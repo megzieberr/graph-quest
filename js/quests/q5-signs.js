@@ -52,6 +52,7 @@ const SKILLS = {
     const spec = specFor([cv], { win, accent: ACC, ticks: "labels", labels: ["f"], asymLabels: true });
     const cuts = criticalXs([cv], win.xmin, win.xmax);
     if (!cuts.length) return SKILLS.singleSign();                 // needs at least one crossing
+    spec.vlines = cuts.map((c) => ({ x: c.x }));                  // her method: the lines come FIRST
     const secs = usableSections(sections(cuts, win.xmin, win.xmax), [cv]);
     const wantPos = pick([true, false]);
     const lang = getLang();
@@ -105,6 +106,7 @@ const SKILLS = {
     const spec = specFor([a, b], { win, accent: ACC, ticks: true, labels: ["f", "g"], asymLabels: true });
     const cuts = criticalXs([a, b], win.xmin, win.xmax);
     if (cuts.length < 2) return SKILLS.productSign();
+    spec.vlines = cuts.map((c) => ({ x: c.x }));                  // sections visible before marking
     const secs = usableSections(sections(cuts, win.xmin, win.xmax), [a, b]);
     const wantNeg = pick([true, true, false]);                    // < 0 is the exam favourite
     const lang = getLang();
@@ -133,7 +135,7 @@ const SKILLS = {
       build: (host, done, nudge) => {
         const truth = truthMap([a, b], [0, 1], secs);
         const ctl = signPaint(host, {
-          spec, sections: secs, curves: [0, 1],
+          spec, sections: secs, curves: [0, 1], names: ["f", "g"],
           onChange: (state, all) => {
             if (!all) return;
             let wrong = false;

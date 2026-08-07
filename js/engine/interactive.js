@@ -118,11 +118,22 @@ export function pointDrop(host, opts) {
     ring.setAttribute("cx", N(px)); ring.setAttribute("cy", N(py));
     dot.setAttribute("cx", N(px)); dot.setAttribute("cy", N(py));
     dot.setAttribute("class", locked ? "iv-snap" : "iv-handle");
-    lab.setAttribute("x", N(px + (mode === "v" ? 30 : 0)));
-    lab.setAttribute("y", N(py + (mode === "v" ? 0 : -20)));
-    lab.textContent = locked
-      ? `(${fmtComma(N(target.x))} ; ${fmtComma(N(target.y))})`
-      : `(${fmtComma(N(cur.x))} ; ${fmtComma(N(cur.y))})`;
+    /* label sits clear of the ring: above-right for a vertical rail */
+    lab.setAttribute("x", N(px + (mode === "v" ? 17 : 0)));
+    lab.setAttribute("y", N(py + (mode === "v" ? -17 : -21)));
+    lab.setAttribute("text-anchor", mode === "v" ? "start" : "middle");
+    /* opts.symbol (e.g. "k") keeps the unknown SYMBOLIC — used when the
+       follow-up wants an exact answer (a surd). Printing a live decimal
+       there leaks a rounded version of the very answer being asked for. */
+    if (opts.symbol) {
+      lab.textContent = mode === "v"
+        ? `(${fmtComma(at)} ; ${opts.symbol})`
+        : `(${opts.symbol} ; ${fmtComma(at)})`;
+    } else {
+      lab.textContent = locked
+        ? `(${fmtComma(N(target.x))} ; ${fmtComma(N(target.y))})`
+        : `(${fmtComma(N(cur.x))} ; ${fmtComma(N(cur.y))})`;
+    }
   }
   paint();
 
@@ -326,15 +337,18 @@ export function climb(host, opts) {
    opts: { spec, sections, curves:[i…], onChange(state, allMarked) }
    state[curveIndex][sectionIndex] = +1 | -1 | 0 (unmarked)
    ============================================================ */
+const TONES = { a: "var(--fg-a)", b: "var(--fg-b)", c: "var(--fg-c)" };
+
 export function signPaint(host, opts) {
-  const { spec, sections, curves, onChange } = opts;
+  const { spec, sections, curves, onChange, names } = opts;
   const { svg, g } = mount(host, spec);
   const state = {};
   const nodes = [];
 
-  curves.forEach((ci) => {
+  curves.forEach((ci, cidx) => {
     state[ci] = {};
     const cv = spec.curves[ci], f = makeFn(cv);
+    const tone = TONES[cv.tone] || "var(--accent)";
     sections.forEach((sec, si) => {
       const y = f(sec.mid);
       if (!Number.isFinite(y) || y < g.win.ymin || y > g.win.ymax) return;   // no graph here
@@ -343,8 +357,16 @@ export function signPaint(host, opts) {
       /* sit the mark just off the curve, on the side away from the axis */
       const py = g.Y(y) + (y >= 0 ? -17 : 17);
       const slot = svgEl("rect", { class: "iv-signslot", x: N(px - 11), y: N(py - 11), width: 22, height: 22, rx: 3 });
+      slot.style.stroke = tone;                     // the box wears its curve's colour
       const t = svgEl("text", { class: "iv-sign", x: N(px), y: N(py), "text-anchor": "middle", "dominant-baseline": "middle" });
       t.textContent = "";
+      /* the curve's letter beside the box, so ownership is never a guess */
+      if (names && names[cidx]) {
+        const own = svgEl("text", { class: "iv-signowner", x: N(px - 15), y: N(py), "text-anchor": "end", "dominant-baseline": "middle" });
+        own.textContent = names[cidx];
+        own.style.fill = tone;
+        svg.appendChild(own);
+      }
       const tap = svgEl("rect", { class: "iv-hit", x: N(px - 16), y: N(py - 16), width: 32, height: 32 });
       tap.style.cursor = "pointer";
       tap.addEventListener("pointerdown", (ev) => {
@@ -370,12 +392,16 @@ export function signPaint(host, opts) {
   return {
     state: () => state,
     allMarked,
-    /* colour every mark right/wrong against the real signs */
+    /* colour every mark right/wrong against the real signs.
+       Inline STYLE, not attributes — a stylesheet rule silently beats an
+       SVG presentation attribute, which is exactly how the first version
+       shipped verdict colours that never showed up on screen. */
     reveal(truth) {
       nodes.forEach(({ ci, si, slot }) => {
         const ok = state[ci][si] === truth[ci][si];
-        slot.setAttribute("stroke", ok ? "var(--good)" : "var(--bad)");
-        slot.setAttribute("fill", ok ? "rgba(52,211,153,.14)" : "rgba(251,113,133,.14)");
+        slot.style.stroke = ok ? "var(--good)" : "var(--bad)";
+        slot.style.fill = ok ? "rgba(52,211,153,.14)" : "rgba(251,113,133,.18)";
+        slot.style.strokeWidth = ok ? "1" : "2";
       });
     },
     countLeft() {
@@ -427,8 +453,9 @@ export function cutSockets(host, opts) {
     reveal(requiredIdx) {
       marks.forEach((m, i) => {
         const should = requiredIdx.has(i), did = chosen.has(i);
-        m.knob.setAttribute("fill", should === did ? "var(--good)" : "var(--bad)");
-        m.knob.setAttribute("stroke", should === did ? "var(--good)" : "var(--bad)");
+        /* inline style — the .iv-sockdot stylesheet rule beats attributes */
+        m.knob.style.fill = should === did ? "var(--good)" : "var(--bad)";
+        m.knob.style.stroke = should === did ? "var(--good)" : "var(--bad)";
         if (should) m.line.setAttribute("class", "iv-socket on");
       });
     },

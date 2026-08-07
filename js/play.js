@@ -17,10 +17,10 @@ import { buildRound, getQuest } from "./quests/index.js";
 
 let S = null;   // the running session
 
-export function startQuest(questId, onFinish) {
+export function startQuest(questId, onFinish, onQuit) {
   const q = getQuest(questId);
   const items = buildRound(questId);
-  S = { q, items, i: 0, score: 0, xp: 0, onFinish, answered: false, usedHint: false, ctl: null };
+  S = { q, items, i: 0, score: 0, xp: 0, onFinish, onQuit, answered: false, usedHint: false, ctl: null };
   render();
 }
 
@@ -37,10 +37,19 @@ function render() {
   const view = el("div", "view");
   view.style.setProperty("--accent", item.accent || S.q.accent || "#3aa0ff");
 
-  /* progress */
+  /* progress + a way OUT — an interactive round must never be a locked room */
   const bar = el("div", "qbar");
   bar.innerHTML = `<div class="qprog"><i style="width:${(S.i / S.items.length) * 100}%"></i></div>
     <div class="qcount">${S.i + 1} ${L(UI.roundOf)} ${S.items.length}</div>`;
+  const backBtn = el("button", "link-btn", "‹ " + L(UI.mapShort));
+  backBtn.type = "button";
+  backBtn.style.padding = "2px 6px";
+  backBtn.addEventListener("click", () => {
+    const oq = S && S.onQuit;
+    S = null;
+    if (oq) oq();
+  });
+  bar.prepend(backBtn);
   view.appendChild(bar);
 
   const wrap = el("div", "qwrap");
@@ -61,7 +70,18 @@ function render() {
   hintBtn.type = "button";
 
   if (item.type === "interactive") {
-    wrap.append(gbox, meter, coach, askslot, optbox, fbslot, hintBtn);
+    const helpRow = el("div", "row");
+    helpRow.style.justifyContent = "center";
+    const skipBtn = el("button", "link-btn", L(UI.skip));
+    skipBtn.type = "button";
+    skipBtn.addEventListener("click", () => {
+      if (S.answered) return;
+      S.answered = true;
+      skipBtn.disabled = true;
+      showFeedback(item.then || item, false, fbslot, hintBtn);
+    });
+    helpRow.append(hintBtn, skipBtn);
+    wrap.append(gbox, meter, coach, askslot, optbox, fbslot, helpRow);
     meter.style.display = item.meter ? "" : "none";
     coach.textContent = L(item.coach || "");
     optbox.style.display = "none";

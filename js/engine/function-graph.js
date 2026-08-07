@@ -132,10 +132,13 @@ export function renderFunction(spec) {
 
   /* ---- axis number ticks (helps "read it off the axis" questions) ---- */
   if (spec.ticks && showX) {
+    /* label every 2nd integer on a wide window — a solid row of digits
+       around the origin mashes "−1  1" into what reads like "−10 1" */
+    const step = xmax - xmin > 13 ? 2 : 1;
     for (let x = Math.ceil(xmin); x <= xmax; x++) {
       if (x === 0) continue;
       out += `<line class="fg-axis" x1="${N(X(x))}" y1="${N(y0px - 3)}" x2="${N(X(x))}" y2="${N(y0px + 3)}"/>`;
-      if (spec.ticks === "labels") out += text(X(x), y0px + 11, fmtComma(x), "fg-axlab");
+      if (spec.ticks === "labels" && x % step === 0) out += text(X(x), y0px + 11, fmtComma(x), "fg-axlab");
     }
   }
   if (spec.ticks && showY) {

@@ -32,7 +32,7 @@ export function L(v) {
 
 /* ---- UI chrome strings ---- */
 export const UI = {
-  appName:      B("Graph Quest", "Grafiek Quest"),
+  appName:      B("Fun Functions", "Fun Functions"),
   tagline:      B("Learn to SEE the graph", "Leer om die grafiek te SIEN"),
   play:         B("Play", "Speel"),
   start:        B("Start", "Begin"),
@@ -41,7 +41,9 @@ export const UI = {
   check:        B("Check", "Kontroleer"),
   again:        B("Play again", "Speel weer"),
   backToMap:    B("Back to the map", "Terug na die kaart"),
-  hint:         B("I'm stuck", "Ek is vas"),
+  hint:         B("I'm lost", "Ek's verlore"),
+  skip:         B("Skip this one", "Slaan oor"),
+  mapShort:     B("Map", "Kaart"),
   correct:      B("Correct", "Korrek"),
   notQuite:     B("Not quite", "Nie heeltemal nie"),
   answerWas:    B("The answer:", "Die antwoord:"),
@@ -57,8 +59,8 @@ export const UI = {
   roundOf:      B("of", "van"),
 
   /* interactive coaching lines */
-  dragDown:     B("Drag the point onto the graph", "Sleep die punt op die grafiek"),
-  dragAcross:   B("Drag the point sideways onto the graph", "Sleep die punt sywaarts op die grafiek"),
+  dragDown:     B("Drag the point onto the graph", "Drag die punt op die grafiek"),
+  dragAcross:   B("Drag the point sideways onto the graph", "Drag die punt sywaarts op die grafiek"),
   snapped:      B("On the graph!", "Op die grafiek!"),
   unlocked:     B("Nice — now answer it.", "Mooi — antwoord dit nou."),
   walkIt:       B("Walk the point from left to right — it will not go back", "Stap die punt van links na regs — dit gaan nie terug nie"),

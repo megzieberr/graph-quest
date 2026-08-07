@@ -18,7 +18,7 @@ import { makeFn, paraTP, paraStd, eqStr, C, pick, circleEq } from "../funclib.js
 const ACC = "#fcd34d";
 
 const WALK = B("Drag the point from left to right. It will not go back.",
-               "Sleep die punt van links na regs. Dit gaan nie terug nie.");
+               "Drag die punt van links na regs. Dit gaan nie terug nie.");
 
 /* a stretch of x the curve actually occupies inside the window */
 function walkRange(cv, win, opts = {}) {
@@ -135,8 +135,10 @@ const SKILLS = {
     const rising = cv.a > 0;
     const spec = specFor([cv], { accent: ACC, ticks: true, labels: ["g"], asymLabels: true });
     const correct = rising
-      ? B(`a = ${C(cv.a)} > 0 and b = ${C(cv.b)} > 1, so g rises`, `a = ${C(cv.a)} > 0 en b = ${C(cv.b)} > 1, dus styg g`)
-      : B(`a = ${C(cv.a)} &lt; 0, so the graph is flipped and g falls`, `a = ${C(cv.a)} &lt; 0, dus is die grafiek omgekeer en g daal`);
+      ? B(`a is positive and b = ${C(cv.b)} is bigger than 1, so g rises`,
+          `a is positief en b = ${C(cv.b)} is groter as 1, dus styg g`)
+      : B(`a is negative (${C(cv.a)}), so the graph is flipped over and g falls`,
+          `a is negatief (${C(cv.a)}), dus is die grafiek omgekeer en g daal`);
     return mc("increasing",
       rising ? B("g is increasing. Give the reason.", "g is stygend. Gee die rede.")
              : B("g is decreasing. Give the reason.", "g is dalend. Gee die rede."),

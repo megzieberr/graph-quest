@@ -188,6 +188,7 @@ h2{font-size:20px} h3{font-size:16px}
 .iv-sockdot{fill:var(--panel-solid);stroke:var(--muted);stroke-width:1.6}
 .iv-sockdot.on{fill:var(--g-read);stroke:var(--g-read)}
 .iv-sign{font-family:var(--font-num);font-size:15px;font-weight:700;paint-order:stroke;stroke:var(--bg);stroke-width:3.5px}
+.iv-signowner{font-size:10.5px;font-weight:700;font-style:italic;paint-order:stroke;stroke:var(--bg);stroke-width:3px}
 .iv-sign.plus{fill:var(--iv-plus)} .iv-sign.minus{fill:var(--iv-minus)}
 .iv-signslot{fill:rgba(255,255,255,.05);stroke:var(--brd-2);stroke-width:1;rx:3}
 .iv-bar{stroke:var(--g-read);stroke-width:3;stroke-linecap:round}

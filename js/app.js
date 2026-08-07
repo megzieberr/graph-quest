@@ -43,7 +43,7 @@ function show(view) {
 
 function play(questId) {
   screen = { name: "play", questId };
-  startQuest(questId, finished);
+  startQuest(questId, finished, () => { screen = { name: "map" }; paint(); });
 }
 
 async function finished(res) {

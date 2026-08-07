@@ -126,8 +126,8 @@ const SKILLS = {
       B("What do you do first?", "Wat doen jy eerste?"),
       m.a, shuffled(m.w),
       { stem: m.t, wide: true,
-        hint: B("Read the phrase again: which coordinate did they GIVE you?",
-                "Lees die frase weer: watter koördinaat het hulle vir jou GEGEE?") });
+        hint: B("Read the sentence again: which coordinate did they GIVE you?",
+                "Lees die sin weer: watter koördinaat het hulle vir jou GEGEE?") });
   },
 };
 

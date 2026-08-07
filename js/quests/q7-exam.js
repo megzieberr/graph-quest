@@ -58,12 +58,12 @@ function sheetSemiExp() {
     domainStr(h), [`${C(-r)} &lt; x &lt; ${C(r)}`, `0 ≤ x ≤ ${C(r)}`, "x ∈ ℝ"], { concept: "domain" });
 
   q(B("Is g increasing or decreasing? Give a reason.", "Is g stygend of dalend? Gee 'n rede."),
-    g.a > 0 ? B(`Increasing — a = ${C(g.a)} > 0 and b = ${C(g.b)} > 1`, `Stygend — a = ${C(g.a)} > 0 en b = ${C(g.b)} > 1`)
-            : B(`Decreasing — a = ${C(g.a)} &lt; 0`, `Dalend — a = ${C(g.a)} &lt; 0`),
-    [g.a > 0 ? B(`Decreasing — a = ${C(g.a)} &lt; 0`, `Dalend — a = ${C(g.a)} &lt; 0`)
-             : B(`Increasing — a = ${C(g.a)} > 0`, `Stygend — a = ${C(g.a)} > 0`),
+    g.a > 0 ? B(`Increasing — a is positive and b = ${C(g.b)} is bigger than 1`, `Stygend — a is positief en b = ${C(g.b)} is groter as 1`)
+            : B("Decreasing — a is negative, so the graph is flipped over", "Dalend — a is negatief, dus is die grafiek omgekeer"),
+    [g.a > 0 ? B("Decreasing — a is negative", "Dalend — a is negatief")
+             : B("Increasing — a is positive", "Stygend — a is positief"),
      B("Increasing, then decreasing", "Stygend, dan dalend"),
-     B(`Decreasing — q = ${C(g.q)} &lt; 0`, `Dalend — q = ${C(g.q)} &lt; 0`)], { concept: "increasing" });
+     B(`Decreasing — q is negative (${C(g.q)})`, `Dalend — q is negatief (${C(g.q)})`)], { concept: "increasing" });
 
   if (negProd.length) {
     const correct = answerString(negProd, cuts, win, { strict: false, lang });
@@ -118,8 +118,8 @@ function sheetHypLine() {
     rangeStr(f), [`y > ${C(f.q)}`, "y ∈ ℝ", domainStr(f)], { concept: "range" });
 
   q(B("Is each branch of f increasing or decreasing?", "Is elke tak van f stygend of dalend?"),
-    f.a > 0 ? B("Decreasing — a > 0", "Dalend — a > 0") : B("Increasing — a &lt; 0", "Stygend — a &lt; 0"),
-    [f.a > 0 ? B("Increasing — a > 0", "Stygend — a > 0") : B("Decreasing — a &lt; 0", "Dalend — a &lt; 0"),
+    f.a > 0 ? B("Decreasing — a is positive", "Dalend — a is positief") : B("Increasing — a is negative", "Stygend — a is negatief"),
+    [f.a > 0 ? B("Increasing — a is positive", "Stygend — a is positief") : B("Decreasing — a is negative", "Dalend — a is negatief"),
      B("One rises, one falls", "Een styg, een daal"),
      B("It turns at the asymptote", "Dit draai by die asimptoot")], { concept: "increasing" });
 
