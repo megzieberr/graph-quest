@@ -130,7 +130,10 @@ for (const lang of ["af", "en"]) {
          length is however many sub-questions that sketch has */
       const wantLen = q.buildAll ? items.length >= 4 : items.length === q.rounds;
       if (!wantLen) { bad++; why = `built ${items.length} (rounds=${q.rounds})`; break; }
-      if (q.buildAll && !items.every((it) => it.graph === items[0].graph)) {
+      /* one sketch per exam round — compared by CONTENT, since a question may
+         legitimately hand out a variant (e.g. asymptote labels stripped) */
+      const sketchKey = (s) => JSON.stringify([s.win, s.curves.map((c) => [c.kind, c.a, c.b, c.p, c.q, c.c, c.r])]);
+      if (q.buildAll && !items.every((it) => sketchKey(it.graph) === sketchKey(items[0].graph))) {
         bad++; why = "exam round mixes more than one sketch"; break;
       }
       for (const it of items) {
@@ -184,6 +187,124 @@ for (const lang of ["af", "en"]) {
     check(g, `${q.id}: every interactive round mounts and stays locked`, bad === 0, why);
   }
   host.remove();
+}
+
+/* ---------- 4b. no question can lie or crop ---------- */
+{
+  setLang("af");
+  const g = group("4b. Honesty of the picture and the wording");
+
+  /* every curve of every generated graph must FIT the window it is drawn in */
+  let bad = 0, why = "";
+  for (const q of QUESTS) {
+    for (let rep = 0; rep < 6; rep++) {
+      buildRound(q.id).forEach((it) => {
+        const spec = it.graph;
+        if (!spec) return;
+        const { xmin, xmax, ymin, ymax } = spec.win;
+        spec.curves.forEach((cv, ci) => {
+          let inside = 0, total = 0;
+          for (let i = 0; i <= 60; i++) {
+            const x = xmin + (i / 60) * (xmax - xmin), y = mf(cv)(x);
+            if (!Number.isFinite(y)) continue;
+            if (cv.kind === "hyperbola" && Math.abs(x - cv.p) < 0.4) continue;
+            total++;
+            if (y >= ymin && y <= ymax) inside++;
+          }
+          /* at least a third of each curve must actually be on screen */
+          if (total && inside / total < 0.34) { bad++; why = `${q.id} curve ${ci} (${cv.kind}) only ${Math.round(inside / total * 100)}% in frame`; }
+        });
+        const w = xmax - xmin, h = ymax - ymin;
+        if (w / h > 2.4) { bad++; why = `${q.id} window is ${w}×${h} — too wide and flat to read`; }
+      });
+    }
+  }
+  check(g, "every drawn curve is mostly inside its frame, and no window is a squashed strip", bad === 0, why);
+
+  /* a "positive or negative?" question may never sample a point ON the axis */
+  bad = 0; why = "";
+  for (let rep = 0; rep < 60; rep++) {
+    buildRound("q5").forEach((it) => {
+      const p = strip(L(it.prompt || ""));
+      const m = p.match(/x = (−?\d+)/);
+      if (!m || !/positief of negatief|positive or negative/.test(p)) return;
+      const spec = it.graph;
+      if (!spec) return;
+      const x = Number(m[1].replace("−", "-"));
+      const y = mf(spec.curves[0])(x);
+      if (!Number.isFinite(y) || Math.abs(y) < 0.5) { bad++; why = `asked about x=${x} where f(x)=${y}`; }
+    });
+  }
+  check(g, "\"is f(x) positive or negative?\" never asks about a point on the x-axis", bad === 0, why);
+
+  /* an inequality must never be split across lines: it has to be inside .eq */
+  bad = 0; why = "";
+  const holder = document.createElement("div");
+  for (const q of QUESTS) {
+    for (let rep = 0; rep < 6; rep++) {
+      buildRound(q.id).forEach((it) => {
+        const check1 = (html) => {
+          if (html == null) return;
+          holder.innerHTML = String(L(html));
+          /* strip out everything already protected, then look for leftovers */
+          holder.querySelectorAll(".eq").forEach((n) => n.remove());
+          const rest = holder.textContent;
+          if (/[a-z]\(x\)\s*[<>≤≥]|[<>≤≥]\s*x\s*[<>≤≥]/.test(rest)) { bad++; why = `${q.id}: "${rest.trim().slice(0, 60)}"`; }
+        };
+        check1(it.prompt);
+        if (it.then) check1(it.then.prompt);
+        (it.options || (it.then && it.then.options) || []).forEach((o) => check1(o.label));
+      });
+    }
+  }
+  check(g, "every inequality is wrapped in .eq so it can never wrap mid-expression", bad === 0, why);
+
+  /* a diagram may never print the very answer being asked for */
+  bad = 0; why = "";
+  for (const q of QUESTS) {
+    for (let rep = 0; rep < 8; rep++) {
+      buildRound(q.id).forEach((it) => {
+        const p = strip(L(it.prompt || ""));
+        if (!/asimptoot|asymptote/i.test(p)) return;
+        if (!/skryf|write|bereken|neer/i.test(p)) return;       // asks FOR the asymptote
+        const spec = it.graph;
+        if (!spec) return;
+        const printed = (spec.asymptotes || []).filter((a) => a.label).map((a) => a.label);
+        const answer = strip(L(it.answerLabel || ""));
+        if (printed.some((lbl) => answer.includes(strip(lbl)))) {
+          bad++; why = `${q.id}: sketch prints "${strip(printed[0])}" and asks for it`;
+        }
+      });
+    }
+  }
+  check(g, "a sketch never prints the asymptote a question is asking for", bad === 0, why);
+
+  /* every round must carry a picture — this app is about READING graphs */
+  bad = 0; why = "";
+  for (const q of QUESTS) {
+    for (let rep = 0; rep < 6; rep++) {
+      buildRound(q.id).forEach((it) => {
+        const hasPic = it.type === "interactive" || !!it.graph;
+        if (!hasPic) { bad++; why = `${q.id}/${it.skillId}: "${strip(L(it.prompt)).slice(0, 50)}…" has no graph`; }
+      });
+    }
+  }
+  check(g, "every round shows a graph (no wall-of-words questions)", bad === 0, why);
+
+  /* semicircles must be drawn round, not squashed into an ellipse */
+  bad = 0; why = "";
+  for (let rep = 0; rep < 40; rep++) {
+    ["q2", "q3", "q4", "q5", "q7"].forEach((qid) => {
+      buildRound(qid).forEach((it) => {
+        const spec = it.graph || (it.then && it.then.graph);
+        if (!spec || !spec.curves.some((c) => c.kind === "semicircle")) return;
+        const { xmin, xmax, ymin, ymax } = spec.win;
+        const shape = ((xmax - xmin) / (ymax - ymin)) / ((spec.w || 360) / (spec.h || 300));
+        if (shape < 0.85 || shape > 1.18) { bad++; why = `${qid}: circle drawn ${shape.toFixed(2)}× out of round`; }
+      });
+    });
+  }
+  check(g, "a semicircle is drawn round, not as a squashed ellipse", bad === 0, why);
 }
 
 /* ---------- 5. interval notation ---------- */

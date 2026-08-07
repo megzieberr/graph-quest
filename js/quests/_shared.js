@@ -26,7 +26,32 @@ import { L } from "../i18n.js";
    opts.hints    progressive hint ladder (array, one rung per tap;
                  rung 1 names the MOVE, never the answer)
    opts.solution worked-method lines shown in the feedback panel */
+/* A maths expression may never wrap mid-way across two lines.
+   Rather than remembering to wrap every generated string by hand, every
+   option label and answer goes through here: anything that looks like an
+   inequality, an interval or set notation gets a no-break .eq wrapper.
+   Already-wrapped text and plain prose are left alone. */
+const MATHY = /(&lt;|&gt;|[<>≤≥≠∈])/;
+function eqWrap(v) {
+  if (v == null) return v;
+  if (typeof v === "object") {
+    const out = {};
+    for (const k in v) out[k] = eqWrap(v[k]);
+    return out;
+  }
+  const s = String(v);
+  if (!MATHY.test(s) || s.includes("class=\"eq\"") || s.includes("class='eq'")) return s;
+  /* prose that merely mentions a symbol (a misconception nudge, a reason)
+     must not be turned into one unbreakable line */
+  if (s.replace(/<[^>]*>/g, "").trim().split(/\s+/).length > 8) return s;
+  return `<span class="eq">${s}</span>`;
+}
+
 export function mc(concept, prompt, correct, wrongs, opts = {}) {
+  correct = eqWrap(correct);
+  wrongs = (wrongs || []).map((w) =>
+    (w && typeof w === "object" && "label" in w) ? { ...w, label: eqWrap(w.label) } : eqWrap(w));
+  if (opts.answerLabel) opts = { ...opts, answerLabel: eqWrap(opts.answerLabel) };
   const key = (v) => `${L(v)}||${typeof v === "object" ? (v.en || "") + "|" + (v.af || "") : v}`;
   const seen = new Set([key(correct)]);
   const uniq = [];

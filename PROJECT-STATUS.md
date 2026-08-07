@@ -23,7 +23,7 @@ Public repo `megzieberr/graph-quest`, Pages from `main` / root.
 | All 7 quests, both languages | ✅ built |
 | 6 interactive mechanics | ✅ built and driven-tested in a real browser |
 | To-scale graph engine (+ semicircles) | ✅ built, verify() honest |
-| `verify.html` | ✅ **34/34 checks pass** |
+| `verify.html` | ✅ **40/40 checks pass** |
 | PWA (manifest, icons, service worker) | ✅ built, cache `gq-v2` |
 | Progress saving | ✅ local (localStorage) |
 | GitHub repo / Pages deploy | ✅ **live**, verified 2026-08-07 |
@@ -124,8 +124,21 @@ changes are pasted into the Supabase SQL editor by hand.
 
 1. **Play it on the phone.** Especially quest 4 (the climb) — the finger-tolerance and
    whether the backwards-drag lock feels fair are the things to judge on a real screen.
-2. Decide the **real app name** ("Grafiek Quest" is a placeholder).
-3. Nothing else is blocking.
+2. Nothing else is blocking. (Name is settled: **Fun Functions**.)
+
+## Where the NEXT session should start
+
+Her standing verdict is that the first pass was **too low quality pedagogically**, and the
+rework is only partly done. In priority order:
+
+1. **Finish the teach-layer sweep across quests 1, 2, 3 and 7.** Quests 4–6 now have hint
+   ladders, misconception nudges on every decoy, method cards and intro lessons. The others
+   have only patchy hints and few misconceptions. Same pattern, applied evenly.
+2. **Read a round out loud before shipping it.** Every issue she reported was visible in one
+   screenshot: a cropped diagram, an answer printed on the sketch, a wall of sentences, an
+   answer that was wrong. The generators were right; the *presentation* was not. Play each
+   new round in the browser and LOOK at it — a passing check is not a played round.
+3. **Then** the login screen + `supabase/schema.sql` (see above) before the Gr11 blipwork mount.
 
 ## Next build session, in order
 
@@ -167,6 +180,29 @@ js/
 supabase/schema.sql   RLS on, no table policies, everything through SECURITY DEFINER RPCs
 verify.html           34 checks — engine honesty, generators, mechanics, notation
 ```
+
+## Rules the verify harness now ENFORCES (each one came from a real bug she caught)
+
+`verify.html` §4b fails the build on any of these — do not "fix" a failure by relaxing a check:
+
+1. **Every round shows a graph.** No wall-of-words questions; this app is about reading
+   graphs. Even the quick-fire word drill (q1) carries a reference sketch.
+2. **A sketch never prints the answer it asks for.** Asking "write down the asymptote"
+   while `y = −8` is drawn on the diagram is a free mark — use `hideAsymLabels(spec)`.
+3. **Every curve is ≥ 34% inside its frame, and no window is wider than 2,4 : 1.**
+   Half-cropped diagrams were reported twice. Intersections are NOT features of either
+   curve alone — pass them to `windowFor` via `include:` or they get cropped.
+4. **A semicircle is drawn round.** The canvas is 360×300, so a semicircle window is
+   forced to that shape; an ellipse is a lie about the graph.
+5. **"Is f(x) positive or negative?" never samples a point on the x-axis.** It once asked
+   about x = −3 where f(−3) = 0 and marked "negatief" correct.
+6. **Every inequality is wrapped in `.eq`** (no-break). `mc()` does this automatically via
+   `eqWrap` for options and answers; wrap prompts by hand.
+
+⚠ **Stale modules will lie to you.** Twice during the build the harness reported failures
+that were already fixed on disk, because the service worker / HTTP cache served old JS.
+If a result contradicts the source, unregister the SW, delete the `gq-*` cache, and reload
+before believing it.
 
 ### If you add a quest or a mechanic
 1. Answers computed in `funclib.js`; decoys filtered **by value**, not by string.

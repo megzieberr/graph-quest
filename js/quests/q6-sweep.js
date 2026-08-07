@@ -83,7 +83,10 @@ const SKILLS = {
   /* ---------- the full three-move drill ---------- */
   topSweep: () => {
     const { f, g, meets, hasAsym } = nicePair();
-    const win = windowFor([f, g]);
+    /* the intersections are the POINT of the question — the window must
+       hold them (they are not "features" of either curve on its own, so
+       windowFor would happily crop them out otherwise) */
+    const win = windowFor([f, g], { include: meets.map((x) => ({ x, y: makeFn(g)(x) })) });
     if (meets.some((x) => x <= win.xmin + 0.5 || x >= win.xmax - 0.5)) return SKILLS.topSweep();
     const spec = specFor([f, g], { win, accent: ACC, ticks: "labels", labels: ["f", "g"], asymLabels: true });
     const cands = socketCandidates(f, g, meets, win);
@@ -120,8 +123,8 @@ const SKILLS = {
     return iq({
       concept: "compare", kind: "sweep", accent: ACC,
       prompt: wantF
-        ? B("For which values of x is f(x) &gt; g(x)?", "Vir watter waardes van x is f(x) &gt; g(x)?")
-        : B("For which values of x is f(x) &lt; g(x)?", "Vir watter waardes van x is f(x) &lt; g(x)?"),
+        ? B("For which values of x is <span class='eq'>f(x) &gt; g(x)</span>?", "Vir watter waardes van x is <span class='eq'>f(x) &gt; g(x)</span>?")
+        : B("For which values of x is <span class='eq'>f(x) &lt; g(x)</span>?", "Vir watter waardes van x is <span class='eq'>f(x) &lt; g(x)</span>?"),
       stem: `<span class="eq">f(x) = ${eqStr(f, "").replace(/^\s*=\s*/, "")}</span> &nbsp;·&nbsp; <span class="eq">g(x) = ${eqStr(g, "").replace(/^\s*=\s*/, "")}</span>`,
       coach: B("First: tap every place that needs a vertical cut line.",
                "Eerste: tik elke plek wat 'n vertikale snylyn nodig het."),
@@ -198,7 +201,8 @@ const SKILLS = {
   /* ---------- just the boundaries: which x needs a line? ---------- */
   whichCuts: () => {
     const { f, g, meets, hasAsym } = nicePair();
-    const win = windowFor([f, g]);
+    const win = windowFor([f, g], { include: meets.map((x) => ({ x, y: makeFn(g)(x) })) });
+    if (meets.some((x) => x <= win.xmin + 0.5 || x >= win.xmax - 0.5)) return SKILLS.whichCuts();
     const spec = specFor([f, g], { win, accent: ACC, ticks: "labels", labels: ["f", "g"], asymLabels: true });
     const meetStr = meets.map((x) => C(x)).join(" and ");
     const meetStrAf = meets.map((x) => C(x)).join(" en ");
@@ -213,8 +217,8 @@ const SKILLS = {
          B("At the turning point", "By die draaipunt"),
          B(`Only x = ${C(meets[0])}`, `Net x = ${C(meets[0])}`)];
     return mc("compare",
-      B("Where must the vertical cut lines go for f(x) &gt; g(x)?",
-        "Waar moet die vertikale snylyne gaan vir f(x) &gt; g(x)?"),
+      B("Where must the vertical cut lines go for <span class='eq'>f(x) &gt; g(x)</span>?",
+        "Waar moet die vertikale snylyne gaan vir <span class='eq'>f(x) &gt; g(x)</span>?"),
       correct, wrongs,
       { graph: spec, wide: true,
         hint: B("Cut lines go where the graphs SWAP places, and where a graph jumps — nowhere else.",
@@ -222,22 +226,56 @@ const SKILLS = {
         answerLabel: correct });
   },
 
-  /* ---------- the notation trap on its own ---------- */
+  /* ---------- read a SHADED band off a real sketch and write it ----------
+     This used to be a wall of sentences with no picture at all — which
+     taught nothing about reading a graph. Now the band is drawn: the
+     learner reads its two edges off the axes and decides each sign by
+     what KIND of boundary it is (asymptote → always open). */
   notation: () => {
-    const a = pick([1, -1, 2, -2, 3]);
-    const p = pick([0, 1, -1, 2]);
-    const q = pick([1, -1, 2]);
-    const f = { kind: "hyperbola", a, p, q };
-    const b1 = p, b2 = p + pick([2, 3, 4]);
-    const correct = `${C(b1)} &lt; x ≤ ${C(b2)}`;
+    const { f, g, meets, hasAsym } = nicePair();
+    if (!hasAsym) return SKILLS.notation();                 // the trap needs an asymptote
+    const win = windowFor([f, g], { include: meets.map((x) => ({ x, y: makeFn(g)(x) })) });
+    if (meets.some((x) => x <= win.xmin + 0.5 || x >= win.xmax - 0.5)) return SKILLS.notation();
+
+    /* shade the band between the asymptote and the intersection to its right */
+    const right = meets.find((x) => x > f.p);
+    if (right == null) return SKILLS.notation();
+    const lo = f.p, hi = right;
+    const spec = specFor([f, g], {
+      win, accent: ACC, ticks: "labels", labels: ["f", "g"], asymLabels: true,
+      points: [{ x: hi, y: makeFn(g)(hi), on: [0, 1], label: `(${C(hi)} ; ${C(makeFn(g)(hi))})` }],
+    });
+    spec.shades = [{ x0: lo, x1: hi }];
+    spec.vlines = [{ x: lo }, { x: hi }];
+
+    const correct = `<span class='eq'>${C(lo)} &lt; x ≤ ${C(hi)}</span>`;
     return mc("notation",
-      B(`The answer covers everything from x = ${C(b1)} to x = ${C(b2)}. x = ${C(b1)} is a vertical asymptote and x = ${C(b2)} is where the graphs meet. Write it.`,
-        `Die antwoord dek alles van x = ${C(b1)} tot x = ${C(b2)}. x = ${C(b1)} is 'n vertikale asimptoot en x = ${C(b2)} is waar die grafieke mekaar ontmoet. Skryf dit.`),
+      B("Write the shaded band in symbols. Careful with each end!",
+        "Skryf die skakeerde strook in simbole. Wees versigtig met elke kant!"),
       correct,
-      [`${C(b1)} ≤ x ≤ ${C(b2)}`, `${C(b1)} ≤ x &lt; ${C(b2)}`, `${C(b2)} &lt; x ≤ ${C(b1)}`],
-      { wide: true,
-        hint: B("You can never stand ON an asymptote — that end always stays open. The meeting point is a real point, so it can be included.",
-                "Jy kan nooit OP 'n asimptoot staan nie — daardie kant bly altyd oop. Die ontmoetpunt is 'n regte punt, so dit kan ingesluit word."),
+      [{ label: `<span class='eq'>${C(lo)} ≤ x ≤ ${C(hi)}</span>`,
+         misc: B(`x = ${C(lo)} is a vertical asymptote — the graph never reaches it, so that end can never be closed.`,
+                 `x = ${C(lo)} is 'n vertikale asimptoot — die grafiek bereik dit nooit nie, so daardie kant kan nooit toe wees nie.`) },
+       { label: `<span class='eq'>${C(lo)} &lt; x &lt; ${C(hi)}</span>`,
+         misc: B(`x = ${C(hi)} is a real meeting point on both graphs, so it CAN be included.`,
+                 `x = ${C(hi)} is 'n werklike ontmoetpunt op albei grafieke, so dit KAN ingesluit word.`) },
+       { label: `<span class='eq'>${C(hi)} &lt; x ≤ ${C(lo)}</span>`,
+         misc: B("Intervals are always written left to right — the smaller number first.",
+                 "Intervalle word altyd links na regs geskryf — die kleiner getal eerste.") }],
+      { graph: spec, wide: true,
+        stem: B("The dashed line at the left edge is an asymptote; the dot at the right edge is where the graphs meet.",
+                "Die stippellyn aan die linkerkant is 'n asimptoot; die kolletjie aan die regterkant is waar die grafieke mekaar ontmoet."),
+        hints: [
+          B("Read the two edges off the x-axis first — what are the numbers?",
+            "Lees eers die twee kante van die x-as af — wat is die getalle?"),
+          B("Now each sign: you can never stand ON an asymptote (open), but a meeting point is a real point (can be closed).",
+            "Nou elke teken: jy kan nooit OP 'n asimptoot staan nie (oop), maar 'n ontmoetpunt is 'n regte punt (kan toe wees)."),
+        ],
+        solution: [
+          B("1. Read the left edge and the right edge off the x-axis.", "1. Lees die linker- en regterkant van die x-as af."),
+          B("2. Asymptote end → always < or > (never included).", "2. Asimptoot-kant → altyd < of > (nooit ingesluit nie)."),
+          B("3. Meeting-point end → ≤ or ≥ is allowed.", "3. Ontmoetpunt-kant → ≤ of ≥ is toegelaat."),
+        ],
         answerLabel: correct });
   },
 };

@@ -11,7 +11,7 @@
    ============================================================ */
 import { mc, quest } from "./_shared.js";
 import { B } from "../i18n.js";
-import { specFor, windowFor, randExp, randSemicircle, randHyperbola, randParabola } from "./_graphs.js";
+import { specFor, windowFor, randExp, randSemicircle, randHyperbola, randParabola, hideAsymLabels } from "./_graphs.js";
 import {
   makeFn, expXInt, expYInt, rangeStr, domainStr, eqStr, C, pick, ptStr,
   criticalXs, sections, signAt, aboveAt, hypXInt, paraTP, paraStd, paraRoots,
@@ -44,8 +44,11 @@ function sheetSemiExp() {
   const q = (prompt, correct, wrongs, opts = {}) =>
     out.push(mc(opts.concept || "exam", prompt, correct, wrongs, { graph: spec, stem, wide: true, ...opts }));
 
+  /* the asymptote LABEL is stripped here — printing "y = −8" on the sketch
+     would hand over the very answer being asked for */
   q(B("Write down the equation of the asymptote of g.", "Skryf die vergelyking van die asimptoot van g neer."),
-    `y = ${C(g.q)}`, [`x = ${C(g.q)}`, `y = ${C(-g.q)}`, "y = 0"], { concept: "range" });
+    `y = ${C(g.q)}`, [`x = ${C(g.q)}`, `y = ${C(-g.q)}`, "y = 0"],
+    { concept: "range", graph: hideAsymLabels(spec) });
 
   if (xi != null && isInt(xi))
     q(B("Calculate the x-intercept of g.", "Bereken die x-afsnit van g."),
@@ -67,7 +70,7 @@ function sheetSemiExp() {
 
   if (negProd.length) {
     const correct = answerString(negProd, cuts, win, { strict: false, lang });
-    q(B("For which values of x is h(x)·g(x) ≤ 0?", "Vir watter waardes van x is h(x)·g(x) ≤ 0?"),
+    q(B("For which values of x is <span class='eq'>h(x)·g(x) ≤ 0</span>?", "Vir watter waardes van x is <span class='eq'>h(x)·g(x) ≤ 0</span>?"),
       correct,
       [complementString(negProd, secs, cuts, win, { strict: false, lang }),
        asYString(correct),
@@ -101,7 +104,8 @@ function sheetHypLine() {
     `x = ${C(f.p)} ${lang === "en" ? "and" : "en"} y = ${C(f.q)}`,
     [`x = ${C(f.q)} ${lang === "en" ? "and" : "en"} y = ${C(f.p)}`,
      `x = ${C(f.p)} ${lang === "en" ? "and" : "en"} y = 0`,
-     `y = ${C(f.q)} ${lang === "en" ? "only" : "alleen"}`], { concept: "range" });
+     `y = ${C(f.q)} ${lang === "en" ? "only" : "alleen"}`],
+    { concept: "range", graph: hideAsymLabels(spec) });
 
   const xi = hypXInt(f);
   if (xi != null && isInt(xi))
@@ -125,7 +129,7 @@ function sheetHypLine() {
 
   if (fTop.length) {
     const correct = answerString(fTop, cuts, win, { strict: true, lang });
-    q(B("For which values of x is f(x) &gt; g(x)?", "Vir watter waardes van x is f(x) &gt; g(x)?"),
+    q(B("For which values of x is <span class='eq'>f(x) &gt; g(x)</span>?", "Vir watter waardes van x is <span class='eq'>f(x) &gt; g(x)</span>?"),
       correct,
       [complementString(fTop, secs, cuts, win, { strict: true, lang }),
        answerString(fTop, cuts, win, { strict: false, lang }),
@@ -171,7 +175,7 @@ function sheetParabola() {
 
   if (below.length) {
     const correct = answerString(below, cuts, win, { strict: true, lang });
-    q(B("For which values of x is f(x) &lt; 0?", "Vir watter waardes van x is f(x) &lt; 0?"),
+    q(B("For which values of x is <span class='eq'>f(x) &lt; 0</span>?", "Vir watter waardes van x is <span class='eq'>f(x) &lt; 0</span>?"),
       correct,
       [complementString(below, secs, cuts, win, { strict: true, lang }),
        asYString(correct),

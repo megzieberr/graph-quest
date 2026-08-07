@@ -109,21 +109,25 @@ export const semiYInt = (cv) => (cv.up === false ? -cv.r : cv.r);
 /* ============================================================
    DOMAIN / RANGE  (CAPS notation, both languages share the symbols)
    ============================================================ */
+/* wrapped in .eq: a domain/range never breaks across lines mid-expression */
+const EQ = (s) => `<span class="eq">${s}</span>`;
+
 export function domainStr(cv) {
-  if (cv.kind === "hyperbola") return `x ∈ ℝ, x ≠ ${C(cv.p)}`;
-  if (cv.kind === "semicircle") return `${C(-cv.r)} ≤ x ≤ ${C(cv.r)}`;
-  return "x ∈ ℝ";
+  if (cv.kind === "hyperbola") return EQ(`x ∈ ℝ, x ≠ ${C(cv.p)}`);
+  if (cv.kind === "semicircle") return EQ(`${C(-cv.r)} ≤ x ≤ ${C(cv.r)}`);
+  return EQ("x ∈ ℝ");
 }
 export function rangeStr(cv) {
   if (cv.kind === "parabola") {
     const { y: q } = paraTP(cv), a = paraStd(cv).a;
-    return a > 0 ? `y ≥ ${C(q)}` : `y ≤ ${C(q)}`;
+    return EQ(a > 0 ? `y ≥ ${C(q)}` : `y ≤ ${C(q)}`);
   }
-  if (cv.kind === "hyperbola") return `y ∈ ℝ, y ≠ ${C(cv.q)}`;
-  if (cv.kind === "exp") return cv.a > 0 ? `y > ${C(cv.q)}` : `y &lt; ${C(cv.q)}`;
-  if (cv.kind === "semicircle") return cv.up === false ? `${C(-cv.r)} ≤ y ≤ 0` : `0 ≤ y ≤ ${C(cv.r)}`;
-  return "y ∈ ℝ";
+  if (cv.kind === "hyperbola") return EQ(`y ∈ ℝ, y ≠ ${C(cv.q)}`);
+  if (cv.kind === "exp") return EQ(cv.a > 0 ? `y > ${C(cv.q)}` : `y &lt; ${C(cv.q)}`);
+  if (cv.kind === "semicircle") return EQ(cv.up === false ? `${C(-cv.r)} ≤ y ≤ 0` : `0 ≤ y ≤ ${C(cv.r)}`);
+  return EQ("y ∈ ℝ");
 }
+export { EQ };
 
 /* ============================================================
    INTERSECTIONS — numeric sign-change scan, robust for any pair

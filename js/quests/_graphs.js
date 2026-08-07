@@ -117,19 +117,59 @@ export function windowFor(curves, opts = {}) {
 
   /* sample the curves across the window so nothing shoots off-frame
      unseen (a hyperbola branch, an exponential taking off) */
-  curves.forEach((cv) => {
-    const f = makeFn(cv);
-    for (let i = 0; i <= 40; i++) {
-      const x = xmin + (i / 40) * (xmax - xmin), y = f(x);
-      if (!Number.isFinite(y)) continue;
-      if (cv.kind === "hyperbola" && Math.abs(x - cv.p) < 0.5) continue;
-      if (cv.kind === "exp" && Math.abs(y) > 40) continue;
-      ymin = Math.min(ymin, Math.max(y, ymin - 6));
-      ymax = Math.max(ymax, Math.min(y, ymax + 6));
-    }
-  });
-  ymin = Math.floor(ymin); ymax = Math.ceil(ymax);
+  function fitY() {
+    curves.forEach((cv) => {
+      const f = makeFn(cv);
+      for (let i = 0; i <= 60; i++) {
+        const x = xmin + (i / 60) * (xmax - xmin), y = f(x);
+        if (!Number.isFinite(y)) continue;
+        if (cv.kind === "hyperbola" && Math.abs(x - cv.p) < 0.5) continue;
+        if (cv.kind === "exp" && Math.abs(y) > 40) continue;
+        ymin = Math.min(ymin, Math.max(y, ymin - 6));
+        ymax = Math.max(ymax, Math.min(y, ymax + 6));
+      }
+    });
+    ymin = Math.floor(ymin); ymax = Math.ceil(ymax);
+  }
+  fitY();
+
+  /* ---- keep the picture READABLE on a phone ----
+     A very wide, very short window squashes the curves into a strip and
+     crops whatever leaves it (a hyperbola + line pair did exactly that:
+     half the diagram was off-screen). The drawing area is 360×300, so
+     hold the window near that 1,2 : 1 shape — widen the short axis
+     rather than ever cropping the long one. */
+  const targetRatio = 360 / 300;
+  let w = xmax - xmin, h = ymax - ymin;
+
+  /* A semicircle MUST look like a semicircle. The canvas is 360×300, so the
+     window has to carry the same shape or a circle is drawn as an ellipse —
+     which is a lie about the graph, not a cosmetic issue. */
+  const widen = () => {
+    const add = Math.ceil(h * targetRatio - w), right = Math.ceil(add / 2);
+    xmax += right; xmin -= (add - right);
+    /* widening x exposes MORE of the curve — a parabola's arms shoot up out
+       of frame — so the vertical fit has to be redone afterwards */
+    fitY();
+  };
+  const heighten = () => {
+    const add = Math.ceil(w / targetRatio - h), up = Math.ceil(add / 2);
+    ymax += up; ymin -= (add - up);
+  };
+
+  if (curves.some((cv) => cv.kind === "semicircle")) {
+    if (w / h > targetRatio) heighten(); else widen();
+    return { xmin, xmax, ymin, ymax };
+  }
+  if (w / h > targetRatio) heighten();
+  else if (h / w > (1 / targetRatio) * 1.9) widen();
   return { xmin, xmax, ymin, ymax };
+}
+
+/* strip a spec's asymptote LABELS — for questions that ask what the
+   asymptote is. Printing "y = −8" on the sketch answers the question. */
+export function hideAsymLabels(spec) {
+  return { ...spec, asymptotes: (spec.asymptotes || []).map((a) => ({ ...a, label: null })) };
 }
 
 /* build a ready-to-draw spec */

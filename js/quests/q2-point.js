@@ -106,18 +106,32 @@ const SKILLS = {
   whichSub: () => {
     const { cv, x, y } = niceCurveAndPoint();
     const eq = eqStr(cv, "f(x)");
+    /* the sketch shows P sitting on the curve with a dashed line down to
+       the x-axis, so the learner SEES that x is the coordinate they were
+       handed — this round used to be words only, which taught nothing
+       about reading a graph */
+    const spec = specFor([cv], {
+      accent: ACC, ticks: "labels", labels: ["f"], include: [{ x, y }],
+      points: [{ x, y, on: 0, dashTo: "x", label: `P(${C(x)} ; k)` }],
+    });
     const correct = B(`Substitute x = ${C(x)} and work out f(${C(x)})`,
                       `Vervang x = ${C(x)} en werk f(${C(x)}) uit`);
     return mc("pointOnGraph",
       B(`P(${C(x)} ; k) lies on f. Which move gives you k?`,
         `P(${C(x)} ; k) lê op f. Watter stap gee vir jou k?`),
       correct,
-      [B(`Substitute y = ${C(x)} and solve for x`, `Vervang y = ${C(x)} en los op vir x`),
-       B("Let f(x) = 0 and solve for x", "Stel f(x) = 0 en los op vir x"),
+      [{ label: B(`Substitute y = ${C(x)} and solve for x`, `Vervang y = ${C(x)} en los op vir x`),
+         misc: B(`${C(x)} is in the FIRST position, so it is the x — not the y.`,
+                 `${C(x)} staan in die EERSTE plek, so dit is die x — nie die y nie.`) },
+       { label: B("Let f(x) = 0 and solve for x", "Stel f(x) = 0 en los op vir x"),
+         misc: B("That finds the x-intercept, not a point sitting up on the curve.",
+                 "Dit kry die x-afsnit, nie 'n punt wat bo-op die kurwe lê nie.") },
        B("Read the y-intercept off the graph", "Lees die y-afsnit van die grafiek af")],
-      { stem: `<span class="eq">${eq}</span>`, wide: true,
-        hint: B("They gave you the x. Put it in and see what comes out.",
-                "Hulle het die x gegee. Sit dit in en kyk wat uitkom."),
+      { graph: spec, stem: `<span class="eq">${eq}</span>`, wide: true,
+        hints: [B("Follow the dashed line down: which coordinate of P did they already give you?",
+                  "Volg die stippellyn af: watter koördinaat van P het hulle reeds gegee?"),
+                B("They gave you the x. Put it in and see what comes out.",
+                  "Hulle het die x gegee. Sit dit in en kyk wat uitkom.")],
         answerLabel: B(`k = f(${C(x)}) = ${C(y)}`, `k = f(${C(x)}) = ${C(y)}`) });
   },
 

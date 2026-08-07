@@ -17,7 +17,9 @@ function cutAt(cuts, x) {
   return cuts.find((c) => Math.abs(c.x - x) < 1e-6) || null;
 }
 
-/* selected sections → the answer string */
+/* selected sections → the answer string. Each interval piece is wrapped
+   in a no-break span so "−4 &lt; x &lt; 1" can never split across lines —
+   the join word ("of"/"or") is the only allowed break point. */
 export function answerString(selected, cuts, win, opts = {}) {
   const { strict = true, lang = "af" } = opts;
   if (!selected.length) return lang === "en" ? "no values of x" : "geen waardes van x nie";
@@ -26,7 +28,7 @@ export function answerString(selected, cuts, win, opts = {}) {
     const cl = cutAt(cuts, iv.x0), cr = cutAt(cuts, iv.x1);
     const openL = strict || !cl || cl.why === "asym";
     const openR = strict || !cr || cr.why === "asym";
-    return intervalStr(iv, win, openL, openR);
+    return `<span class='eq'>${intervalStr(iv, win, openL, openR)}</span>`;
   });
   return joinIntervals(parts, lang);
 }

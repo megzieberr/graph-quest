@@ -113,7 +113,9 @@ h2{font-size:20px} h3{font-size:16px}
 .qcount{font-family:var(--font-num);font-size:12px;color:var(--muted);white-space:nowrap}
 .prompt{font-size:16.5px;line-height:1.45}
 .prompt b{color:#fff}
-.prompt .eq{font-family:var(--font-num);white-space:nowrap}
+/* .eq is GLOBAL: a maths expression may never break across lines,
+   wherever it appears — prompts, captions, options, feedback */
+.eq{font-family:var(--font-num);white-space:nowrap}
 .stem{background:var(--panel);border:1px solid var(--brd);border-left:2px solid var(--accent);border-radius:var(--r-md);padding:11px 13px;font-size:14.5px;color:var(--ink)}
 
 .opts{display:grid;grid-template-columns:1fr 1fr;gap:9px}

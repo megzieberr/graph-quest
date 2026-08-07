@@ -148,8 +148,8 @@ const SKILLS = {
     return iq({
       concept: "signs", kind: "signTable", accent: ACC,
       prompt: wantPos
-        ? B("For which values of x is f(x) &gt; 0?", "Vir watter waardes van x is f(x) &gt; 0?")
-        : B("For which values of x is f(x) &lt; 0?", "Vir watter waardes van x is f(x) &lt; 0?"),
+        ? B("For which values of x is <span class='eq'>f(x) &gt; 0</span>?", "Vir watter waardes van x is <span class='eq'>f(x) &gt; 0</span>?")
+        : B("For which values of x is <span class='eq'>f(x) &lt; 0</span>?", "Vir watter waardes van x is <span class='eq'>f(x) &lt; 0</span>?"),
       stem: `<span class="eq">${eqStr(cv, "f(x)")}</span>`,
       coach: B("Step 1: tap every place that needs a vertical line.",
                "Stap 1: tik elke plek wat 'n vertikale lyn nodig het."),
@@ -214,8 +214,8 @@ const SKILLS = {
 
     return iq({
       concept: "product", kind: "signTable", accent: ACC,
-      prompt: B(`For which values of x is f(x)·g(x) ${sym}?`,
-                `Vir watter waardes van x is f(x)·g(x) ${sym}?`),
+      prompt: B(`For which values of x is <span class='eq'>f(x)·g(x) ${sym}</span>?`,
+                `Vir watter waardes van x is <span class='eq'>f(x)·g(x) ${sym}</span>?`),
       stem: B("Both graphs get a row in the table.", "Albei grafieke kry 'n ry in die tabel."),
       coach: B("Step 1: tap every place that needs a vertical line.",
                "Stap 1: tik elke plek wat 'n vertikale lyn nodig het."),
@@ -241,8 +241,13 @@ const SKILLS = {
     const cv = pick([randParabola(), randLine(), randExp()]);
     const win = windowFor([cv]);
     const f = makeFn(cv);
-    let x = pick([win.xmin + 1, win.xmin + 2, win.xmax - 2, win.xmax - 1].filter((v) => Number.isFinite(f(v))));
-    if (x == null) x = 0;
+    /* the sample x must sit CLEARLY above or below the axis — a point on
+       (or near) an x-intercept makes "positive or negative?" a lie, and
+       the app once marked f(x)=0 as "negative" because of exactly this */
+    const cands = [win.xmin + 1, win.xmin + 2, win.xmax - 2, win.xmax - 1]
+      .filter((v) => Number.isFinite(f(v)) && Math.abs(f(v)) >= 0.6 && f(v) > win.ymin && f(v) < win.ymax);
+    if (!cands.length) return SKILLS.heightIdea();
+    const x = pick(cands);
     const y = f(x);
     const spec = specFor([cv], { win, accent: ACC, ticks: "labels", labels: ["f"],
       points: [{ x, y, on: 0, dashTo: "x" }] });
@@ -289,8 +294,8 @@ function buildIntro() {
     return `<text class="iv-sign ${s === "+" ? "plus" : "minus"}" x="${g.X(m).toFixed(1)}" y="${py.toFixed(1)}" text-anchor="middle">${s}</text>`;
   }).join("");
   return { beats: [
-    { spec: base, cap: B("The question: for which values of x is f(x) &lt; 0? Remember — f(x) is just the y-value, the HEIGHT of the graph.",
-                         "Die vraag: vir watter waardes van x is f(x) &lt; 0? Onthou — f(x) is net die y-waarde, die HOOGTE van die grafiek.") },
+    { spec: base, cap: B("The question: for which values of x is <span class='eq'>f(x) &lt; 0</span>? Remember — f(x) is just the y-value, the HEIGHT of the graph.",
+                         "Die vraag: vir watter waardes van x is <span class='eq'>f(x) &lt; 0</span>? Onthou — f(x) is net die y-waarde, die HOOGTE van die grafiek.") },
     { spec: lined, cap: B("Step 1: draw a vertical line through EVERY x-intercept (and every asymptote).",
                           "Stap 1: trek 'n vertikale lyn deur ELKE x-afsnit (en elke asimptoot).") },
     { spec: lined, frag: labFrag,
@@ -299,8 +304,8 @@ function buildIntro() {
       cap: B("Step 3: mark each section — graph ABOVE the x-axis = +, BELOW = −.",
              "Stap 3: merk elke afdeling — grafiek BO die x-as = +, ONDER = −.") },
     { spec: { ...lined, shades: [{ x0: -1, x1: 3 }] }, frag: labFrag + signFrag,
-      cap: B("Step 4: read it off, left to right. f(x) &lt; 0 where the − is: <b>−1 &lt; x &lt; 3</b>.",
-             "Stap 4: lees af, links na regs. f(x) &lt; 0 waar die − is: <b>−1 &lt; x &lt; 3</b>.") },
+      cap: B("Step 4: read it off, left to right. <span class='eq'>f(x) &lt; 0</span> where the − is: <b class='eq'>−1 &lt; x &lt; 3</b>.",
+             "Stap 4: lees af, links na regs. <span class='eq'>f(x) &lt; 0</span> waar die − is: <b class='eq'>−1 &lt; x &lt; 3</b>.") },
   ] };
 }
 

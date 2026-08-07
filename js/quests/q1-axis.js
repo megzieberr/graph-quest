@@ -10,6 +10,16 @@
 import { mc, quest } from "./_shared.js";
 import { B } from "../i18n.js";
 import { pick, shuffled } from "../ui.js";
+import { specFor, randCurve } from "./_graphs.js";
+
+/* Every round shows a real graph, even this word-recognition drill.
+   The learner should never be answering ABOUT graphs while staring at a
+   wall of text — the phrase and the picture belong together. The curve
+   is generic and unlabelled, so it never leaks the answer. */
+function refGraph() {
+  const cv = randCurve(["line", "parabola", "hyperbola", "exp"]);
+  return specFor([cv], { accent: "#3aa0ff", ticks: "labels", labels: ["f"], asymLabels: true, h: 230 });
+}
 
 const X = "x", Y = "y", BOTH = "both";
 
@@ -116,7 +126,7 @@ const SKILLS = {
     return mc("whichAxis",
       B("The question asks for …", "Die vraag vra vir …"),
       correct, wrongs,
-      { stem: p.t, hint: p.why, answerLabel: correct, wide: true });
+      { stem: p.t, hint: p.why, answerLabel: correct, wide: true, graph: refGraph() });
   },
 
   /* what is your first move? */
@@ -125,7 +135,7 @@ const SKILLS = {
     return mc("firstMove",
       B("What do you do first?", "Wat doen jy eerste?"),
       m.a, shuffled(m.w),
-      { stem: m.t, wide: true,
+      { stem: m.t, wide: true, graph: refGraph(),
         hint: B("Read the sentence again: which coordinate did they GIVE you?",
                 "Lees die sin weer: watter koördinaat het hulle vir jou GEGEE?") });
   },
