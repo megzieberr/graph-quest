@@ -101,9 +101,18 @@ const SKILLS = {
 
     const correct = answerString(chosen, cuts, win, { strict: true, lang });
     const wrongs = [
-      complementString(chosen, secs, cuts, win, { strict: true, lang }),
-      flipStrictString(chosen, cuts, win, { strict: true, lang }),
-      asYString(correct),
+      { label: complementString(chosen, secs, cuts, win, { strict: true, lang }),
+        misc: wantF
+          ? B("Those are the sections where f lies BELOW g — the question asks where f is on top.",
+              "Daai is die afdelings waar f ONDER g lê — die vraag vra waar f bo lê.")
+          : B("Those are the sections where f lies ABOVE g — the question asks where f is below.",
+              "Daai is die afdelings waar f BO g lê — die vraag vra waar f onder lê.") },
+      { label: flipStrictString(chosen, cuts, win, { strict: true, lang }),
+        misc: B("A strict < or > never includes the boundaries — and an asymptote's x is NEVER included.",
+                "'n Streng < of > sluit nooit die grense in nie — en 'n asimptoot se x word NOOIT ingesluit nie.") },
+      { label: asYString(correct),
+        misc: B("The answer must be x-values — we compare heights, but WHERE it happens is an x.",
+                "Die antwoord moet x-waardes wees — ons vergelyk hoogtes, maar WAAR dit gebeur is 'n x.") },
     ];
 
     const nameTop = (fOnTop) => (fOnTop ? "f" : "g");
@@ -116,6 +125,12 @@ const SKILLS = {
       stem: `<span class="eq">f(x) = ${eqStr(f, "").replace(/^\s*=\s*/, "")}</span> &nbsp;·&nbsp; <span class="eq">g(x) = ${eqStr(g, "").replace(/^\s*=\s*/, "")}</span>`,
       coach: B("First: tap every place that needs a vertical cut line.",
                "Eerste: tik elke plek wat 'n vertikale snylyn nodig het."),
+      hints: [
+        B("Cut lines go where the graphs CROSS each other, and at every asymptote.",
+          "Snylyne gaan waar die grafieke mekaar SNY, en by elke asimptoot."),
+        B("Then sweep left to right: in each section, which graph is physically higher?",
+          "Vee dan links na regs: in elke afdeling, watter grafiek lê fisies hoër?"),
+      ],
       build: (host, done, nudge, meter, ask) => {
         /* ---- phase 1: place the cut lines ---- */
         const sockets = cutSockets(host, {
@@ -168,7 +183,15 @@ const SKILLS = {
                 "Voeg die afdelings saam wat jy gemerk het. Die asimptoot se x word nooit ingesluit nie.")
             : B("Join the sections you marked, in order from left to right.",
                 "Voeg die afdelings saam wat jy gemerk het, van links na regs."),
-          answerLabel: correct }),
+          answerLabel: correct,
+          solution: [
+            B("1. A line through every intersection AND every asymptote.",
+              "1. 'n Lyn deur elke snypunt EN elke asimptoot."),
+            B("2. Sweep left to right: per section, which graph is on top?",
+              "2. Vee links na regs: per afdeling, watter grafiek lê bo?"),
+            B("3. Write those sections as x-intervals, left to right — an asymptote's x is never included.",
+              "3. Skryf daardie afdelings as x-intervalle, links na regs — 'n asimptoot se x word nooit ingesluit nie."),
+          ] }),
     });
   },
 
@@ -228,3 +251,34 @@ export const quest6 = quest("q6",
     { id: "notation", concept: "notation", gen: SKILLS.notation },
   ],
   { rounds: 5, accent: ACC });
+
+/* ---------------- the intro lesson: her vb. 6 shape ---------------- */
+import { computeFunction } from "../engine/function-graph.js";
+import { specFor as _specFor, windowFor as _windowFor } from "./_graphs.js";
+
+function buildIntro() {
+  const f = { kind: "hyperbola", a: 8, p: 0, q: 1 };
+  const g0 = { kind: "line", a: 1, q: -1 };
+  const win = _windowFor([f, g0]);
+  const base = _specFor([f, g0], { win, accent: ACC, ticks: "labels", labels: ["f", "g"], asymLabels: true });
+  const lined = { ...base, vlines: [{ x: -2 }, { x: 0 }, { x: 4 }] };
+  const geo = computeFunction(base);
+  const mids = [(win.xmin - 2) / 2, -1, 2, (win.xmax + 4) / 2];
+  const labFrag = mids.map((m, i) =>
+    `<text class="iv-sectlab" x="${geo.X(m).toFixed(1)}" y="${(geo.Y(win.ymax) + 12).toFixed(1)}" text-anchor="middle">${"①②③④"[i]}</text>`).join("");
+  quest6.intro = { beats: [
+    { spec: base, cap: B("The question: for which values of x is f(x) &gt; g(x)? In pictures: WHERE does f lie on top of g?",
+                         "Die vraag: vir watter waardes van x is f(x) &gt; g(x)? In prente: WAAR lê f bo-op g?") },
+    { spec: lined, cap: B("Step 1: a vertical line through EVERY intersection AND every asymptote. The asymptote is the one everyone forgets.",
+                          "Stap 1: 'n vertikale lyn deur ELKE snypunt EN elke asimptoot. Die asimptoot is die een wat almal vergeet.") },
+    { spec: lined, frag: labFrag,
+      cap: B("Step 2: number the sections, left to right.", "Stap 2: nommer die afdelings, links na regs.") },
+    { spec: { ...lined, shades: [{ x0: win.xmin, x1: -2 }, { x0: 0, x1: 4 }] }, frag: labFrag,
+      cap: B("Step 3: sweep left to right, one section at a time: ① f on top ✓ · ② g on top ✗ · ③ f on top ✓ · ④ g on top ✗.",
+             "Stap 3: vee links na regs, een afdeling op 'n slag: ① f lê bo ✓ · ② g lê bo ✗ · ③ f lê bo ✓ · ④ g lê bo ✗.") },
+    { spec: { ...lined, shades: [{ x0: win.xmin, x1: -2 }, { x0: 0, x1: 4 }] }, frag: labFrag,
+      cap: B("Step 4: write the ✓ sections, left to right: <b>x &lt; −2 or 0 &lt; x &lt; 4</b>. The asymptote's x = 0 is NEVER included.",
+             "Stap 4: skryf die ✓ afdelings, links na regs: <b>x &lt; −2 of 0 &lt; x &lt; 4</b>. Die asimptoot se x = 0 word NOOIT ingesluit nie.") },
+  ] };
+}
+buildIntro();

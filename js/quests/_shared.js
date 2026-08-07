@@ -14,20 +14,31 @@ import { shuffled } from "../ui.js";
 import { L } from "../i18n.js";
 
 /* Multiple choice.
+   A wrong option may be a plain label OR `{ label, misc }`, where `misc`
+   is a targeted misconception nudge shown when THAT distractor is picked
+   (Circle Quest's pattern — even learners who never tap a hint get the
+   misconception addressed).
    Wrong options are de-duplicated by their RENDERED text in BOTH
    languages, so a collision can never show two identical buttons.
    Generators must still filter decoys by VALUE (blipwork bug #4:
-   `1/2` and `0,5` are different strings but the same number). */
+   `1/2` and `0,5` are different strings but the same number).
+
+   opts.hints    progressive hint ladder (array, one rung per tap;
+                 rung 1 names the MOVE, never the answer)
+   opts.solution worked-method lines shown in the feedback panel */
 export function mc(concept, prompt, correct, wrongs, opts = {}) {
-  const key = (v) => `${L(v)}||${typeof v === "object" ? v.en + "|" + v.af : v}`;
+  const key = (v) => `${L(v)}||${typeof v === "object" ? (v.en || "") + "|" + (v.af || "") : v}`;
   const seen = new Set([key(correct)]);
   const uniq = [];
   for (const w of wrongs) {
     if (w == null) continue;
-    const k = key(w);
+    const label = (w && typeof w === "object" && "label" in w) ? w.label : w;
+    const misc = (w && typeof w === "object" && "label" in w) ? w.misc : null;
+    if (label == null) continue;
+    const k = key(label);
     if (seen.has(k)) continue;
     seen.add(k);
-    uniq.push({ label: w, correct: false });
+    uniq.push({ label, misc, correct: false });
     if (uniq.length >= 3) break;              // 4 buttons max — a phone screen
   }
   return {
@@ -36,6 +47,8 @@ export function mc(concept, prompt, correct, wrongs, opts = {}) {
     options: shuffled([{ label: correct, correct: true }, ...uniq]),
     answerLabel: opts.answerLabel || correct,
     hint: opts.hint,
+    hints: opts.hints,
+    solution: opts.solution,
     graph: opts.graph,
     graphCap: opts.graphCap,
     wide: opts.wide,

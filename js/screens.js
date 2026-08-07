@@ -65,13 +65,15 @@ const B_INTRO = {
 };
 
 /* ---------------- results ---------------- */
-export function resultScreen(res, questTitle, onAgain, onMap) {
+export function resultScreen(res, questTitle, onAgain, onMap, onLesson) {
   const view = el("div", "view");
   const pct = Math.round((res.score / res.total) * 100);
+  const scoreStr = String(res.score).replace(".", ",");
   const card = el("div", "card res");
   card.innerHTML = `<div class="eyebrow">${L(questTitle)}</div>
-    <div class="big">${res.score}/${res.total}</div>
-    <div class="sub">${pct}% · +${res.xp} ${L(UI.xp)}</div>`;
+    <div class="big">${scoreStr}/${res.total}</div>
+    <div class="sub">${pct}% · +${res.xp} ${L(UI.xp)}</div>
+    ${res.comeback ? `<div class="comeback-pill">🏅 ${L(UI.comeback)} · +40 XP</div>` : ""}`;
   view.appendChild(card);
   const again = el("button", "btn primary big", L(UI.again));
   const back = el("button", "btn big ghost", L(UI.backToMap));
@@ -80,7 +82,14 @@ export function resultScreen(res, questTitle, onAgain, onMap) {
   back.addEventListener("click", onMap);
   const stack = el("div", "stack");
   stack.style.marginTop = "16px";
-  stack.append(again, back);
+  stack.appendChild(again);
+  if (onLesson) {
+    const lesson = el("button", "btn big ghost", "🔭 " + L(UI.lessonAgain));
+    lesson.type = "button";
+    lesson.addEventListener("click", onLesson);
+    stack.appendChild(lesson);
+  }
+  stack.appendChild(back);
   view.appendChild(stack);
   return view;
 }

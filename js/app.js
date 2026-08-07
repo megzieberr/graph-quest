@@ -28,9 +28,14 @@ function paint() {
   paintChrome(profile, () => { if (isPlaying()) rerender(); else paint(); });
   if (screen.name === "map") show(mapScreen(profile, play, resetAll));
   else if (screen.name === "result") {
-    show(resultScreen(screen.res, getQuest(screen.res.questId).title,
+    const q = getQuest(screen.res.questId);
+    const onLesson = q.intro && !screen.res.passed
+      ? () => play(screen.res.questId, { forceIntro: true })
+      : null;
+    show(resultScreen(screen.res, q.title,
       () => play(screen.res.questId),
-      () => { screen = { name: "map" }; paint(); }));
+      () => { screen = { name: "map" }; paint(); },
+      onLesson));
   }
 }
 
@@ -41,9 +46,12 @@ function show(view) {
   window.scrollTo(0, 0);
 }
 
-function play(questId) {
+function play(questId, opts = {}) {
+  const p = (profile.quests || {})[questId];
+  const fails = p && !p.done ? (p.plays || 0) : 0;   // failed attempts → Boost mode after 2
   screen = { name: "play", questId };
-  startQuest(questId, finished, () => { screen = { name: "map" }; paint(); });
+  startQuest(questId, finished, () => { screen = { name: "map" }; paint(); },
+    { fails, forceIntro: opts.forceIntro });
 }
 
 async function finished(res) {

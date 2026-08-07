@@ -1,32 +1,135 @@
 /* ============================================================
-   THE PLAY LOOP
+   THE PLAY LOOP  (rebuilt on Circle Quest's scaffolding toolkit)
    ------------------------------------------------------------
-   Two kinds of round:
+   Three kinds of screen:
 
+     intro         "Kyk eers een saam" — a click-paced worked example
+                   that plays the first time a quest opens
      mc            picture (maybe) + prompt + tap an option
      interactive   DO the thing first — the options stay hidden
                    until the mechanic reports it is done
 
-   Nothing is typed. Marking is always about the maths, never
-   about spelling or a keyboard (blipwork's locked decision).
+   The teach-layer (all from Circle Quest):
+     · hint LADDER — one rung per tap; rung 1 names the move,
+       never the answer
+     · misconception nudges — a wrong pick leads with WHY that
+       specific wrong answer is tempting
+     · solution steps — feedback shows the method, not just the
+       answer
+     · Boost mode — after 2 failed tries: hints open by themselves
+       and every question gives a second chance for half marks;
+       finally passing then earns a comeback bonus
+
+   Nothing is typed. Marking is always about the maths.
    ============================================================ */
 import { el, $, toast } from "./ui.js";
 import { L, UI, getLang } from "./i18n.js";
 import { staticGraph } from "./engine/interactive.js";
+import { renderFunction } from "./engine/function-graph.js";
 import { buildRound, getQuest } from "./quests/index.js";
+
+const XP_FULL = 10, XP_HINTED = 5, XP_HALF = 5, COMEBACK = 40, PASS = 0.7, BOOST_AFTER = 2;
 
 let S = null;   // the running session
 
-export function startQuest(questId, onFinish, onQuit) {
+const introKey = (id) => "gq.intro." + id;
+const introSeen = (id) => { try { return localStorage.getItem(introKey(id)) === "1"; } catch { return true; } };
+const markIntroSeen = (id) => { try { localStorage.setItem(introKey(id), "1"); } catch { /* ignore */ } };
+
+export function startQuest(questId, onFinish, onQuit, opts = {}) {
   const q = getQuest(questId);
   const items = buildRound(questId);
-  S = { q, items, i: 0, score: 0, xp: 0, onFinish, onQuit, answered: false, usedHint: false, ctl: null };
-  render();
+  const forceBoost = (() => { try { return new URL(location.href).searchParams.get("boost") === "1"; } catch { return false; } })();
+  const boost = forceBoost || (opts.fails || 0) >= BOOST_AFTER;
+  S = {
+    q, items, i: 0, score: 0, xp: 0, onFinish, onQuit,
+    answered: false, usedHint: false, ctl: null,
+    boost, fails: opts.fails || 0,
+  };
+  if (q.intro && (opts.forceIntro || !introSeen(q.id))) renderIntro(q);
+  else render();
 }
 
 export function rerender() { if (S) render(); }
 export const isPlaying = () => !!S;
 export function quitQuest() { S = null; }
+
+/* ---------------- the intro player (cutscene) ----------------
+   quest.intro = { beats: [ { cap:{en,af}, spec, frag? } ] }
+   Each beat re-renders the graph spec (so lines/shades/points can
+   appear step by step) and may add an SVG frag (sign marks, ①②③). */
+function renderIntro(q) {
+  const app = $("#app");
+  const beats = q.intro.beats;
+  let i = 0;
+
+  const view = el("div", "view");
+  view.style.setProperty("--accent", q.accent || "#3aa0ff");
+  const head = el("div", "qbar");
+  head.innerHTML = `<div class="eyebrow">🔭 ${L(UI.watchFirst)}</div><div class="qcount"></div>`;
+  const gbox = el("div", "graphbox");
+  const cap = el("div", "intro-cap");
+  const next = el("button", "btn primary big", L(UI.next));
+  next.type = "button";
+  const skip = el("button", "link-btn", L(UI.skip));
+  skip.type = "button";
+  const foot = el("div", "stack");
+  const skipRow = el("div", "center");
+  skipRow.appendChild(skip);
+  foot.append(next, skipRow);
+  view.append(head, el("h2", null, L(q.title)), gbox, cap, foot);
+
+  function paint() {
+    head.querySelector(".qcount").textContent = `${i + 1} / ${beats.length}`;
+    const b = beats[i];
+    gbox.innerHTML = renderFunction(b.spec);
+    if (b.frag) {
+      const svg = gbox.querySelector("svg");
+      const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      g.innerHTML = b.frag;
+      svg.appendChild(g);
+    }
+    cap.innerHTML = L(b.cap);
+    next.textContent = i + 1 < beats.length ? L(UI.next) : L(UI.start);
+  }
+  const done = () => { markIntroSeen(q.id); render(); };
+  next.addEventListener("click", () => { i++; if (i < beats.length) paint(); else done(); });
+  skip.addEventListener("click", done);
+  gbox.addEventListener("pointerdown", () => { if (i + 1 < beats.length) { i++; paint(); } });
+
+  app.textContent = "";
+  app.appendChild(view);
+  paint();
+  window.scrollTo(0, 0);
+}
+
+/* ---------------- the hint ladder ---------------- */
+function hintSteps(item) {
+  const src = item.type === "interactive" ? (item.hints || (item.then && (item.then.hints || (item.then.hint ? [item.then.hint] : []))) || []) : (item.hints || (item.hint ? [item.hint] : []));
+  return src;
+}
+function buildHintLadder(item, host) {
+  const steps = hintSteps(item);
+  if (!steps.length) return null;
+  const wrap = el("div", "stack");
+  const panel = el("div", "stack");
+  const btn = el("button", "link-btn hint-btn", "💡 " + L(UI.hint));
+  btn.type = "button";
+  let shown = 0;
+  const open = () => {
+    if (shown >= steps.length) return;
+    S.usedHint = true;
+    const step = el("div", "hintbox qh-step", `<span class="qh-n">${shown + 1}</span> ${L(steps[shown])}`);
+    panel.appendChild(step);
+    shown++;
+    if (shown >= steps.length) { btn.textContent = "✓ " + L(UI.noMoreHints); btn.disabled = true; }
+    else btn.textContent = "💡 " + L(UI.anotherHint);
+  };
+  btn.addEventListener("click", open);
+  wrap.append(panel, btn);
+  host.appendChild(wrap);
+  return { wrap, btn, open, hide: () => { btn.hidden = true; } };
+}
 
 /* ---------------- rendering ---------------- */
 function render() {
@@ -52,6 +155,11 @@ function render() {
   bar.prepend(backBtn);
   view.appendChild(bar);
 
+  if (S.boost && S.i === 0) {
+    view.appendChild(el("div", "boost-banner",
+      `<span class="boost-icon">🛟</span><div><b>${L(UI.boostTitle)}</b><div class="small muted">${L(UI.boostBlurb)}</div></div>`));
+  }
+
   const wrap = el("div", "qwrap");
   view.appendChild(wrap);
 
@@ -66,42 +174,38 @@ function render() {
   const optbox = el("div", "opts" + (item.wide || (item.then && item.then.wide) ? " one" : ""));
   const fbslot = el("div", "stack");
 
-  const hintBtn = el("button", "link-btn", L(UI.hint));
-  hintBtn.type = "button";
+  let ladder = null;
 
   if (item.type === "interactive") {
-    const helpRow = el("div", "row");
-    helpRow.style.justifyContent = "center";
+    wrap.append(gbox, meter, coach, askslot, optbox, fbslot);
+    meter.style.display = item.meter ? "" : "none";
+    coach.textContent = L(item.coach || "");
+    optbox.style.display = "none";
+    ladder = buildHintLadder(item, wrap);
     const skipBtn = el("button", "link-btn", L(UI.skip));
     skipBtn.type = "button";
     skipBtn.addEventListener("click", () => {
       if (S.answered) return;
       S.answered = true;
       skipBtn.disabled = true;
-      showFeedback(item.then || item, false, fbslot, hintBtn);
+      showFeedback(item.then || item, "wrong", fbslot, ladder, null);
     });
-    helpRow.append(hintBtn, skipBtn);
-    wrap.append(gbox, meter, coach, askslot, optbox, fbslot, helpRow);
-    meter.style.display = item.meter ? "" : "none";
-    coach.textContent = L(item.coach || "");
-    optbox.style.display = "none";
-    mountInteractive(item, gbox, coach, meter, askslot, optbox, fbslot, hintBtn);
+    const skipRow = el("div", "center");
+    skipRow.appendChild(skipBtn);
+    wrap.appendChild(skipRow);
+    mountInteractive(item, gbox, coach, meter, askslot, optbox, fbslot, ladder);
   } else {
     if (item.graph) wrap.appendChild(gbox); else gbox.remove();
-    wrap.append(optbox, fbslot, hintBtn);
+    wrap.append(optbox, fbslot);
     meter.remove(); coach.remove(); askslot.remove();
     if (item.graph) staticGraph(gbox, item.graph);
-    paintOptions(item, optbox, fbslot, hintBtn);
+    ladder = buildHintLadder(item, wrap);
+    paintOptions(item, optbox, fbslot, ladder);
   }
 
-  hintBtn.addEventListener("click", () => {
-    const src = item.type === "interactive" ? item.then : item;
-    if (!src || !src.hint) { toast(L(UI.hint)); return; }
-    if ($(".hintbox")) return;
-    S.usedHint = true;
-    fbslot.prepend(el("div", "hintbox", L(src.hint)));
-    hintBtn.disabled = true;
-  });
+  /* Boost: the first hint rung opens by itself, so the scaffold is in front
+     of the learner without them having to admit they need it */
+  if (S.boost && ladder) ladder.open();
 
   app.textContent = "";
   app.appendChild(view);
@@ -109,23 +213,23 @@ function render() {
 }
 
 /* ---------------- interactive gate ---------------- */
-function mountInteractive(item, gbox, coach, meter, askslot, optbox, fbslot, hintBtn) {
+function mountInteractive(item, gbox, coach, meter, askslot, optbox, fbslot, ladder) {
   let unlocked = false;
 
   const done = () => {
-    if (unlocked) return;
+    if (unlocked || S.answered) return;
     unlocked = true;
     askslot.textContent = "";
     coach.textContent = L(item.unlockMsg || UI.unlocked);
     coach.style.color = "var(--good)";
-    if (!item.then) { S.score++; showFeedback(item, true, fbslot, hintBtn); return; }
+    if (!item.then) { S.score++; S.xp += XP_FULL; showFeedback(item, "full", fbslot, ladder, null); return; }
     optbox.style.display = "";
     const q = item.then;
     if (q.prompt) {
       const p = el("div", "prompt", L(q.prompt));
       optbox.parentNode.insertBefore(p, optbox);
     }
-    paintOptions(q, optbox, fbslot, hintBtn);
+    paintOptions(q, optbox, fbslot, ladder);
   };
 
   const nudge = (msg) => { coach.textContent = L(msg); coach.style.color = ""; };
@@ -174,33 +278,58 @@ function mountInteractive(item, gbox, coach, meter, askslot, optbox, fbslot, hin
 }
 
 /* ---------------- options + marking ---------------- */
-function paintOptions(q, optbox, fbslot, hintBtn) {
+function paintOptions(q, optbox, fbslot, ladder) {
   optbox.textContent = "";
+  let chanceUsed = false;
+  const nudgeEl = el("div", "second-nudge");
+  nudgeEl.hidden = true;
+
   q.options.forEach((o) => {
     const b = el("button", "opt", L(o.label));
     b.type = "button";
     b.addEventListener("click", () => {
       if (S.answered) return;
-      S.answered = true;
-      [...optbox.children].forEach((c) => { c.disabled = true; });
-      b.classList.add(o.correct ? "good" : "bad");
-      if (!o.correct) {
-        [...optbox.children].forEach((c, k) => { if (q.options[k].correct) c.classList.add("good"); });
-      } else {
-        S.score++;
-        S.xp += S.usedHint ? 5 : 10;
+      /* Boost second chance: the first wrong pick greys out with its
+         misconception nudge instead of ending the question; the next
+         pick is final (correct = half marks). */
+      if (S.boost && !chanceUsed && !o.correct && q.options.length > 2) {
+        chanceUsed = true;
+        b.disabled = true;
+        b.classList.add("bad");
+        nudgeEl.hidden = false;
+        nudgeEl.innerHTML = "💡 " + L(o.misc || UI.secondChance);
+        return;
       }
-      showFeedback(q, o.correct, fbslot, hintBtn);
+      S.answered = true;
+      nudgeEl.hidden = true;
+      [...optbox.children].forEach((c, k) => {
+        c.disabled = true;
+        if (q.options[k].correct) c.classList.add("good");
+      });
+      if (!o.correct) b.classList.add("bad");
+      let outcome = "wrong";
+      if (o.correct && chanceUsed) { outcome = "half"; S.score += 0.5; S.xp += XP_HALF; }
+      else if (o.correct) { outcome = "full"; S.score += 1; S.xp += S.usedHint ? XP_HINTED : XP_FULL; }
+      showFeedback(q, outcome, fbslot, ladder, o.correct ? null : o);
     });
     optbox.appendChild(b);
   });
+  optbox.parentNode.insertBefore(nudgeEl, optbox.nextSibling);
 }
 
-function showFeedback(q, ok, fbslot, hintBtn) {
-  hintBtn.style.display = "none";
-  const fb = el("div", "fb " + (ok ? "good" : "bad"));
-  fb.innerHTML = `<h3>${ok ? L(UI.correct) : L(UI.notQuite)}</h3>
-    <div>${ok ? "" : `${L(UI.answerWas)} <b>${L(q.answerLabel || "")}</b>`}</div>`;
+/* outcome: "full" | "half" | "wrong". `chosen` = the wrong option picked. */
+function showFeedback(q, outcome, fbslot, ladder, chosen) {
+  if (ladder) ladder.hide();
+  const good = outcome !== "wrong";
+  const fb = el("div", "fb " + (good ? "good" : "bad"));
+  let html = `<h3>${outcome === "full" ? "✓ " + L(UI.correct) : outcome === "half" ? "✓ " + L(UI.almost) : "✗ " + L(UI.notQuite)}</h3>`;
+  if (outcome === "wrong" && chosen && chosen.misc) html += `<div class="fb-nudge">💡 ${L(chosen.misc)}</div>`;
+  if (outcome !== "full") html += `<div>${L(UI.answerWas)} <b>${L(q.answerLabel || "")}</b></div>`;
+  if (Array.isArray(q.solution) && q.solution.length) {
+    html += `<div class="fb-steps"><div class="fb-steps-head">${L(UI.theMethod)}:</div>`
+      + q.solution.map((s) => `<div class="fb-step">${L(s)}</div>`).join("") + `</div>`;
+  }
+  fb.innerHTML = html;
   const next = el("button", "btn primary big", S.i === S.items.length - 1 ? L(UI.finish) : L(UI.next));
   next.type = "button";
   next.addEventListener("click", () => {
@@ -212,7 +341,13 @@ function showFeedback(q, ok, fbslot, hintBtn) {
 }
 
 function finish() {
-  const { q, score, items, xp, onFinish } = S;
+  const { q, score, items, fails, onFinish } = S;
+  let { xp } = S;
+  const frac = items.length ? score / items.length : 0;
+  /* Comeback: finally passing on the 3rd+ attempt earns a bonus — persistence
+     is the exact behaviour worth celebrating (Circle Quest's rule). */
+  const comeback = fails >= BOOST_AFTER && frac >= PASS;
+  if (comeback) xp += COMEBACK;
   S = null;
-  onFinish({ questId: q.id, score, total: items.length, xp });
+  onFinish({ questId: q.id, score, total: items.length, xp, comeback, passed: frac >= PASS });
 }

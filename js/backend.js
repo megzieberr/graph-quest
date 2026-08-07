@@ -38,7 +38,7 @@ const LocalBackend = {
       best: Math.max(prev.best, score),
       total,
       plays: prev.plays + 1,
-      done: prev.done || score >= Math.ceil(total * 0.7),
+      done: prev.done || (total > 0 && score / total >= 0.7),   // matches play.js PASS
     };
     p.xp += xp;
     write(p);

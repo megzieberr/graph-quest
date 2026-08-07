@@ -200,3 +200,26 @@ export const quest4 = quest("q4",
     { id: "semiClimb", concept: "increasing", gen: SKILLS.semiClimb, techOnly: true },
   ],
   { rounds: 6, accent: ACC });
+
+/* ---------------- the intro lesson ---------------- */
+import { parabolaFromRoots } from "../funclib.js";
+import { specFor as _specFor, windowFor as _windowFor } from "./_graphs.js";
+
+{
+  const cv = parabolaFromRoots(1, -1, 3);           // turning point at x = 1
+  const win = _windowFor([cv]);
+  const base = _specFor([cv], { win, accent: ACC, ticks: "labels", labels: ["f"] });
+  quest4.intro = { beats: [
+    { spec: base, cap: B("We read a graph like a sentence: from LEFT to RIGHT. Always.",
+                         "Ons lees 'n grafiek soos 'n sin: van LINKS na REGS. Altyd.") },
+    { spec: { ...base, shades: [{ x0: win.xmin, x1: 1 }] },
+      cap: B("From the left up to the turning point your hand goes DOWN — f is <b>decreasing</b> here.",
+             "Van links tot by die draaipunt gaan jou hand AF — f is hier <b>dalend</b>.") },
+    { spec: { ...base, shades: [{ x0: 1, x1: win.xmax }] },
+      cap: B("After the turning point your hand climbs — f is <b>increasing</b> here.",
+             "Ná die draaipunt klim jou hand — f is hier <b>stygend</b>.") },
+    { spec: { ...base, vlines: [{ x: 1 }] },
+      cap: B("The answer is always written in x-values: decreasing for x &lt; 1, increasing for x &gt; 1. Now you walk one — the point will refuse to go backwards.",
+             "Die antwoord word altyd in x-waardes geskryf: dalend vir x &lt; 1, stygend vir x &gt; 1. Nou stap jy een — die punt gaan weier om terug te gaan.") },
+  ] };
+}

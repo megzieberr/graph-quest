@@ -59,11 +59,27 @@ unregister the SW and delete the `gq-*` cache (this cost time once during the bu
 | 2 | q2 | Op die grafiek | **point drop** — drag a locked point until it snaps onto the curve | "P(5;k) lies on f" |
 | 3 | q3 | Die skerm | **curtain** — pull a shade from a boundary; the graph inside lights up | domain & range, and the inequality SIGN |
 | 4 | q4 | Die klim | **climb** — a point that can only move LEFT → RIGHT | reading a graph right-to-left |
-| 5 | q5 | Plus en minus | **sign paint** — mark + / − on every piece | f(x) > 0, f(x)·g(x) < 0 |
+| 5 | q5 | Plus en minus | **cut lines → TEKENTABEL** — place the lines, fill the sign table, product row does "tekens verskil" | f(x) > 0, f(x)·g(x) < 0 |
 | 6 | q6 | Watter een lê bo | **cut sockets** then **sweep** | f(x) > g(x) |
 | 7 | q7 | Eksamenmodus | one sketch, all its sub-questions | transfer to exam wording |
 
 Quests unlock in order (70% of a round marks it done).
+
+## The teach-layer (mined from Circle Quest, 2026-08-07 — her request)
+
+- **Hint LADDER** per question: one rung per tap, rung 1 names the move, never the answer.
+- **Misconception nudges**: wrong options can carry `misc` — picking that distractor leads
+  the feedback with WHY it was tempting.
+- **Method cards**: `solution` lines in feedback show the steps, not just the answer.
+- **Intro lessons** ("Kyk eers een saam"): q4/q5/q6 play a click-paced worked example the
+  first time they open (localStorage `gq.intro.<qid>`); a failed round offers
+  "Kyk weer die les".
+- **Boost mode** after 2 failed attempts (`?boost=1` to preview): banner + hints auto-open
+  + second chance on every MC for half marks; finally passing earns +40 comeback XP.
+- q5 is now HER board order end to end: tap the cut-line sockets (decoys: turning point,
+  y-axis) → numbered sections → fill the TEKENTABEL (rows per curve) → product row
+  ("tekens verskil") → read the answer off the bottom row. Wrong cells go genuinely red
+  (HTML, immune to the SVG-attribute CSS trap).
 
 ---
 

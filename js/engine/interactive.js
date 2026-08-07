@@ -19,7 +19,7 @@
    phone anyway.)
    ============================================================ */
 import { computeFunction, renderFunction, curvePaths } from "./function-graph.js";
-import { makeFn, curveDomain } from "../funclib.js";
+import { makeFn, curveDomain, signAt } from "../funclib.js";
 import { fmtComma } from "../check.js";
 import { buzz } from "../ui.js";
 
@@ -428,15 +428,20 @@ export function cutSockets(host, opts) {
   const { ymin, ymax } = g.win;
   const chosen = new Set();
   const marks = [];
+  let locked = false;
 
   candidates.forEach((c, i) => {
     const px = g.X(c.x);
     const line = svgEl("line", { class: "iv-socket", x1: N(px), y1: N(g.Y(ymin)), x2: N(px), y2: N(g.Y(ymax)) });
     const knob = svgEl("circle", { class: "iv-sockdot", cx: N(px), cy: N(g.Y(0)), r: 6.5 });
+    /* the knob is the most inviting tap target — let the tap fall through
+       to the hit strip underneath it, or a finger on the knob does nothing */
+    knob.style.pointerEvents = "none";
     const tap = svgEl("rect", { class: "iv-hit", x: N(px - 17), y: 0, width: 34, height: g.H });
     tap.style.cursor = "pointer";
     tap.addEventListener("pointerdown", (ev) => {
       ev.preventDefault(); ev.stopPropagation();
+      if (locked) return;
       if (chosen.has(i)) chosen.delete(i); else chosen.add(i);
       const on = chosen.has(i);
       line.setAttribute("class", "iv-socket" + (on ? " on" : ""));
@@ -450,7 +455,9 @@ export function cutSockets(host, opts) {
 
   return {
     chosen: () => new Set(chosen),
+    lock() { locked = true; },
     reveal(requiredIdx) {
+      locked = true;
       marks.forEach((m, i) => {
         const should = requiredIdx.has(i), did = chosen.has(i);
         /* inline style — the .iv-sockdot stylesheet rule beats attributes */
@@ -538,6 +545,129 @@ export function sweep(host, opts) {
     },
     isFinished: () => idx >= sections.length - 1,
   };
+}
+
+/* ============================================================
+   7. SIGN TABLE — the exam "tekentabel", in her board ORDER
+   ------------------------------------------------------------
+   Runs AFTER the learner has placed the cut lines (cutSockets):
+   the graph shows the numbered sections, and under it sits a
+   table — one row per curve, one column per section. Tap a cell
+   to cycle blank → + → −. When a stage is fully filled it marks
+   itself: wrong cells go red (real red — HTML, not SVG attrs)
+   and the learner fixes them.
+
+   For a product question a third row (f·g) appears once the
+   curve rows are right: same signs → +, different signs → −
+   ("tekens verskil"). The answer is read off that bottom row.
+
+   opts: { spec (with vlines), sections, curves:[idx], names,
+           product:bool }
+   cb:   { nudge(key), done() }   keys: "signs" | "product" | "productWrong"
+   ============================================================ */
+export function signTable(host, opts, cb) {
+  const { spec, sections, curves, names, product } = opts;
+  const { svg, g } = mount(host, spec);
+  const { ymin, ymax } = g.win;
+
+  /* number the sections along the top of the graph */
+  sections.forEach((s, i) => {
+    const t = svgEl("text", {
+      class: "iv-sectlab", x: N((g.X(s.x0) + g.X(s.x1)) / 2), y: N(g.Y(ymax) + 12),
+      "text-anchor": "middle", "dominant-baseline": "middle",
+    });
+    t.textContent = "①②③④⑤⑥⑦⑧"[i] || String(i + 1);
+    svg.appendChild(t);
+  });
+
+  /* truth per curve per section (null = curve doesn't exist there) */
+  const truth = curves.map((ci) => sections.map((s) => signAt(spec.curves[ci], s.mid)));
+  const prodTruth = product
+    ? sections.map((_, si) => {
+        const a = truth[0][si], b = truth[1][si];
+        return (a == null || b == null) ? null : (a * b > 0 ? 1 : a * b < 0 ? -1 : 0);
+      })
+    : null;
+
+  const table = document.createElement("table");
+  table.className = "sign-table";
+  const headRow = document.createElement("tr");
+  headRow.appendChild(document.createElement("th"));
+  sections.forEach((_, i) => {
+    const th = document.createElement("th");
+    th.textContent = "①②③④⑤⑥⑦⑧"[i] || String(i + 1);
+    headRow.appendChild(th);
+  });
+  table.appendChild(headRow);
+
+  const stages = [];   // [{cells:[{btn,val,want}], row}]
+  function addRow(label, tone, wants, locked) {
+    const tr = document.createElement("tr");
+    const th = document.createElement("th");
+    th.textContent = label;
+    if (tone) th.style.color = tone;
+    tr.appendChild(th);
+    const cells = [];
+    wants.forEach((want) => {
+      const td = document.createElement("td");
+      if (want == null) { td.textContent = "·"; td.className = "off"; }
+      else {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "sgn";
+        btn.disabled = !!locked;
+        btn.addEventListener("click", () => {
+          if (btn.disabled) return;
+          const cur = btn.textContent;
+          btn.textContent = cur === "" ? "+" : cur === "+" ? "−" : "";
+          btn.classList.remove("bad");
+          btn.classList.toggle("plus", btn.textContent === "+");
+          btn.classList.toggle("minus", btn.textContent === "−");
+          buzz(8);
+          checkStage();
+        });
+        td.appendChild(btn);
+        cells.push({ btn, want });
+      }
+      tr.appendChild(td);
+    });
+    table.appendChild(tr);
+    return cells;
+  }
+
+  const TONES = { a: "var(--fg-a)", b: "var(--fg-b)", c: "var(--fg-c)" };
+  curves.forEach((ci, k) => {
+    const tone = TONES[spec.curves[ci].tone] || "var(--accent)";
+    stages.push({ cells: addRow(names[k] || "f", tone, truth[k]), kind: "signs" });
+  });
+  let prodStage = null;
+
+  let active = 0;                    // curve rows validate together as stage 0
+  function stageCells() {
+    return active === 0 ? stages.flatMap((s) => s.cells) : prodStage.cells;
+  }
+  function checkStage() {
+    const cells = stageCells();
+    if (cells.some((c) => c.btn.textContent === "")) return;      // not full yet
+    const wrong = cells.filter((c) => (c.btn.textContent === "+" ? 1 : -1) !== c.want);
+    if (wrong.length) {
+      wrong.forEach((c) => c.btn.classList.add("bad"));
+      cb.nudge(active === 0 ? "signs" : "productWrong");
+      buzz(20);
+      return;
+    }
+    cells.forEach((c) => { c.btn.disabled = true; c.btn.classList.add("good"); });
+    if (active === 0 && product) {
+      active = 1;
+      prodStage = { cells: addRow(`${names[0]}·${names[1]}`, "var(--warn)", prodTruth) };
+      cb.nudge("product");
+      return;
+    }
+    cb.done();
+  }
+
+  host.appendChild(table);
+  return { table };
 }
 
 /* ============================================================
