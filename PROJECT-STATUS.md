@@ -11,7 +11,12 @@ A gamified graph-reading trainer for **functions**: seven quests that teach the 
 job each, by making the hand do it first. Standalone app for Megan's Grade 12 Technical
 Maths learner now; the same engine mounts into **blipwork** later as a section.
 
-## State: BUILT AND PLAYABLE (local mode). Not deployed. Not connected to Supabase yet.
+## LIVE: <https://megzieberr.github.io/graph-quest/>
+
+Public repo `megzieberr/graph-quest`, Pages from `main` / root.
+**Pushing to `main` IS the deploy** — no build step, no workflow, ~1 minute to go live.
+
+## State: BUILT AND PLAYABLE. Progress saves on the device only (no login yet).
 
 | Piece | State |
 |---|---|
@@ -21,9 +26,9 @@ Maths learner now; the same engine mounts into **blipwork** later as a section.
 | `verify.html` | ✅ **34/34 checks pass** |
 | PWA (manifest, icons, service worker) | ✅ built, cache `gq-v2` |
 | Progress saving | ✅ local (localStorage) |
+| GitHub repo / Pages deploy | ✅ **live**, verified 2026-08-07 |
 | `supabase/schema.sql` | ✅ written — **NOT RUN YET** |
-| Login screen | ❌ **the one missing piece** before it can go online |
-| GitHub repo / Pages deploy | ❌ not created |
+| Login screen | ❌ **the one missing piece** before progress can follow her between devices |
 | Blipwork mount | ❌ separate later job |
 
 ---
@@ -86,12 +91,25 @@ Quests unlock in order (70% of a round marks it done).
 
 ---
 
+## The deploy pipeline (how to ship a change)
+
+1. Make the change, run `verify.html` — all checks must pass.
+2. Bump `CACHE` in `sw.js` (`gq-v2` → `gq-v3`). **Skipping this is why a phone still
+   shows the old version.**
+3. `git add -A && git commit -F <message file> && git push` — that is the whole deploy.
+   (Use `-F`, not `-m`: double quotes break on her Windows PowerShell.)
+4. Wait ~1 minute, then check the live URL.
+5. On the phone: fully close and reopen the installed app, sometimes twice.
+
+The database is a **separate** pipeline: pushing code never touches Supabase. Schema
+changes are pasted into the Supabase SQL editor by hand.
+
 ## Pending on Megan
 
-1. **Play it.** Especially quest 4 (the climb) — the finger-tolerance and whether the
-   backwards-drag lock feels fair are the things worth judging on a real phone first.
+1. **Play it on the phone.** Especially quest 4 (the climb) — the finger-tolerance and
+   whether the backwards-drag lock feels fair are the things to judge on a real screen.
 2. Decide the **real app name** ("Grafiek Quest" is a placeholder).
-3. Nothing else is blocking — it works offline right now.
+3. Nothing else is blocking.
 
 ## Next build session, in order
 
