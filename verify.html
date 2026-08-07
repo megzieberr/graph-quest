@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Graph Quest — verify</title>
+<link rel="stylesheet" href="./css/styles.css">
+<style>
+  body{padding:18px}
+  .grp{border:1px solid var(--brd);border-radius:4px;padding:12px;margin-bottom:12px;background:var(--panel)}
+  .ok{color:var(--good)} .no{color:var(--bad)}
+  .line{font-family:var(--font-num);font-size:12.5px;padding:2px 0}
+  h2{margin-bottom:8px}
+  #sum{position:sticky;top:0;background:var(--bg);padding:10px 0;font-size:17px;font-family:var(--font-display);z-index:2}
+</style>
+</head>
+<body>
+<h1>Graph Quest — verify</h1>
+<div id="sum">running…</div>
+<div id="out"></div>
+
+<script type="module">
+import { QUESTS, buildRound, setSemicircles } from "./js/quests/index.js";
+import { verifyFunction, renderFunction } from "./js/engine/function-graph.js";
+import { L, setLang } from "./js/i18n.js";
+import {
+  makeFn, criticalXs, sections, signAt, intersections, paraTP, paraRoots,
+  makeFn as mf, intervalStr, mergeSections,
+} from "./js/funclib.js";
+import { specFor, randParabola, randHyperbola, randExp, randLine, randSemicircle, windowFor } from "./js/quests/_graphs.js";
+
+const out = document.getElementById("out");
+let pass = 0, fail = 0;
+const group = (title) => {
+  const g = document.createElement("div"); g.className = "grp";
+  g.innerHTML = `<h2>${title}</h2>`; out.appendChild(g); return g;
+};
+function check(g, label, ok, extra = "") {
+  if (ok) pass++; else fail++;
+  const d = document.createElement("div");
+  d.className = "line " + (ok ? "ok" : "no");
+  d.textContent = `${ok ? "PASS" : "FAIL"} — ${label}${extra ? "  ·  " + extra : ""}`;
+  g.appendChild(d);
+  return ok;
+}
+
+const BAD = /NaN|undefined|Infinity|null/;
+/* render like the app does: drop the tags, then decode the entities
+   (&lt; is a real "<" to the learner, so the tests must see one too) */
+const decoder = document.createElement("textarea");
+function strip(h) {
+  decoder.innerHTML = String(h).replace(/<[^>]*>/g, "");
+  return decoder.value;
+}
+
+/* ---------- 1. the engine's own honesty checks ---------- */
+{
+  const g = group("1. Engine — every drawn feature really lies where the maths says");
+  const builders = [
+    ["line", () => randLine()], ["parabola", () => randParabola()],
+    ["hyperbola", () => randHyperbola()], ["exp", () => randExp()],
+    ["semicircle", () => randSemicircle()],
+  ];
+  builders.forEach(([name, make]) => {
+    let bad = 0, worst = "";
+    for (let i = 0; i < 120; i++) {
+      const cv = make();
+      const spec = specFor([cv], { ticks: "labels", labels: ["f"] });
+      const res = verifyFunction(spec);
+      const f = res.filter((r) => !r.ok);
+      if (f.length) { bad++; worst = f[0].label; }
+      const svg = renderFunction(spec);
+      if (BAD.test(svg.replace(/class="[^"]*"/g, ""))) { bad++; worst = "NaN/undefined in the SVG"; }
+    }
+    check(g, `${name}: 120 random graphs are all to scale and clean`, bad === 0, bad ? `${bad} bad · ${worst}` : "");
+  });
+}
+
+/* ---------- 2. maths library sanity ---------- */
+{
+  const g = group("2. Maths library — computed answers, not typed ones");
+  let ok = true, why = "";
+  for (let i = 0; i < 300; i++) {
+    const cv = randParabola();
+    const tp = paraTP(cv), f = makeFn(cv);
+    /* the turning point is really the lowest/highest value nearby */
+    const a = f(tp.x - 0.7), b = f(tp.x + 0.7), v = f(tp.x);
+    const opens = a > v && b > v, closes = a < v && b < v;
+    if (!opens && !closes) { ok = false; why = "turning point is not a turn"; break; }
+    paraRoots(cv).forEach((r) => { if (Math.abs(f(r)) > 1e-6) { ok = false; why = "root is not a root"; } });
+  }
+  check(g, "parabola turning points and roots are genuine (300 curves)", ok, why);
+
+  ok = true; why = "";
+  for (let i = 0; i < 200; i++) {
+    const A = randParabola(), Bc = randLine();
+    const win = windowFor([A, Bc]);
+    const xs = intersections(A, Bc, win.xmin, win.xmax);
+    const fa = makeFn(A), fb = makeFn(Bc);
+    xs.forEach((x) => { if (Math.abs(fa(x) - fb(x)) > 1e-4) { ok = false; why = `f−g = ${fa(x) - fb(x)} at x=${x}`; } });
+  }
+  check(g, "every reported intersection really has f(x) = g(x) (200 pairs)", ok, why);
+
+  ok = true; why = "";
+  for (let i = 0; i < 200; i++) {
+    const cv = randHyperbola();
+    const win = windowFor([cv]);
+    const cuts = criticalXs([cv], win.xmin, win.xmax);
+    const secs = sections(cuts, win.xmin, win.xmax);
+    /* the sign must be constant across a whole section */
+    secs.forEach((s) => {
+      const probes = [0.15, 0.5, 0.85].map((t) => s.x0 + t * (s.x1 - s.x0));
+      const sgns = probes.map((x) => signAt(cv, x)).filter((v) => v !== null && v !== 0);
+      if (new Set(sgns).size > 1) { ok = false; why = `sign flips inside a section (${s.x0}…${s.x1})`; }
+    });
+  }
+  check(g, "the sign never changes inside a section — so the cut lines are complete", ok, why);
+}
+
+/* ---------- 3. every quest generator, in both languages ---------- */
+for (const lang of ["af", "en"]) {
+  setLang(lang);
+  const g = group(`3. Quest generators — ${lang.toUpperCase()}`);
+  for (const q of QUESTS) {
+    let bad = 0, why = "";
+    for (let rep = 0; rep < 12; rep++) {
+      let items = [];
+      try { items = buildRound(q.id); } catch (e) { bad++; why = "threw: " + e.message; break; }
+      /* a buildAll quest (exam mode) hands back one whole sketch, so its
+         length is however many sub-questions that sketch has */
+      const wantLen = q.buildAll ? items.length >= 4 : items.length === q.rounds;
+      if (!wantLen) { bad++; why = `built ${items.length} (rounds=${q.rounds})`; break; }
+      if (q.buildAll && !items.every((it) => it.graph === items[0].graph)) {
+        bad++; why = "exam round mixes more than one sketch"; break;
+      }
+      for (const it of items) {
+        const mcq = it.type === "interactive" ? it.then : it;
+        if (it.type === "interactive" && !it.build) { bad++; why = "interactive without build()"; break; }
+        if (!mcq) continue;
+        const labels = mcq.options.map((o) => strip(L(o.label)));
+        if (mcq.options.filter((o) => o.correct).length !== 1) { bad++; why = "not exactly one correct option"; break; }
+        if (new Set(labels).size !== labels.length) { bad++; why = "duplicate options: " + labels.join(" | "); break; }
+        if (labels.some((s) => BAD.test(s) || !s.trim())) { bad++; why = "bad option text: " + labels.join(" | "); break; }
+        const ptext = strip(L(mcq.prompt || it.prompt || ""));
+        if (BAD.test(ptext) || !ptext.trim()) { bad++; why = "bad prompt: " + ptext; break; }
+        if (!strip(L(mcq.answerLabel || "")).trim()) { bad++; why = "empty answerLabel"; break; }
+        if (mcq.graph) {
+          const f = verifyFunction(mcq.graph).filter((r) => !r.ok);
+          if (f.length) { bad++; why = "graph not honest: " + f[0].label; break; }
+        }
+      }
+      if (bad) break;
+    }
+    check(g, `${q.id} — ${strip(L(q.title))}: 12 full rounds are well formed`, bad === 0, why);
+  }
+}
+
+/* ---------- 4. the interactive mechanics really mount ---------- */
+{
+  setLang("af");
+  const g = group("4. Interactive mechanics — they mount, draw, and gate the question");
+  const host = document.createElement("div");
+  host.style.width = "360px";
+  document.body.appendChild(host);
+  host.style.position = "absolute"; host.style.left = "-9999px";
+
+  for (const q of QUESTS) {
+    const items = buildRound(q.id).filter((it) => it.type === "interactive");
+    if (!items.length) continue;
+    let bad = 0, why = "";
+    for (const it of items) {
+      const box = document.createElement("div");
+      host.appendChild(box);
+      let unlocked = false;
+      try {
+        it.build(box, () => { unlocked = true; }, () => {}, () => {}, () => {});
+      } catch (e) { bad++; why = `${it.skillId} threw: ${e.message}`; continue; }
+      const svg = box.querySelector("svg");
+      if (!svg) { bad++; why = `${it.skillId} drew no svg`; continue; }
+      if (!svg.querySelector("path.fg-curve")) { bad++; why = `${it.skillId} drew no curve`; continue; }
+      if (unlocked) { bad++; why = `${it.skillId} unlocked before the learner did anything`; continue; }
+      if (!it.then) { bad++; why = `${it.skillId} has no follow-up question`; continue; }
+    }
+    check(g, `${q.id}: every interactive round mounts and stays locked`, bad === 0, why);
+  }
+  host.remove();
+}
+
+/* ---------- 5. interval notation ---------- */
+{
+  const g = group("5. Interval notation — left to right, asymptotes never included");
+  const win = { xmin: -6, xmax: 6, ymin: -6, ymax: 6 };
+  check(g, "a ray to the left reads x < 2", strip(intervalStr({ x0: -6, x1: 2 }, win, true, true)) === "x < 2");
+  check(g, "a ray to the right reads x > 2", strip(intervalStr({ x0: 2, x1: 6 }, win, true, true)) === "x > 2");
+  check(g, "a band reads −1 < x < 3", strip(intervalStr({ x0: -1, x1: 3 }, win, true, true)) === "−1 < x < 3");
+  check(g, "a closed band reads −1 ≤ x ≤ 3", strip(intervalStr({ x0: -1, x1: 3 }, win, false, false)) === "−1 ≤ x ≤ 3");
+  const m = mergeSections([{ x0: -2, x1: 0 }, { x0: 0, x1: 3 }]);
+  check(g, "touching sections merge into one interval", m.length === 1 && m[0].x0 === -2 && m[0].x1 === 3);
+}
+
+/* ---------- 6. the blipwork content switch ---------- */
+{
+  const g = group("6. Content switch — blipwork build has no semicircles");
+  setSemicircles(false);
+  let found = false;
+  for (const q of QUESTS) {
+    for (let rep = 0; rep < 14; rep++) {
+      buildRound(q.id).forEach((it) => {
+        const txt = strip(L(it.stem || "")) + strip(L(it.prompt || ""));
+        if (/halfsirkel|semicircle|x² \+ y²/.test(txt)) found = true;
+      });
+    }
+  }
+  check(g, "with semicircles off, no round mentions one (98 rounds)", !found);
+  setSemicircles(true);
+  let any = false;
+  for (let rep = 0; rep < 40; rep++) {
+    buildRound("q3").forEach((it) => {
+      if (/halfsirkel|x² \+ y²/.test(strip(L(it.stem || "")))) any = true;
+    });
+  }
+  check(g, "with semicircles on, they come back", any);
+}
+
+document.getElementById("sum").innerHTML = fail === 0
+  ? `<span class="ok">ALL ${pass} CHECKS PASS</span>`
+  : `<span class="no">${fail} FAILED</span> · ${pass} passed`;
+window.__verify = { pass, fail };
+</script>
+</body>
+</html>
