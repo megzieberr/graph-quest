@@ -22,7 +22,9 @@
 <script type="module">
 import { QUESTS, buildRound, setSemicircles } from "./js/quests/index.js";
 import { verifyFunction, renderFunction, computeFunction } from "./js/engine/function-graph.js";
+import { axisGate } from "./js/engine/interactive.js";
 import { L, UI, setLang } from "./js/i18n.js";
+import { fmtComma } from "./js/check.js";
 import {
   makeFn, criticalXs, sections, signAt, intersections, paraTP, paraRoots,
   makeFn as mf, intervalStr, mergeSections,
@@ -639,7 +641,7 @@ for (const lang of ["af", "en"]) {
   /* semicircles must be drawn round, not squashed into an ellipse */
   bad = 0; why = "";
   for (let rep = 0; rep < 40; rep++) {
-    ["q2", "q3", "q4", "q5", "q7"].forEach((qid) => {
+    ["q2", "q3", "q5", "q7"].forEach((qid) => {
       buildRound(qid).forEach((it) => {
         const spec = it.graph || (it.then && it.then.graph);
         if (!spec || !spec.curves.some((c) => c.kind === "semicircle")) return;
@@ -890,6 +892,123 @@ for (const lang of ["af", "en"]) {
     if (it.options.length !== 4) { bad++; why = `a qB round has ${it.options.length} options`; }
   });
   check(g, `every qB round deals a full hand of 4 options (${rounds.length} rounds)`, bad === 0, why);
+}
+
+/* ---------- 8. Round C (q3) — basic region reading (session 4) ----------
+   Four sub-rounds replaced v1's q3-curtain.js and q4-climb.js: climb
+   (kept, x-value answers now), above/below (clean sketch, no mechanic),
+   domain/range behind a NEW axis-tap gate, and sub-in reading behind a
+   NEW tap-reveal. §3/§4/§4b already exercise q3 generically (it is just
+   another entry in QUESTS); these checks are the session-4-specific
+   promises RUN-PLAN calls out by name. */
+
+/* 8a. the axis-tap gate: refuses the wrong axis (no pass), passes the right one */
+{
+  const g = group("8a. Round C — the axis-tap gate refuses the wrong axis first");
+  const host = document.createElement("div");
+  host.style.position = "absolute"; host.style.left = "-9999px"; host.style.width = "360px";
+  document.body.appendChild(host);
+
+  let bad = 0, why = "";
+  [["x", "y"], ["y", "x"]].forEach(([want, wrongAxis]) => {
+    const box = document.createElement("div");
+    host.appendChild(box);
+    const cv = randParabola();
+    const win = windowFor([cv]);
+    const spec = specFor([cv], { win, accent: "#2dd4bf", ticks: "labels", labels: ["f"] });
+    let passed = 0, wronged = 0;
+    const ctl = axisGate(box, { spec, want, onPass: () => passed++, onWrong: () => wronged++ });
+    const hits = box.querySelectorAll("rect.iv-axishit");
+    if (hits.length !== 2) { bad++; why = `axisGate drew ${hits.length} hit zones, wanted 2`; return; }
+    const wrongEl = want === "x" ? hits[1] : hits[0];
+    const rightEl = want === "x" ? hits[0] : hits[1];
+    wrongEl.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, cancelable: true }));
+    if (ctl.passed() || passed !== 0 || wronged !== 1) {
+      bad++; why = `want=${want}: tapping the wrong axis (${wrongAxis}) passed the gate, or onWrong did not fire`; return;
+    }
+    rightEl.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, cancelable: true }));
+    if (!ctl.passed() || passed !== 1) { bad++; why = `want=${want}: tapping the right axis did not pass the gate`; }
+  });
+  check(g, "axisGate refuses the wrong axis (never passes, onWrong fires) and passes on the right one", bad === 0, why);
+  host.remove();
+}
+
+/* 8b. climb rounds never move backwards on a leftward drag */
+{
+  const g = group("8b. Round C — climb rounds never accept a backwards drag");
+  const host = document.createElement("div");
+  host.style.position = "absolute"; host.style.left = "-9999px"; host.style.width = "360px";
+  document.body.appendChild(host);
+  let bad = 0, why = "", tested = 0;
+  for (let rep = 0; rep < 15; rep++) {
+    const items = buildRound("q3").filter((it) => it.skillId && it.skillId.startsWith("climb"));
+    items.forEach((it) => {
+      const box = document.createElement("div");
+      host.appendChild(box);
+      const moves = [];
+      let ctl;
+      try { ctl = it.build(box, () => {}, () => {}, (s) => moves.push(s)); }
+      catch (e) { bad++; why = `${it.skillId} threw: ${e.message}`; return; }
+      const svg = box.querySelector("svg");
+      const r = svg.getBoundingClientRect();
+      if (!r.width || !r.height) return;      // no live layout in this environment — skip, don't fail
+      tested++;
+      const fire = (type, fracX) => svg.dispatchEvent(new PointerEvent(type, {
+        bubbles: true, cancelable: true, pointerId: 1,
+        clientX: r.left + r.width * fracX, clientY: r.top + r.height * 0.5,
+      }));
+      fire("pointerdown", 0.8);
+      const after1 = moves.length ? moves[moves.length - 1].frac : 0;
+      fire("pointermove", 0.2);              // a backwards drag — must be silently ignored
+      const after2 = moves.length ? moves[moves.length - 1].frac : 0;
+      if (after2 < after1 - 1e-9) { bad++; why = `${it.skillId}: frac went backwards (${after1.toFixed(2)} → ${after2.toFixed(2)})`; }
+    });
+  }
+  check(g, `a leftward drag never moves the climb point backwards (${tested} rounds probed)`, bad === 0, why);
+  host.remove();
+}
+
+/* 8c. sub-in reading: the tapped value always matches the mc answer */
+{
+  const g = group("8c. Round C — sub-in reading: the tapped k always matches the mc answer");
+  const host = document.createElement("div");
+  host.style.position = "absolute"; host.style.left = "-9999px"; host.style.width = "360px";
+  document.body.appendChild(host);
+  let bad = 0, why = "", tested = 0;
+  for (let rep = 0; rep < 20; rep++) {
+    const items = buildRound("q3").filter((it) => it.skillId && it.skillId.startsWith("subIn"));
+    items.forEach((it) => {
+      const box = document.createElement("div");
+      host.appendChild(box);
+      let ctl;
+      try { ctl = it.build(box, () => {}); } catch (e) { bad++; why = `${it.skillId} threw: ${e.message}`; return; }
+      const hit = box.querySelector("rect.iv-hit");
+      if (!hit) { bad++; why = `${it.skillId}: no tap target drawn`; return; }
+      hit.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, cancelable: true }));
+      if (!ctl.isTapped()) { bad++; why = `${it.skillId}: tapping the hit zone did not reveal the point`; return; }
+      const correctOpt = it.then.options.find((o) => o.correct);
+      const wantText = strip(L(correctOpt.label));
+      const gotText = strip(fmtComma(ctl.value()));
+      tested++;
+      if (wantText !== gotText) { bad++; why = `${it.skillId}: tapped k=${gotText} but the mc answer says k=${wantText}`; }
+    });
+  }
+  check(g, `the tapped value always equals the mc answer's k (${tested} probes)`, bad === 0, why);
+  host.remove();
+}
+
+/* 8d. every sub-round concept appears, and the retired quests are really gone */
+{
+  const g = group("8d. Round C — every sub-round concept appears, and q1-axis/q3-curtain/q4-climb are gone");
+  const concepts = new Set();
+  for (let rep = 0; rep < 20; rep++) buildRound("q3").forEach((it) => concepts.add(it.concept));
+  const wantConcepts = ["increasing", "sign", "range", "domain", "subIn"];
+  check(g, `all sub-round concepts appear (${wantConcepts.join(", ")}) — saw: ${[...concepts].join(", ")}`,
+    wantConcepts.every((c) => concepts.has(c)));
+
+  const ids = QUESTS.map((q) => q.id);
+  check(g, "QUESTS holds exactly 8 quests and q4 no longer exists as a separate quest",
+    ids.length === 8 && !ids.includes("q4"), `ids: ${ids.join(", ")}`);
 }
 
 document.getElementById("sum").innerHTML = fail === 0

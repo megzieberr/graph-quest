@@ -14,8 +14,8 @@ const SHELL = [
   "./js/engine/function-graph.js", "./js/engine/interactive.js",
   "./js/quests/index.js", "./js/quests/_shared.js", "./js/quests/_graphs.js",
   "./js/quests/_intervals.js",
-  "./js/quests/q1-axis.js", "./js/quests/q2-point.js", "./js/quests/q3-curtain.js",
-  "./js/quests/q4-climb.js", "./js/quests/q5-signs.js", "./js/quests/q6-sweep.js",
+  "./js/quests/q2-point.js", "./js/quests/q3-region.js",
+  "./js/quests/q5-signs.js", "./js/quests/q6-sweep.js",
   "./js/quests/q7-exam.js",
 ];
 

@@ -671,6 +671,95 @@ export function signTable(host, opts, cb) {
 }
 
 /* ============================================================
+   8. AXIS GATE — tap the axis the answer lives on   ★ session 4
+   ------------------------------------------------------------
+   Before a domain/range question opens its curtain, the learner
+   must tap the AXIS their answer will live on: domain → x-axis,
+   range → y-axis. A wrong tap gets a gentle flash and a nudge —
+   no penalty, no lock; they simply try the other line.
+
+   opts: { spec, want:"x"|"y", onPass(), onWrong(axis) }
+   ============================================================ */
+export function axisGate(host, opts) {
+  const { spec, want, onPass, onWrong } = opts;
+  const { svg, g } = mount(host, spec);
+  let passed = false;
+
+  const BAND = 28;    // px either side of the axis line — a forgiving strip
+  const xHit = svgEl("rect", { class: "iv-axishit", x: 0, y: N(g.Y(0) - BAND / 2), width: g.W, height: BAND });
+  const yHit = svgEl("rect", { class: "iv-axishit", x: N(g.X(0) - BAND / 2), y: 0, width: BAND, height: g.H });
+  xHit.style.cursor = "pointer";
+  yHit.style.cursor = "pointer";
+  svg.append(xHit, yHit);
+
+  function flash(el) {
+    el.classList.remove("iv-bounce");
+    el.getBoundingClientRect();           // force reflow — restarts the CSS animation, no rAF needed
+    el.classList.add("iv-bounce");
+  }
+  function tap(axis, el) {
+    if (passed) return;
+    if (axis === want) {
+      passed = true;
+      el.classList.add("iv-axis-ok");
+      buzz(16);
+      if (onPass) onPass();
+    } else {
+      flash(el);
+      buzz(6);
+      if (onWrong) onWrong(axis);
+    }
+  }
+  xHit.addEventListener("pointerdown", (ev) => { ev.preventDefault(); ev.stopPropagation(); tap("x", xHit); });
+  yHit.addEventListener("pointerdown", (ev) => { ev.preventDefault(); ev.stopPropagation(); tap("y", yHit); });
+
+  return { passed: () => passed };
+}
+
+/* ============================================================
+   9. TAP REVEAL — "(2 ; k) lies on f", read not computed   ★ session 4
+   ------------------------------------------------------------
+   A single tap at x = `at` on the x-axis reveals the dashed drop
+   line up to the curve and marks the point — nothing is shown
+   before the tap. Reading, not dragging: the point is marked the
+   instant it is tapped, symbol kept literal ("k") so a follow-up
+   question never leaks a rounded version of its own answer.
+
+   opts: { spec, curve, at, symbol, onTap(y) }
+   ============================================================ */
+export function tapReveal(host, opts) {
+  const { spec, curve, at, symbol, onTap } = opts;
+  const { svg, g } = mount(host, spec);
+  const cv = spec.curves[curve], f = makeFn(cv);
+  const y = f(at);
+  let tapped = false;
+
+  const px = N(g.X(at));
+  const knob = svgEl("circle", { class: "iv-taphint", cx: px, cy: N(g.Y(0)), r: 7 });
+  const hit = svgEl("rect", { class: "iv-hit", x: N(px - 18), y: 0, width: 36, height: g.H });
+  hit.style.cursor = "pointer";
+  svg.append(hit, knob);
+
+  const reveal = svgEl("g");
+  function doReveal() {
+    if (tapped || !Number.isFinite(y)) return;
+    tapped = true;
+    knob.setAttribute("class", "iv-taphint on");
+    const drop = svgEl("line", { class: "fg-drop", x1: px, y1: N(g.Y(y)), x2: px, y2: N(g.Y(0)) });
+    const dot = svgEl("circle", { class: "fg-dot", cx: px, cy: N(g.Y(y)), r: 3.6 });
+    const lab = svgEl("text", { class: "fg-plab", x: N(px + 8), y: N(g.Y(y) - 10), "text-anchor": "start" });
+    lab.textContent = `(${fmtComma(at)} ; ${symbol})`;
+    reveal.append(drop, dot, lab);
+    svg.appendChild(reveal);
+    buzz(16);
+    if (onTap) onTap(y);
+  }
+  hit.addEventListener("pointerdown", (ev) => { ev.preventDefault(); ev.stopPropagation(); doReveal(); });
+
+  return { isTapped: () => tapped, value: () => y };
+}
+
+/* ============================================================
    A plain (non-interactive) graph, for the MC rounds
    ============================================================ */
 export function staticGraph(host, spec) { return mount(host, spec); }

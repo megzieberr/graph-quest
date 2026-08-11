@@ -195,6 +195,15 @@ h2{font-size:20px} h3{font-size:16px}
 .iv-sign.plus{fill:var(--iv-plus)} .iv-sign.minus{fill:var(--iv-minus)}
 .iv-signslot{fill:rgba(255,255,255,.05);stroke:var(--brd-2);stroke-width:1;rx:3}
 .iv-bar{stroke:var(--g-read);stroke-width:3;stroke-linecap:round}
+.iv-axishit{fill:transparent;stroke:none}
+.iv-axishit.iv-axis-ok{fill:color-mix(in srgb,var(--good) 16%,transparent)}
+.iv-axishit.iv-bounce{animation:iv-bounce .38s ease-out}
+@keyframes iv-bounce{
+  0%{fill:color-mix(in srgb,var(--bad) 45%,transparent)}
+  100%{fill:transparent}
+}
+.iv-taphint{fill:var(--panel-solid);stroke:var(--iv-hand);stroke-width:1.6}
+.iv-taphint.on{fill:var(--good);stroke:var(--good)}
 
 /* the discovery slider (session 2) */
 .vs{display:flex;flex-direction:column;gap:8px}

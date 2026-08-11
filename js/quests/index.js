@@ -8,21 +8,23 @@
    one place — that is the switch the blipwork mount flips, because
    the IEB Grade 11 syllabus does not include them.
    ============================================================ */
-/* q1's slot now holds session 2's discovery sliders. The v1 file
-   (q1-axis.js) still owns the TECH content flag and is retired in
-   session 4, when its replacement round lands — until then it stays
-   on disk, imported for the flag only. */
+/* q1's slot holds session 2's discovery sliders. */
 import { questDiscover } from "./q1-discover.js";
-import { TECH } from "./q1-axis.js";
 /* session 3: the second discovery sheet (line/hyperbola/exp) and Round B
    (equation-only recognition) slot in right after the parabola discovery
-   quest — new quests, added without disturbing the v1 slots q2…q7 that
-   later sessions still replace one at a time. */
+   quest. */
 import { questDiscover2 } from "./q1b-discover2.js";
 import { questRecognize } from "./qB-recognize.js";
+/* session 4: Round C (basic region reading) replaces v1's q3-curtain.js
+   AND q4-climb.js in one slot — both retired, files deleted. The old
+   q1-axis.js is also retired this session: its TECH content flag had no
+   remaining reader once its own quest content (superseded back in
+   session 2) was the last thing to use it, so it is simply gone rather
+   than moved — CONTENT.semicircles (below) is the one remaining
+   semicircle switch, and every skill that needs it already gates on
+   `techOnly` generically in buildRound(). */
+import { quest3 } from "./q3-region.js";
 import { quest2 } from "./q2-point.js";
-import { quest3 } from "./q3-curtain.js";
-import { quest4 } from "./q4-climb.js";
 import { quest5 } from "./q5-signs.js";
 import { quest6 } from "./q6-sweep.js";
 import { quest7, TECHOK, resetExam } from "./q7-exam.js";
@@ -30,14 +32,13 @@ import { CONTENT } from "./_graphs.js";
 import { pick, shuffled } from "../ui.js";
 
 export const QUESTS = [
-  questDiscover, questDiscover2, questRecognize,
-  quest2, quest3, quest4, quest5, quest6, quest7,
+  questDiscover, questDiscover2, questRecognize, quest3,
+  quest2, quest5, quest6, quest7,
 ];
 
 /* flip semicircle content on/off everywhere */
 export function setSemicircles(on) {
   CONTENT.semicircles = on;
-  TECH.on = on;
   TECHOK.on = on;
   resetExam();
 }
