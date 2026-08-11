@@ -43,8 +43,14 @@ export function randParabola(opts = {}) {
   const cv = parabolaFromRoots(a, r1, r2);
   const tp = paraTP(cv);
   /* |yTP| ≤ 8 keeps a square-grid window's identity box inside the
-     [20,45] px/unit clamp — see windowFor()'s MARGIN comment */
-  if (Math.abs(tp.y) > 8) return randParabola(opts);
+     [20,45] px/unit clamp — see windowFor()'s MARGIN comment.
+     The second cap bans the tall-AND-narrow shape: when the feature box
+     (TP, y-intercept, x-axis together) is tall and the arms are steep,
+     the curve crosses the whole window in a few units of x and only a
+     third of it is on screen — right at verify §4b's visibility line
+     (in-frame fraction ≈ 1,4/√(|a|·spanY), so 12 keeps it ≥ 0,40) */
+  const spanY = Math.max(tp.y, paraYInt(cv), 0) - Math.min(tp.y, paraYInt(cv), 0);
+  if (Math.abs(tp.y) > 8 || Math.abs(a) * spanY > 12) return randParabola(opts);
   if (!windowFor([cv])) return randParabola(opts);
   return cv;
 }

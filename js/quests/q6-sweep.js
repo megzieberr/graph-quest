@@ -302,7 +302,11 @@ import { specFor as _specFor, windowFor as _windowFor } from "./_graphs.js";
 function buildIntro() {
   const f = { kind: "hyperbola", a: 8, p: 0, q: 1 };
   const g0 = { kind: "line", a: 1, q: -1 };
-  const win = _windowFor([f, g0]);
+  /* this fixed pair meets at (−2;−3) and (4;3). Without naming them the
+     window puts x = 4 EXACTLY on the frame edge — and the whole lesson
+     is "a cut line through every intersection", so both must sit
+     comfortably inside the picture */
+  const win = _windowFor([f, g0], { include: [{ x: -2, y: -3 }, { x: 4, y: 3 }] });
   const base = _specFor([f, g0], { win, accent: ACC, ticks: "labels", labels: ["f", "g"], asymLabels: true });
   const lined = { ...base, vlines: [{ x: -2 }, { x: 0 }, { x: 4 }] };
   const geo = computeFunction(base);

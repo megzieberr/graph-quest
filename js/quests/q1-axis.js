@@ -11,11 +11,29 @@ import { mc, quest } from "./_shared.js";
 import { B } from "../i18n.js";
 import { pick, shuffled } from "../ui.js";
 import { specFor, randCurve, windowFor } from "./_graphs.js";
+import { makeFn } from "../funclib.js";
 
 /* Every round shows a real graph, even this word-recognition drill.
    The learner should never be answering ABOUT graphs while staring at a
    wall of text — the phrase and the picture belong together. The curve
    is generic and unlabelled, so it never leaks the answer. */
+
+/* how much of the curve is actually on screen — the same measure verify
+   §4b takes (its floor is a third; we demand more, this graph is only a
+   backdrop and deserves an easy, mostly-visible curve) */
+function visibleFraction(cv, win) {
+  const f = makeFn(cv);
+  let inside = 0, total = 0;
+  for (let i = 0; i <= 60; i++) {
+    const x = win.xmin + (i / 60) * (win.xmax - win.xmin), y = f(x);
+    if (!Number.isFinite(y)) continue;
+    if (cv.kind === "hyperbola" && Math.abs(x - cv.p) < 0.4) continue;
+    total++;
+    if (y >= win.ymin && y <= win.ymax) inside++;
+  }
+  return total ? inside / total : 1;
+}
+
 function refGraph() {
   const cv = randCurve(["line", "parabola", "hyperbola", "exp"]);
   /* h:230 is shorter than the default canvas — a steep line that clears
@@ -25,6 +43,9 @@ function refGraph() {
   if (cv.kind === "line" && Math.abs(cv.a) > 1) return refGraph();
   const win = windowFor([cv], { h: 230 });
   if (!win) return refGraph();
+  /* deep parabolas do the same on this short canvas (measured 25% visible
+     — a verify §4b failure); accept only curves that stay mostly on screen */
+  if (visibleFraction(cv, win) < 0.45) return refGraph();
   return specFor([cv], { win, accent: "#3aa0ff", ticks: "labels", labels: ["f"], asymLabels: true, h: 230 });
 }
 
