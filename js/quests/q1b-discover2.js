@@ -236,7 +236,13 @@ const BEATS = {
 
   /* ---------- 4. hyperbola: sign of a ---------- */
   hypSign: () => beatOrDie("hypSign", () => {
-    const p = pick([-1, 0, 1]), q = randInt(-2, 2);
+    /* frozen asymptotes stay OFF the axes: at p = 0 or q = 0 the dashed
+       line is drawn exactly on top of the solid axis and the "cross"
+       this beat's wording leans on is half invisible (seen on the
+       foreman's contact sheet). Dragged parameters may cross 0 —
+       watching an asymptote ride through an axis is good discovery —
+       but a frozen one must be visibly its own line. */
+    const p = pick([-1, 1]), q = pick([-2, -1, 1, 2]);
     const correct = B("a positive → the branches sit top-right & bottom-left of the cross; a negative → top-left & bottom-right",
                       "a positief → die arms lê regs-bo & links-onder van die kruis; a negatief → links-bo & regs-onder");
     return beat({
@@ -280,7 +286,7 @@ const BEATS = {
 
   /* ---------- 5. hyperbola: p — vertical asymptote rides ---------- */
   hypP: () => beatOrDie("hypP", () => {
-    const a = pick([2, -2, 3, -3]), q = randInt(-2, 2);
+    const a = pick([2, -2, 3, -3]), q = pick([-2, -1, 1, 2]);   // frozen q off the axis, see hypSign
     const correct = B("p slides the vertical (dashed) asymptote sideways — it always sits at x = p",
                       "p skuif die vertikale (stippel) asimptoot sywaarts — dit sit altyd by x = p");
     return beat({
@@ -321,7 +327,7 @@ const BEATS = {
 
   /* ---------- 6. hyperbola: q — horizontal asymptote rides ---------- */
   hypQ: () => beatOrDie("hypQ", () => {
-    const a = pick([2, -2, 3, -3]), p = pick([-1, 0, 1]);
+    const a = pick([2, -2, 3, -3]), p = pick([-1, 1]);          // frozen p off the axis, see hypSign
     const correct = B("q slides the horizontal (dashed) asymptote up and down — it always sits at y = q",
                       "q skuif die horisontale (stippel) asimptoot op en af — dit sit altyd by y = q");
     return beat({
@@ -362,7 +368,7 @@ const BEATS = {
 
   /* ---------- 7. exp: a — above/below the asymptote ---------- */
   expSide: () => beatOrDie("expSide", () => {
-    const b = pick([2, 3]), q = randInt(-2, 2);
+    const b = pick([2, 3]), q = pick([-2, -1, 1, 2]);           // frozen q off the axis, see hypSign
     const correct = B("a positive → the curve sits ABOVE the asymptote; a negative → BELOW it",
                       "a positief → die kurwe lê BO die asimptoot; a negatief → ONDER dit");
     return beat({
@@ -404,7 +410,12 @@ const BEATS = {
 
   /* ---------- 8. exp: b — opstyg (taking off) / land (landing) ---------- */
   expB: () => beatOrDie("expB", () => {
-    const a = pick([1, 2, -1, -2]), q = randInt(-2, 2);
+    /* a stays POSITIVE in this beat: the correct option says the curve
+       "STYG OP weg van die asimptoot" (her opstyg/land vocabulary), and
+       with a negative a the takeoff is a downward plunge — the words
+       would fight the picture. The a-beat (expSide) owns negative a.
+       Frozen q off the axis, see hypSign. */
+    const a = pick([1, 2]), q = pick([-2, -1, 1, 2]);
     const correct = B("b between 0 and 1 → the curve LANDS on the asymptote as x grows; b bigger than 1 → it TAKES OFF away from the asymptote",
                       "b tussen 0 en 1 → die kurwe LAND op die asimptoot soos x groei; b groter as 1 → dit STYG OP weg van die asimptoot");
     return beat({

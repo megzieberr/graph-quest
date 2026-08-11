@@ -480,6 +480,31 @@ for (const lang of ["af", "en"]) {
     hyperStopsChecked > 0 && bad === 0, why);
   info(g, `worst gap between the drawn curve and funclib: ${worstOff.toExponential(1)} units`);
 
+  /* a FROZEN asymptote must never sit on an axis: at p = 0 or q = 0 the
+     dashed line is drawn exactly on top of the solid axis and disappears
+     into it, and the beat's "watch the cross" wording points at nothing
+     (foreman review fix, session 3 — seen on the contact sheet). An
+     asymptote the learner is DRAGGING may cross 0; one that is constant
+     across every stop may not BE 0. */
+  bad = 0; why = "";
+  buildRound("q1b").forEach((it) => {
+    const { ctl } = mountBeat(it);
+    ctl.sliders.forEach((s) => {
+      const perStop = s.specs().map((sp) => ({
+        xs: (sp.asymptotes || []).filter((a) => a.x !== undefined).map((a) => a.x),
+        ys: (sp.asymptotes || []).filter((a) => a.y !== undefined).map((a) => a.y),
+      }));
+      ["xs", "ys"].forEach((axis) => {
+        const first = perStop[0][axis];
+        first.forEach((v, idx) => {
+          const constant = perStop.every((st) => st[axis][idx] === v);
+          if (constant && v === 0) { bad++; why = `${it.skillId}: frozen asymptote sits on the axis (${axis === "xs" ? "x" : "y"} = 0)`; }
+        });
+      });
+    });
+  });
+  check(g, "no frozen asymptote hides on an axis (dragged ones may cross it)", bad === 0, why);
+
   bad = 0; why = "";
   for (let rep = 0; rep < 10; rep++) {
     buildRound("q1b").forEach((it) => {
@@ -855,6 +880,16 @@ for (const lang of ["af", "en"]) {
     });
   });
   check(g, "every numeric asymptote/symmetry chip is wrapped in .eq", bad === 0, why);
+
+  /* a flash round is a drill, not a coin flip: degenerate parameter draws
+     (p = 0, q = 0, p = −q …) collapse decoys into each other, mc() dedupes
+     them away, and the round could shrink to two buttons — the generator
+     must redraw instead (foreman review fix, session 3) */
+  bad = 0; why = "";
+  rounds.forEach((it) => {
+    if (it.options.length !== 4) { bad++; why = `a qB round has ${it.options.length} options`; }
+  });
+  check(g, `every qB round deals a full hand of 4 options (${rounds.length} rounds)`, bad === 0, why);
 }
 
 document.getElementById("sum").innerHTML = fail === 0

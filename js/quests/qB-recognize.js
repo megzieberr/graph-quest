@@ -37,7 +37,12 @@ const NONE = B("None", "Geen");
    need to read cleanly as whole numbers. Parabolas are always built
    in TP-form so p is a number sitting right there, never derived. */
 function randLineB() {
-  return { kind: "line", a: pick([-3, -2, -1, 0, 1, 2, 3]), q: randInt(-4, 4) };
+  const a = pick([-3, -2, -1, 0, 1, 2, 3]);
+  let q = randInt(-4, 4);
+  /* f(x) = 0 is a line lying ON the x-axis — a confusing flash for an
+     asymptote drill; give a horizontal line a real height instead */
+  if (a === 0 && q === 0) q = pick([-3, -2, -1, 1, 2, 3]);
+  return { kind: "line", a, q };
 }
 function randParabolaB() {
   return { kind: "parabola", a: pick([1, -1, 2, -2]), p: randInt(-4, 4), q: randInt(-4, 4) };
@@ -102,7 +107,10 @@ function answerFor(family, feature, cv) {
     if (feature === "vAsym") {
       const xi = cv.a === 0 ? null : -cv.q / cv.a;
       const decoys = [chipY(cv.q), chipX(-cv.q)];
-      if (Number.isFinite(xi)) decoys.push(chipX(xi));
+      /* the x-intercept posing as a vertical asymptote is the best decoy
+         of the lot — but only when it reads as a whole number; a lone
+         decimal chip in a whole-number drill points at itself */
+      if (Number.isFinite(xi) && Number.isInteger(xi)) decoys.push(chipX(xi));
       return { correct: NONE, decoys };
     }
   }
@@ -143,11 +151,17 @@ function genOne() {
   if (!ans) return null;
   const correctStr = ans.correct === NONE ? "NONE" : ans.correct;
   const decoys = ans.decoys.filter((d) => d !== correctStr);
-  return mc("recognize", PROMPTS[feature], ans.correct, decoys, {
+  const it = mc("recognize", PROMPTS[feature], ans.correct, decoys, {
     stem: eqOfFamily(family, cv),
     hints: [HINTS[feature]],
     solution: methodFor(family, feature, ans),
   });
+  /* degenerate draws (p = 0, q = 0, p = −q …) can collapse decoys into
+     each other or into the answer; mc() de-duplicates them away, which
+     is right — but a two-button flash round is a coin flip, not a
+     drill. Redraw until the round carries a full hand. */
+  if (it.options.length < 4) return null;
+  return it;
 }
 function genRound() {
   for (let k = 0; k < 20; k++) {
