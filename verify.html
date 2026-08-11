@@ -33,6 +33,7 @@ import {
   specFor, randParabola, randHyperbola, randExp, randLine, randSemicircle,
   windowFor, features,
 } from "./js/quests/_graphs.js";
+import { answerString } from "./js/quests/_intervals.js";
 
 const out = document.getElementById("out");
 let pass = 0, fail = 0;
@@ -1023,6 +1024,126 @@ for (const lang of ["af", "en"]) {
   const ids = QUESTS.map((q) => q.id);
   check(g, "QUESTS holds exactly 8 quests and q4 no longer exists as a separate quest",
     ids.length === 8 && !ids.includes("q4"), `ids: ${ids.join(", ")}`);
+}
+
+/* ---------- 9. Round D (q6) — pre-drawn cuts, stamp, sweep, scaffold-on-error (session 5) ----------
+   v1's q6-sweep.js (learner-placed cutSockets) is retired. This round
+   pre-draws the cut lines, stamps + / − between the two curves (Law 4's
+   painting move), sweeps a plain scan line to confirm by eye, then asks
+   for the answer from a short list. §3/§4/§4b already exercise q6
+   generically; these are the session-5-specific promises RUN-PLAN calls
+   out by name, checked independently of the generator's own logic
+   wherever a truly independent check is possible. */
+{
+  setLang("af");
+  const g = group("9. Round D (q6) — compare f vs g: pre-drawn cuts, stamp, scaffold-on-error");
+  const host = document.createElement("div");
+  host.style.position = "absolute"; host.style.left = "-9999px"; host.style.width = "360px";
+  document.body.appendChild(host);
+
+  const REPS = 25;
+  const items = [];
+  for (let rep = 0; rep < REPS; rep++) {
+    buildRound("q6").filter((it) => it.skillId === "compareSweep").forEach((it) => items.push(it));
+  }
+  check(g, `compareSweep builds across ${REPS} rounds`, items.length > 0, `saw ${items.length}`);
+
+  /* 9a. the pre-drawn cut lines sit EXACTLY at the computed
+     intersections and asymptote — never rounded, never approximated */
+  let bad = 0, why = "", cutsChecked = 0;
+  items.slice(0, 15).forEach((it) => {
+    const box = document.createElement("div");
+    host.appendChild(box);
+    try { it.build(box, () => {}, () => {}, () => {}, () => {}); }
+    catch (e) { bad++; why = `threw: ${e.message}`; return; }
+    const dc = it.debugCurves;
+    if (!dc || !dc.win) { bad++; why = "no debugCurves exposed for verification"; return; }
+    const gm = computeFunction({ win: dc.win, w: 360, h: 300 });
+    const lines = [...box.querySelectorAll("line.fg-vline")];
+    if (lines.length !== dc.cuts.length) { bad++; why = `drew ${lines.length} cut lines, wanted ${dc.cuts.length}`; return; }
+    const drawnXs = lines.map((l) => gm.xAt(Number(l.getAttribute("x1")))).sort((a, b) => a - b);
+    const wantXs = dc.cuts.map((c) => c.x).sort((a, b) => a - b);
+    wantXs.forEach((wx, i) => {
+      cutsChecked++;
+      if (Math.abs(drawnXs[i] - wx) > 0.02) { bad++; why = `cut ${i}: drawn x=${drawnXs[i].toFixed(3)} vs computed x=${wx.toFixed(3)}`; }
+    });
+  });
+  check(g, `pre-drawn cut lines sit exactly at computed intersections/asymptotes (${cutsChecked} cuts checked)`, bad === 0, why);
+
+  /* 9b. stamping the true sign of f − g at every section (evaluated
+     raw, independent of aboveAt()) reveals every mark as correct */
+  bad = 0; why = ""; let stampsChecked = 0;
+  items.slice(0, 15).forEach((it) => {
+    const box = document.createElement("div");
+    host.appendChild(box);
+    try { it.build(box, () => {}, () => {}, () => {}, () => {}); }
+    catch (e) { bad++; why = `threw: ${e.message}`; return; }
+    const dc = it.debugCurves;
+    if (!dc) { bad++; why = "no debugCurves exposed"; return; }
+    const hits = [...box.querySelectorAll("rect.iv-hit")];
+    if (hits.length !== dc.secs.length) { bad++; why = `${hits.length} stamp targets, wanted ${dc.secs.length} sections`; return; }
+    const ff = mf(dc.f), fg = mf(dc.g);
+    hits.forEach((hit, i) => {
+      const raw = ff(dc.secs[i].mid) - fg(dc.secs[i].mid);
+      const taps = raw > 0 ? 1 : 2;                 // blank→+ is one tap, blank→+→− is two
+      for (let t = 0; t < taps; t++) hit.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, cancelable: true }));
+    });
+    stampsChecked += hits.length;
+    const slots = [...box.querySelectorAll("rect.iv-signslot")];
+    if (slots.length !== hits.length) { bad++; why = "stamp slot count does not match hit-target count"; return; }
+    slots.forEach((s, i) => {
+      if (s.style.stroke !== "var(--good)") { bad++; why = `section ${i}: stamped the funclib-true sign but was marked wrong (stroke=${s.style.stroke})`; }
+    });
+  });
+  check(g, `stamping the true sign of f − g (raw, independent of aboveAt) reveals every mark as correct (${stampsChecked} stamps)`, bad === 0, why);
+
+  /* 9c. the scaffold is hidden by default and appears only in a
+     wrong-answer nudge — checked on the RAW (unstripped) HTML, since
+     strip() would remove the very markup being looked for */
+  bad = 0; why = "";
+  items.slice(0, 20).forEach((it) => {
+    const rawSaid = [it.prompt, it.stem, it.coach, ...(it.hints || [])].map((v) => String(L(v || ""))).join(" ");
+    if (rawSaid.includes("fg-shade")) { bad++; why = "the prompt/stem/coach/hints leak the shaded scaffold before any answer"; return; }
+    const wrongMiscs = (it.then.options || []).filter((o) => !o.correct).map((o) => String(L(o.misc || "")));
+    if (!wrongMiscs.length || !wrongMiscs.every((m) => m.includes("fg-shade"))) {
+      bad++; why = "a wrong option's nudge does not carry the shaded-region scaffold";
+    }
+  });
+  check(g, "the shaded-region scaffold is absent by default and present in every wrong-answer nudge", bad === 0, why);
+
+  /* 9d. the answer interval matches the + (f-above-g) sections — the
+     sign recomputed raw, independent of aboveAt(), the string rebuilt
+     independently through the same public answerString() used in §5 */
+  bad = 0; why = "";
+  items.slice(0, 15).forEach((it) => {
+    const dc = it.debugCurves;
+    if (!dc) return;
+    const ff = mf(dc.f), fg = mf(dc.g);
+    const rawChosen = dc.secs.filter((s) => {
+      const raw = ff(s.mid) - fg(s.mid);
+      return dc.wantF ? raw > 0 : raw < 0;
+    });
+    const expected = strip(answerString(rawChosen, dc.cuts, dc.win, { strict: true, lang: "af" }));
+    const got = strip(L(it.then.answerLabel || ""));
+    if (expected !== got) { bad++; why = `expected "${expected}" but answerLabel reads "${got}"`; }
+  });
+  check(g, "the answer interval matches the + (f-above-g) sections, recomputed independently of aboveAt()", bad === 0, why);
+
+  /* 9e. the retired v1 skills (learner-placed cutSockets) are gone;
+     the new stamp-and-sweep round is in; the quest map is unchanged */
+  bad = 0; why = "";
+  let sawOld = false, sawNew = false;
+  for (let rep = 0; rep < 10; rep++) {
+    buildRound("q6").forEach((it) => {
+      if (it.skillId === "topSweep" || it.skillId === "whichCuts") sawOld = true;
+      if (it.skillId === "compareSweep") sawNew = true;
+    });
+  }
+  const ids = QUESTS.map((q) => q.id);
+  check(g, "q6's retired v1 skills (topSweep/whichCuts) are gone and the new compareSweep round is in, QUESTS still holds 8",
+    !sawOld && sawNew && ids.length === 8 && ids.includes("q6"), `ids: ${ids.join(", ")}`);
+
+  host.remove();
 }
 
 document.getElementById("sum").innerHTML = fail === 0

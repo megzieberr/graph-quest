@@ -26,7 +26,10 @@ import { questRecognize } from "./qB-recognize.js";
 import { quest3 } from "./q3-region.js";
 import { quest2 } from "./q2-point.js";
 import { quest5 } from "./q5-signs.js";
-import { quest6 } from "./q6-sweep.js";
+/* session 5: Round D (f above/below g) replaces v1's q6-sweep.js — the
+   cut lines are now pre-drawn by the game, the learner stamps + and −
+   between the two curves, then sweeps a scan line to confirm by eye. */
+import { quest6 } from "./q6-compare.js";
 import { quest7, TECHOK, resetExam } from "./q7-exam.js";
 import { CONTENT } from "./_graphs.js";
 import { pick, shuffled } from "../ui.js";

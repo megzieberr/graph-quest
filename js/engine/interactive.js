@@ -12,6 +12,7 @@
      signPaint   mark + and − on each piece    (f(x) > 0, f·g < 0)
      cutSockets  place the vertical cut lines  (f > g, step 1)
      sweep       drag the scan line, section by section (f > g, step 2)
+     comparePaint mark + and − between TWO curves (f above/below g)   ★ session 5
 
    Deliberately no requestAnimationFrame: every update happens
    synchronously inside the pointer handler. (The browser preview
@@ -413,6 +414,69 @@ export function signPaint(host, opts) {
 }
 
 /* ============================================================
+   4.5 COMPARE PAINT — is f above or below g, per section   ★ session 5
+   ------------------------------------------------------------
+   Round D's stamp move (Law 4's +/− painting, applied to TWO curves
+   instead of one). Unlike signPaint (a curve's sign against the
+   x-axis), the mark here lands BETWEEN the two curves, at their
+   mid-height in that section — a finger genuinely points at "which
+   one is physically higher here", not at a fixed axis.
+
+   opts: { spec, curveA, curveB, sections, onChange(state, allMarked) }
+   state[sectionIndex] = +1 (A above B) | −1 (A below B) | 0 (unmarked)
+   ============================================================ */
+export function comparePaint(host, opts) {
+  const { spec, curveA = 0, curveB = 1, sections, onChange } = opts;
+  const { svg, g } = mount(host, spec);
+  const fA = makeFn(spec.curves[curveA]), fB = makeFn(spec.curves[curveB]);
+  const state = {};
+  const nodes = [];
+
+  sections.forEach((sec, si) => {
+    const ya = fA(sec.mid), yb = fB(sec.mid);
+    if (!Number.isFinite(ya) || !Number.isFinite(yb)) return;    // curve gap here — no stamp
+    state[si] = 0;
+    const px = g.X(sec.mid);
+    const midY = clamp((ya + yb) / 2, g.win.ymin + 0.3, g.win.ymax - 0.3);
+    const py = g.Y(midY);
+    const slot = svgEl("rect", { class: "iv-signslot", x: N(px - 11), y: N(py - 11), width: 22, height: 22, rx: 3 });
+    const t = svgEl("text", { class: "iv-sign", x: N(px), y: N(py), "text-anchor": "middle", "dominant-baseline": "middle" });
+    t.textContent = "";
+    const tap = svgEl("rect", { class: "iv-hit", x: N(px - 16), y: N(py - 16), width: 32, height: 32 });
+    tap.style.cursor = "pointer";
+    tap.addEventListener("pointerdown", (ev) => {
+      ev.preventDefault(); ev.stopPropagation();
+      const nv = state[si] === 0 ? 1 : state[si] === 1 ? -1 : 0;
+      state[si] = nv;
+      t.textContent = nv === 1 ? "+" : nv === -1 ? "−" : "";
+      t.setAttribute("class", "iv-sign " + (nv === 1 ? "plus" : nv === -1 ? "minus" : ""));
+      buzz(8);
+      report();
+    });
+    svg.append(slot, t, tap);
+    nodes.push({ si, t, slot });
+  });
+
+  function allMarked() { return nodes.every((n) => state[n.si] !== 0); }
+  function report() { if (onChange) onChange(state, allMarked()); }
+  report();
+
+  return {
+    state: () => state,
+    allMarked,
+    /* colour every mark right/wrong against the true sign of f − g */
+    reveal(truth) {
+      nodes.forEach(({ si, slot }) => {
+        const ok = state[si] === truth[si];
+        slot.style.stroke = ok ? "var(--good)" : "var(--bad)";
+        slot.style.fill = ok ? "rgba(52,211,153,.14)" : "rgba(251,113,133,.18)";
+        slot.style.strokeWidth = ok ? "1" : "2";
+      });
+    },
+  };
+}
+
+/* ============================================================
    5. CUT SOCKETS — where does a vertical line belong?
    ------------------------------------------------------------
    Candidates are shown as tappable sockets on the x-axis, mixing
@@ -476,16 +540,24 @@ export function cutSockets(host, opts) {
    answered, and it never goes back. Answering left to right is
    what builds the interval answer in the right order.
 
-   opts: { spec, sections, onEnter(section, index) }
-   host app calls .unlock() once the section's question is right.
+   opts: { spec, sections, onEnter(section, index),
+           plain?:bool   — no section fill as it passes (Round D:
+                           "no shading, no highlighted regions, just
+                           the line and their eyes" — only the
+                           numbers and the scan line show),
+           open?:bool    — no per-section gate: the whole width is
+                           free to drag from the start (Round D has
+                           no per-section question to answer first) }
+   host app calls .unlock() once the section's question is right
+   (skip this when opts.open is true — nothing to unlock).
    ============================================================ */
 export function sweep(host, opts) {
-  const { spec, sections, onEnter } = opts;
+  const { spec, sections, onEnter, plain, open } = opts;
   const { svg, g } = mount(host, spec);
   const { xmin, xmax, ymin, ymax } = g.win;
 
-  let idx = -1;                 // section the scan line is inside
-  let limit = sections[0].x1;   // may not pass this until unlocked
+  let idx = -1;                                    // section the scan line is inside
+  let limit = open ? xmax : sections[0].x1;         // may not pass this until unlocked
   let x = xmin;
 
   const bandG = svgEl("g");
@@ -520,8 +592,10 @@ export function sweep(host, opts) {
   function enter(i) {
     if (i === idx) return;
     idx = i;
-    sections.forEach((s, k) => s._rect.setAttribute("opacity", k === i ? 1 : k < i ? 0.55 : 0));
-    sections.forEach((s, k) => s._rect.setAttribute("class", k < i ? "iv-sect done" : "iv-sect"));
+    if (!plain) {
+      sections.forEach((s, k) => s._rect.setAttribute("opacity", k === i ? 1 : k < i ? 0.55 : 0));
+      sections.forEach((s, k) => s._rect.setAttribute("class", k < i ? "iv-sect done" : "iv-sect"));
+    }
     buzz(14);
     if (onEnter) onEnter(sections[i], i);
   }
