@@ -991,6 +991,20 @@ for (const lang of ["af", "en"]) {
       const gotText = strip(fmtComma(ctl.value()));
       tested++;
       if (wantText !== gotText) { bad++; why = `${it.skillId}: tapped k=${gotText} but the mc answer says k=${wantText}`; }
+      /* the revealed point must sit INSIDE the drawn window — k has to be
+         READABLE off the picture, not mathematically correct off-screen
+         (foreman catch: an exponential's point sat above the frame and
+         the drop-line ran off the top edge) */
+      const svgEl2 = box.querySelector("svg");
+      const dot = box.querySelector(".fg-dot");
+      if (!dot) { bad++; why = `${it.skillId}: no revealed point drawn`; }
+      else {
+        const cy = Number(dot.getAttribute("cy")), cx = Number(dot.getAttribute("cx"));
+        const H = Number(svgEl2.getAttribute("viewBox").split(" ")[3]), W = Number(svgEl2.getAttribute("viewBox").split(" ")[2]);
+        if (!(cy > 6 && cy < H - 6 && cx > 6 && cx < W - 6)) {
+          bad++; why = `${it.skillId}: revealed point at (${cx};${cy}) is outside the ${W}×${H} frame`;
+        }
+      }
     });
   }
   check(g, `the tapped value always equals the mc answer's k (${tested} probes)`, bad === 0, why);

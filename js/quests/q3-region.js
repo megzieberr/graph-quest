@@ -413,7 +413,11 @@ function niceSubPoint(kind) {
 
 function subInFor(kind) {
   const { cv, x, y } = niceSubPoint(kind);
-  const spec = specFor([cv], { accent: ACC, ticks: "labels", labels: ["f"] });
+  /* the tapped point is the whole round — the window must HOLD it, not
+     just the curve's own features (an exponential's y at the tapped x
+     can sit far above the curve-only window; the drop-line then runs
+     off the top of the frame and k is unreadable — foreman catch) */
+  const spec = specFor([cv], { accent: ACC, ticks: "labels", labels: ["f"], include: [{ x, y }] });
   if (!spec) return subInFor(kind);
   const correct = C(y);
   const wrongs = numDecoys(y, [x, -y, y + 2]).map(C);
