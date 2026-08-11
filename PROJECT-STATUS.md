@@ -1,68 +1,68 @@
-# Project status — updated 2026-08-09 (evening, Fable design day)
+# Project status — updated 2026-08-12 (overnight foreman run, batch 1 SHIPPED)
 
-**Read this first, then [RUN-PLAN.md](RUN-PLAN.md).** The full v1 spec is [BRIEF.md](BRIEF.md);
-Megan's own 59-page class notes are digested at
-[reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTIONS-NOTES-DIGEST.md) — they
-are the content canon.
+**Read this first.** The v2 spec is [RUN-PLAN.md](RUN-PLAN.md); Megan's own class notes
+are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTIONS-NOTES-DIGEST.md).
 
 ## Where we are
 
-- **v1 is condemned; a full rebuild starts 2026-08-10.** Her verdict on v1 (a one-session
-  Opus build): "no value outside the game itself." v2's goal: train SEEING and
-  interpreting graphs so the skill transfers to paper, like Circle Quest transferred.
-- 2026-08-09 was the **design day** (Fable foreman + Megan, round-by-round). Output:
-  `RUN-PLAN.md` — THE LAW (no algebra, square-grid engine, scaffold-on-error, her +/−
-  painting method, no-spoilers discovery) + 5 numbered session prompts for batch 1.
-- The graph-unreadability mystery is SOLVED and measured (probe results + 3 root causes
-  in RUN-PLAN session 1): `windowFor`'s fitY sampler is a ratchet, the aspect fix never
-  converges, and the objective (contain, not show) is wrong. Median parabola round:
-  1,5 px per y-unit. Session 1 rebuilds it on the square-grid principle.
-- v1 stays live at <https://megzieberr.github.io/graph-quest/> untouched until batch 1
-  ships (build sessions commit locally, ONLY the foreman pushes — push = deploy).
-- Target order unchanged: Gr12 Tech Maths learner plays the finished v2 first
-  (semicircles ON) → feedback → semicircles OFF → rounds into blipwork for the Gr11s.
+- **Batch 1 of the v2 rebuild is COMPLETE and DEPLOYED** (overnight 2026-08-11→12,
+  Megan's explicit authorization: sessions run one at a time, each foreman-reviewed —
+  code, fresh harness runs, AND rendered-graph inspection — before the next started).
+- The app now has **8 quests**: Ontdek (parabola discovery sliders) · Ontdek 2
+  (line/hyperbola/exp discovery) · Vinnige Oë (equation-only recognition, Round B) ·
+  Lees die gebied (Round C: climb, above/below, domain/range axis-tap, sub-in reading) ·
+  Op die grafiek (v1 q2, kept) · Plus en minus (v1 q5, kept) · Bo of onder (Round D:
+  pre-drawn cuts, +/− stamping, scan line) · Eksamenmodus (v1 q7, kept).
+- v1's q1-axis / q3-curtain / q4-climb / q6-sweep are retired and deleted.
+- **verify.html: 78 checks, ALL PASS** — grown from 40, now covering the square-grid
+  window engine, slider mechanics read back off the SVG against funclib, no-spoilers
+  wording, her "drag/sin" rulings, frozen-asymptote visibility, full-hand options,
+  sub-in point containment, Round D cut-line exactness and scaffold gating.
+- Progress saves are still on-device only (Supabase schema written, NOT run; no login
+  screen). Nobody but Megan has the app yet.
 
 ## Decisions
 
-(append-only; older v1 decisions kept for the record)
+(append-only; see git history of this file for the v1-era list)
 
-- 2026-08-07: name **Fun Functions**; blipwork theme from day one; computed answers only;
-  to-scale engine + verify; max 4 options; decimal comma + real minus; semicircles
-  flag-gated; quests 5/6 encode her board method (tekentabel).
-- 2026-08-08: presentation faults she caught became verify §4b checks — never relax them.
-- **2026-08-09: FULL REBUILD (foreman pattern).** Design day rulings:
-  - **NO ALGEBRA in the game — interpretation only.** Reading a number off the picture is
-    in; producing one by working (solve for a, −b/2a, top−bottom) is out.
-  - **TEKENTABEL retired** (supersedes the 2026-08-07 q5/q6 decision): her board method
-    is now cut lines + **+/− painted on each curve per section**. Her own Gr11 notes
-    (the 59-page PDF) show the method and are canon.
-  - **Square-grid engine rule**: sx = sy, zoom clamped, identity features centred; if
-    features don't fit, regenerate the curve — never zoom out. Semicircle handling stays.
-  - **Scaffold-on-error**: clean exam-look picture by default; highlights only after a
-    wrong answer. Boost layer stays.
-  - **Discovery rounds** (sliders per variable, q-vs-c contrast) follow Circle Quest's
-    no-spoilers rule: learner commits to the conclusion; the app never announces it first.
-  - No sentence input anywhere (chips / keypad / taps / option lists only — AI marking
-    costs money). No sketching mechanic; error-spotting rounds instead (ja/nee → why).
-  - Same repo + URL; rebuild in place. She plays the whole thing only when done.
-  - Batch 1 = engine fix → discovery sliders → equation-only recognition → basic region
-    reading → f-above/below-g scan line. Both Megan AND the foreman review every session
-    before the next dispatches.
+- 2026-08-09: FULL REBUILD, foreman pattern; THE LAW in RUN-PLAN.md (no algebra,
+  square-grid engine, her +/− painting, no-spoilers discovery, scaffold-on-error).
+- 2026-08-11 (day): session 1 (square-grid windowFor) + session 2 (discovery slider,
+  parabola beats) built and reviewed; axis-of-symmetry = TP-form only (her kickoff
+  answer); native sliders, not GeoGebra embeds.
+- 2026-08-11 (overnight, foreman under her explicit /go): sessions 3–5 built by Sonnet
+  agents, each reviewed + fixed before the next:
+  - S3 review fixes: frozen asymptote coordinates never 0 (dashed line hides on an
+    axis); exp b-beat keeps a > 0 (opstyg wording vs a downward plunge); Round B always
+    deals 4 options; x-intercept decoy only when whole-number.
+  - S4 review fix: sub-in point included in the window (an exp's point sat off-frame).
+  - S5 review fix: the learner's +/− painting survives into the sweep phase (her
+    method reads the answer OFF the painting).
+  - Round D's half-marks retry is Boost-gated (as v1's plumbing works app-wide) — the
+    scaffold shows on every wrong answer, the second chance only in Boost. Flag for
+    Megan if she wants always-retry on Round D specifically.
+  - Round B (Vinnige Oë) and the "notation" skill inside Bo of onder are additions the
+    run plan allowed but did not spell out — hers to keep or cut after playtesting.
+- Ship 2026-08-12 (foreman): sw.js SHELL list completed and corrected (it still named
+  the deleted q6-sweep.js, which would have broken the SW install), CACHE bumped gq-v5
+  → gq-v6, pushed to main (push = deploy on this repo).
 
 ## Pending on Megan
 
-1. 📱 1 min: **[blocking, tomorrow at kickoff]** answer RUN-PLAN's 3 confirm questions —
-   native sliders vs GeoGebra? · sockets return later? · axis-of-symmetry TP-form only?
-2. 💻 2 min: [whenever, before session 2 runs] share/point to the GeoGebra applets so the
-   discovery beats can copy what they show.
+1. 📱 15 min: **[blocking, morning]** play-test the new app on your phone — fully close
+   + reopen the PWA first (stale-icon/cache rule) — the whole point of the overnight run.
+2. 💻 2 min: [whenever] circle-geometry-game has 18 unpushed commits → run /ship there.
 
-## Next up (tomorrow, 2026-08-10 — build day, foreman pattern)
+## Next up
 
-1. Fable session: /catchup on fun functions → confirm the 3 kickoff questions.
-2. Dispatch **session 1 (engine, Opus)** from RUN-PLAN.md. Foreman reviews diff + plays
-   rounds; Megan eyeballs graphs. Both approve → dispatch session 2.
-3. Continue through sessions 2–5 the same way. Ship decision (push + SW cache bump)
-   happens in the foreman session only, with her explicit yes.
+- Her playtest verdict drives the next foreman day: wording tweaks, map order (Op die
+  grafiek now sits AFTER Lees die gebied — run-plan order, easily swapped), whether
+  Vinnige Oë / notation stay, Round D retry behavior.
+- Then per RUN-PLAN "parked for later batches": transformations, finding equations,
+  lengths, full inequalities batch (learner-placed cut lines return), nature of roots,
+  average gradient, error-spotting, eksamenmodus rebuild.
+- After all batches: login screen + Supabase, then the blipwork mount
+  (`setSemicircles(false)`).
 
 ## How to run it
 
@@ -70,41 +70,40 @@ are the content canon.
 python -m http.server 5207 --directory "C:\Users\megzi\Desktop\Claude Code Projects\graph-quest"
 ```
 
-Then <http://localhost:5207/>. Preview entry `graph-quest` (port 5207) in the nested
-`C:\Users\megzi\.claude\.claude\launch.json`. `?local=1` forces local save mode;
-`verify.html` is the harness — all checks must pass before any commit.
+Then <http://localhost:5207/> (`?local=1` forces local save mode). Preview entry
+`graph-quest` (port 5207) in the nested `C:\Users\megzi\.claude\.claude\launch.json`.
+verify.html is the harness — all 78 must pass before any commit.
 
-⚠ The service worker caches app code: if a change doesn't appear, unregister the SW and
-delete the `gq-*` cache. Stale modules have lied to the harness twice.
+⚠ Cache discipline (it lied to THREE reviews this build): before trusting verify.html
+in a browser, unregister the SW, delete `gq-*` caches, AND force-refetch changed modules
+with `fetch(url, {cache:"reload"})` — the plain HTTP cache serves stale modules even
+with the SW gone.
 
 ## The deploy pipeline (unchanged)
 
-1. verify.html all-pass → 2. bump `CACHE` in `sw.js` → 3. `git add -A && git commit -F
-<file> && git push` (push = deploy, ~1 min) → 4. check live → 5. phone: fully close +
-reopen the PWA. Supabase is a separate hand-run pipeline (schema written, NOT run;
-login screen still unbuilt — parked until after the rebuild).
+1. verify.html all-pass → 2. bump `CACHE` in `sw.js` → 3. commit (`git commit -F`,
+never `-m`) → 4. `git push` (= deploy, ~1 min) → 5. check live → 6. phone: fully close
++ reopen the PWA. Supabase is a separate hand-run pipeline (schema written, NOT run).
 
 ## Map of the code
 
 ```
 index.html            shell
-css/styles.css        blipwork "System Window" theme + .iv-* interactive classes
+css/styles.css        blipwork "System Window" theme + .iv-* / .vs-* classes
 js/
-  app.js · play.js · screens.js · i18n.js (B/L bilingual) · check.js (fmtComma)
-  funclib.js          ALL the maths — every answer computed here
+  app.js · play.js (Boost, XP, second-chance) · screens.js · i18n.js · check.js
+  funclib.js          ALL the maths — every answer computed here (+ eqTPStr)
   backend.js          local + cloud behind one interface (cloud unused, no login yet)
-  engine/function-graph.js   the one affine map + verify()  ← session 1 rewrites windowFor
-  engine/interactive.js      pointDrop · curtain · climb · signPaint · cutSockets · sweep
-  quests/_shared.js · _graphs.js (windowFor lives here) · _intervals.js · q1…q7 (v1,
-                      being replaced batch by batch)
+  engine/function-graph.js   the one affine map, square-grid renderer, exit arrows
+  engine/slider.js           varSlider/sliderPair — the discovery mechanic (S2)
+  engine/interactive.js      pointDrop · curtain · climb · signPaint · cutSockets ·
+                             sweep(+plain/open) · comparePaint · axisGate · tapReveal
+  quests/_shared.js (mc dedupes options) · _graphs.js (windowFor: square-grid, returns
+                    null → regenerate; generators self-constrain) · _intervals.js
+  quests/q1-discover.js · q1b-discover2.js · qB-recognize.js · q3-region.js ·
+         q2-point.js · q5-signs.js · q6-compare.js · q7-exam.js
 supabase/schema.sql   written, not run
-verify.html           the harness; §4b = her caught-fault rules — never relax
+verify.html           the harness: 78 checks — §4b + frozen-asymptote + containment
+                      + Round D exactness are never-relax rules
+sw.js                 network-first for code; SHELL precache; CACHE = gq-v6
 ```
-
-v1 quest content (the seven-quest table, teach-layer notes) is now historical — see git
-history of this file if needed. The teach-layer PATTERNS (hint ladder, misconception
-nudges, method cards, Boost) carry into v2 rounds.
-
----
-Probe artefacts from the design day (window-readability measurements):
-`scratchpad …\gq-probe\probe.mjs` — RUN-PLAN session 1 says to port this into verify.
