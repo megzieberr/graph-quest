@@ -161,9 +161,32 @@ const SKILLS = {
 
         /* ---- phase 2: sweep left to right — just the line, no shading ---- */
         function startSweep() {
+          const state = { ...stamper.state() };
           sweep(host, {
             spec: linedSpec, sections: secs, plain: true, open: true,
             onEnter: (sec, i) => { if (i >= secs.length - 1) setTimeout(done, 300); },
+          });
+          /* her board method reads the ANSWER off the PAINTING — so the
+             painting must survive into this phase (mount() replaced the
+             stamped graph; foreman catch). The stamps are re-drawn as the
+             learner left them, mistakes included: a wrong painting reads
+             into a wrong answer, and the scaffold catches it there. */
+          const svg = host.querySelector("svg");
+          const geo = computeFunction(linedSpec);
+          const fA = makeFn(f), fB = makeFn(g);
+          secs.forEach((sec, si) => {
+            if (!state[si]) return;
+            const ya = fA(sec.mid), yb = fB(sec.mid);
+            if (!Number.isFinite(ya) || !Number.isFinite(yb)) return;
+            const midY = Math.max(win.ymin + 0.3, Math.min(win.ymax - 0.3, (ya + yb) / 2));
+            const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            t.setAttribute("class", "iv-sign " + (state[si] === 1 ? "plus" : "minus"));
+            t.setAttribute("x", geo.X(sec.mid).toFixed(1));
+            t.setAttribute("y", geo.Y(midY).toFixed(1));
+            t.setAttribute("text-anchor", "middle");
+            t.setAttribute("dominant-baseline", "middle");
+            t.textContent = state[si] === 1 ? "+" : "−";
+            svg.appendChild(t);
           });
         }
         return stamper;
