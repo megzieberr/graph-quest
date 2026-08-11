@@ -14,6 +14,12 @@
    on disk, imported for the flag only. */
 import { questDiscover } from "./q1-discover.js";
 import { TECH } from "./q1-axis.js";
+/* session 3: the second discovery sheet (line/hyperbola/exp) and Round B
+   (equation-only recognition) slot in right after the parabola discovery
+   quest — new quests, added without disturbing the v1 slots q2…q7 that
+   later sessions still replace one at a time. */
+import { questDiscover2 } from "./q1b-discover2.js";
+import { questRecognize } from "./qB-recognize.js";
 import { quest2 } from "./q2-point.js";
 import { quest3 } from "./q3-curtain.js";
 import { quest4 } from "./q4-climb.js";
@@ -23,7 +29,10 @@ import { quest7, TECHOK, resetExam } from "./q7-exam.js";
 import { CONTENT } from "./_graphs.js";
 import { pick, shuffled } from "../ui.js";
 
-export const QUESTS = [questDiscover, quest2, quest3, quest4, quest5, quest6, quest7];
+export const QUESTS = [
+  questDiscover, questDiscover2, questRecognize,
+  quest2, quest3, quest4, quest5, quest6, quest7,
+];
 
 /* flip semicircle content on/off everywhere */
 export function setSemicircles(on) {

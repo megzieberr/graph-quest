@@ -351,6 +351,150 @@ for (const lang of ["af", "en"]) {
   host.remove();
 }
 
+/* ---------- 4a2. Discovery sliders — line, hyperbola, exp (session 3) ----------
+   The same three promises as 4a, walked headlessly for quest q1b: it
+   mounts, it stays locked until the WHOLE range has been dragged, and at
+   every stop the curve on screen is the curve funclib describes. Adds one
+   more promise specific to this session: a hyperbola beat's dashed
+   asymptote CROSS (both the x= and y= lines) is present at every stop —
+   never just one of the two, never neither. */
+{
+  setLang("af");
+  const g = group("4a2. Discovery sliders — line/hyperbola/exp (session 3)");
+  const host = document.createElement("div");
+  host.style.position = "absolute"; host.style.left = "-9999px"; host.style.width = "360px";
+  document.body.appendChild(host);
+
+  const mountBeat = (it) => {
+    const box = document.createElement("div");
+    host.appendChild(box);
+    const fired = { n: 0 };
+    const ctl = it.build(box, () => { fired.n++; }, () => {}, () => {}, () => {});
+    return { box, ctl, fired };
+  };
+  /* like 4a's curveOffBy, but with one extra allowance measured directly
+     (a debug walk of the hypQ beat pinned it exactly): a point that got
+     CLIPPED at the frame edge is placed by intersectY()'s precise
+     boundary crossing, then that pixel gets rounded to 2dp for the SVG
+     (N() in function-graph.js). Recovering x from the rounded pixel and
+     re-evaluating f(x) there does not reproduce ymin/ymax exactly when
+     the curve is steep right at the clip (a hyperbola's elbow bend) —
+     that is a property of clip-then-round, not a drawing error, so a
+     point sitting on the frame boundary is excluded from this check the
+     same way the engine itself treats a clip differently from a sampled
+     point. */
+  const curveOffBy = (box, spec) => {
+    const gm = computeFunction(spec), f = mf(spec.curves[0]);
+    const { ymin, ymax } = spec.win;
+    const onBoundary = (y) => Math.abs(y - ymin) < 1e-3 || Math.abs(y - ymax) < 1e-3;
+    const paths = [...box.querySelectorAll("path.fg-curve")];
+    if (!paths.length) return Infinity;
+    let worst = 0;
+    paths.forEach((p) => {
+      const nums = (p.getAttribute("d").match(/-?\d+(?:\.\d+)?/g) || []).map(Number);
+      for (let i = 0; i + 1 < nums.length; i += 2) {
+        const x = gm.xAt(nums[i]);
+        const drawnY = gm.yAt(nums[i + 1]);
+        if (onBoundary(drawnY)) continue;
+        const y = f(x);
+        if (!Number.isFinite(y)) continue;
+        worst = Math.max(worst, Math.abs(y - drawnY));
+      }
+    });
+    return worst;
+  };
+
+  const ORDER = ["lineSign", "lineSize", "lineC", "hypSign", "hypP", "hypQ", "expSide", "expB", "expQ"];
+  let bad = 0, why = "";
+  for (let rep = 0; rep < 40; rep++) {
+    let items = [];
+    try { items = buildRound("q1b"); } catch (e) { bad++; why = "threw: " + e.message; break; }
+    if (items.length !== ORDER.length) { bad++; why = `built ${items.length} beats`; break; }
+    if (!items.every((it, i) => it.skillId === ORDER[i])) { bad++; why = "beats came out of lesson order"; break; }
+    if (!items.every((it) => it.type === "interactive" && it.build && it.then)) {
+      bad++; why = "a beat is not a gated interactive round"; break;
+    }
+  }
+  check(g, "all nine beats build, in lesson order (40 rounds)", bad === 0, why);
+
+  bad = 0; why = "";
+  buildRound("q1b").forEach((it) => {
+    let m;
+    try { m = mountBeat(it); } catch (e) { bad++; why = `${it.skillId} threw: ${e.message}`; return; }
+    const { box, ctl, fired } = m;
+    if (!box.querySelector("svg path.fg-curve")) { bad++; why = `${it.skillId} drew no curve`; return; }
+    if (!ctl || !Array.isArray(ctl.sliders) || !ctl.sliders.length) { bad++; why = `${it.skillId} handed back no slider`; return; }
+    if (fired.n) { bad++; why = `${it.skillId} unlocked on mount`; return; }
+    ctl.sliders.forEach((s, si) => {
+      if (s.index() === 0 || s.index() === s.values().length - 1) {
+        bad++; why = `${it.skillId} slider ${si} opens on an end stop`;
+      }
+    });
+    const stops = [];
+    ctl.sliders.forEach((s, si) => s.values().forEach((_, k) => stops.push([si, k])));
+    stops.slice(0, -1).forEach(([si, k]) => ctl.sliders[si].setIndex(k));
+    if (fired.n) { bad++; why = `${it.skillId} unlocked before the whole range was dragged`; return; }
+    const [ls, lk] = stops[stops.length - 1];
+    ctl.sliders[ls].setIndex(lk);
+    if (fired.n !== 1) { bad++; why = `${it.skillId} fired done ${fired.n}× on completing the range`; }
+  });
+  check(g, "every beat mounts, opens mid-range, and stays locked until the last stop", bad === 0, why);
+
+  bad = 0; why = "";
+  let stopsChecked = 0, worstOff = 0, hyperStopsChecked = 0;
+  buildRound("q1b").forEach((it) => {
+    const { ctl } = mountBeat(it);
+    ctl.sliders.forEach((s) => {
+      const winKey = JSON.stringify(s.specs()[0].win);
+      if (!s.specs().every((sp) => JSON.stringify(sp.win) === winKey)) {
+        bad++; why = `${it.skillId}: the window changes mid-drag`;
+      }
+      s.values().forEach((v, k) => {
+        if (Math.abs(v * 2 - Math.round(v * 2)) > 1e-9) { bad++; why = `${it.skillId}: stop ${v} is neither a whole number nor a half`; }
+        s.setIndex(k);
+        const spec = s.spec(), gm = computeFunction(spec);
+        stopsChecked++;
+        if (Math.abs(gm.sx - gm.sy) > 1e-6) { bad++; why = `${it.skillId}: sx ${gm.sx.toFixed(2)} ≠ sy ${gm.sy.toFixed(2)}`; }
+        if (gm.sx < 18 || gm.sx > 47) { bad++; why = `${it.skillId}: ${gm.sx.toFixed(1)} px/unit`; }
+        const f = verifyFunction(spec).filter((r) => !r.ok);
+        if (f.length) { bad++; why = `${it.skillId}: ${f[0].label}`; }
+        const off = curveOffBy(s.graph(), spec);
+        worstOff = Math.max(worstOff, off);
+        if (!(off <= 0.01)) { bad++; why = `${it.skillId}: drawn curve is ${off.toFixed(3)} off funclib`; }
+        /* the hyperbola's dashed asymptote CROSS — both lines, every stop */
+        if (spec.curves[0].kind === "hyperbola") {
+          hyperStopsChecked++;
+          const xs = spec.asymptotes.filter((a) => a.of === 0 && a.x !== undefined);
+          const ys = spec.asymptotes.filter((a) => a.of === 0 && a.y !== undefined);
+          if (xs.length !== 1 || ys.length !== 1) {
+            bad++; why = `${it.skillId}: asymptote cross incomplete (x:${xs.length} y:${ys.length})`;
+          }
+          const asymLines = s.graph().querySelectorAll("svg line.fg-asym");
+          if (asymLines.length !== 2) { bad++; why = `${it.skillId}: SVG drew ${asymLines.length} dashed asymptote lines, wanted 2`; }
+        }
+      });
+    });
+  });
+  check(g, `the drawn curve matches funclib at every slider stop (${stopsChecked} stops)`, bad === 0, why);
+  check(g, `every hyperbola stop draws its dashed asymptote cross, both lines (${hyperStopsChecked} stops)`,
+    hyperStopsChecked > 0 && bad === 0, why);
+  info(g, `worst gap between the drawn curve and funclib: ${worstOff.toExponential(1)} units`);
+
+  bad = 0; why = "";
+  for (let rep = 0; rep < 10; rep++) {
+    buildRound("q1b").forEach((it) => {
+      const said = strip(L(it.prompt || "")) + " " + strip(L(it.stem || "")) + " " + strip(L(it.coach || ""));
+      const answer = strip(L(it.then.answerLabel || ""));
+      if (answer && said.includes(answer)) { bad++; why = `${it.skillId} states its own finding up front`; }
+      if (!Array.isArray(it.then.solution) || !it.then.solution.length) { bad++; why = `${it.skillId} has no method card`; }
+      if (it.then.options.length < 3 || it.then.options.length > 4) { bad++; why = `${it.skillId} offers ${it.then.options.length} options`; }
+    });
+  }
+  check(g, "no beat reveals its finding before the commit, and every one ends in a method card", bad === 0, why);
+
+  host.remove();
+}
+
 /* ---------- 4b. no question can lie or crop ---------- */
 {
   setLang("af");
@@ -441,9 +585,13 @@ for (const lang of ["af", "en"]) {
   }
   check(g, "a sketch never prints the asymptote a question is asking for", bad === 0, why);
 
-  /* every round must carry a picture — this app is about READING graphs */
+  /* every round must carry a picture — this app is about READING graphs.
+     Exception: qB (session 3's Round B) is DELIBERATELY graph-free —
+     equation-only instant recognition, speed-round format, RUN-PLAN's
+     own spec for that round. */
   bad = 0; why = "";
   for (const q of QUESTS) {
+    if (q.id === "qB") continue;
     for (let rep = 0; rep < 6; rep++) {
       buildRound(q.id).forEach((it) => {
         const hasPic = it.type === "interactive" || !!it.graph;
@@ -451,7 +599,17 @@ for (const lang of ["af", "en"]) {
       });
     }
   }
-  check(g, "every round shows a graph (no wall-of-words questions)", bad === 0, why);
+  check(g, "every round shows a graph (no wall-of-words questions), except qB by design", bad === 0, why);
+
+  /* qB itself: confirm it really is graph-free, in both directions —
+     never leaks a graph, and never gets caught by a stray graph check */
+  bad = 0; why = "";
+  for (let rep = 0; rep < 20; rep++) {
+    buildRound("qB").forEach((it) => {
+      if (it.graph || it.type === "interactive") { bad++; why = "qB round unexpectedly carries a graph"; }
+    });
+  }
+  check(g, "qB (Round B) never draws a graph — equation only, as designed", bad === 0, why);
 
   /* semicircles must be drawn round, not squashed into an ellipse */
   bad = 0; why = "";
@@ -608,6 +766,95 @@ for (const lang of ["af", "en"]) {
     });
   }
   check(g, "with semicircles on, they come back", any);
+}
+
+/* ---------- 7. Round B — equation-only recognition (session 3) ----------
+   No graph is drawn (checked in §4b already) — this section checks the
+   content itself: every family actually turns up, every numeric chip is
+   wrapped in .eq, and the closed (family, feature) → has-it table holds
+   for every round generated (the "no 'geen' round whose curve HAS the
+   asked feature" rule, and its converse: no valued round for a family
+   that never has that feature). */
+{
+  setLang("af");
+  const g = group("7. Round B (qB) — equation-only recognition");
+
+  const classifyFamily = (stemHtml) => {
+    if (/²/.test(stemHtml)) return "parabola";
+    if (/frac/.test(stemHtml)) return "hyperbola";
+    if (/<sup>/.test(stemHtml)) return "exp";
+    return "line";
+  };
+  const classifyFeature = (promptText) => {
+    if (/horisontale|horizontal/i.test(promptText)) return "hAsym";
+    if (/vertikale|vertical/i.test(promptText)) return "vAsym";
+    if (/simmetrie|symmetry/i.test(promptText)) return "axisSym";
+    return null;
+  };
+  /* the same closed table qB.js encodes — kept independently here on
+     purpose, so a bug in the generator's own table doesn't also hide
+     itself from the check that is supposed to catch it */
+  const HAS_FEATURE = {
+    line: { hAsym: false, vAsym: false },
+    parabola: { hAsym: false, vAsym: false, axisSym: true },
+    hyperbola: { hAsym: true, vAsym: true },
+    exp: { hAsym: true, vAsym: false },
+  };
+
+  const REPS = 200;
+  const rounds = [];
+  let genBad = 0, genWhy = "";
+  for (let rep = 0; rep < REPS; rep++) {
+    let items = [];
+    try { items = buildRound("qB"); } catch (e) { genBad++; genWhy = "threw: " + e.message; break; }
+    items.forEach((it) => rounds.push(it));
+  }
+  check(g, `qB builds ${REPS} rounds without throwing`, genBad === 0, genWhy);
+
+  /* classify every round, generator for every family */
+  let bad = 0, why = "";
+  const seenFamilies = new Set();
+  const classified = [];
+  rounds.forEach((it) => {
+    const stemHtml = String(L(it.stem || ""));
+    const promptText = strip(L(it.prompt || ""));
+    const family = classifyFamily(stemHtml);
+    const feature = classifyFeature(promptText);
+    if (!family || !feature) { bad++; why = `could not classify round: "${promptText}"`; return; }
+    seenFamilies.add(family);
+    classified.push({ it, family, feature });
+  });
+  check(g, `every round classifies to a known (family, feature) pair (${rounds.length} rounds)`, bad === 0, why);
+  check(g, `all four families are generated (line, parabola, hyperbola, exp) across ${rounds.length} rounds`,
+    ["line", "parabola", "hyperbola", "exp"].every((f) => seenFamilies.has(f)),
+    `saw: ${[...seenFamilies].join(", ")}`);
+
+  /* the closed (family, feature) → has-it table holds for every round:
+     no "geen"/"none" round whose curve HAS the asked feature, and no
+     valued round for a family that never has that feature */
+  bad = 0; why = "";
+  classified.forEach(({ it, family, feature }) => {
+    const answerText = strip(L(it.answerLabel || ""));
+    const isNone = /^(geen|none)$/i.test(answerText.trim());
+    const shouldHave = HAS_FEATURE[family][feature];
+    if (shouldHave === isNone) {
+      bad++; why = `${family}/${feature}: answer "${answerText}" but curve ${shouldHave ? "HAS" : "lacks"} the feature`;
+    }
+  });
+  check(g, "no 'geen'/'none' round whose curve HAS the asked feature (and no valued round whose family never has it)",
+    bad === 0, why);
+
+  /* every numeric chip ("y = ..." / "x = ...") must be wrapped in .eq —
+     the "geen"/"none" chip is prose, not notation, so it is exempt */
+  bad = 0; why = "";
+  rounds.forEach((it) => {
+    it.options.forEach((o) => {
+      const raw = String(L(o.label));
+      const txt = strip(raw);
+      if (/^[xy] = /.test(txt) && !raw.includes('class="eq"')) { bad++; why = `unwrapped chip: "${txt}"`; }
+    });
+  });
+  check(g, "every numeric asymptote/symmetry chip is wrapped in .eq", bad === 0, why);
 }
 
 document.getElementById("sum").innerHTML = fail === 0

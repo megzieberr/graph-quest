@@ -60,8 +60,8 @@ export function mapScreen(profile, onPlay, onReset) {
 }
 
 const B_INTRO = {
-  en: "Seven quests. Each one teaches your eyes one job — by making your hand do it first.",
-  af: "Sewe soektogte. Elkeen leer jou oë een taak — deur eers jou hand dit te laat doen.",
+  en: "Nine quests. Each one teaches your eyes one job — by making your hand do it first.",
+  af: "Nege soektogte. Elkeen leer jou oë een taak — deur eers jou hand dit te laat doen.",
 };
 
 /* ---------------- results ---------------- */
