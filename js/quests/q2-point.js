@@ -11,7 +11,7 @@
 import { mc, iq, quest } from "./_shared.js";
 import { B, UI } from "../i18n.js";
 import { pointDrop } from "../engine/interactive.js";
-import { specFor, randLine, randParabola, randHyperbola, randExp } from "./_graphs.js";
+import { specFor, randLine, randParabola, randHyperbola, randExp, windowFor } from "./_graphs.js";
 import {
   makeFn, eqStr, C, ptStr, pick, randInt, isInt, numDecoys, circleEq,
 } from "../funclib.js";
@@ -34,6 +34,8 @@ function niceCurveAndPoint() {
     const y = makeFn(cv)(x);
     if (!Number.isFinite(y) || !isInt(y) || Math.abs(y) > 13 || Math.abs(x) > 7) continue;
     if (Math.abs(y) < 0.5) continue;                 // (x ; 0) is a giveaway, it's on the axis
+    /* the dragged point P is an extra feature the window must also hold */
+    if (!windowFor([cv], { include: [{ x, y }] })) continue;
     return { cv, x: Math.round(x), y: Math.round(y) };
   }
   const cv = { kind: "line", a: 2, q: 1 };
@@ -137,7 +139,7 @@ const SKILLS = {
 
   /* ---------- semicircle: the answer is a surd (her vb. 1.4) ---------- */
   semiSurd: () => {
-    const r = pick([4, 5, 6, 7]);
+    const r = pick([4, 5, 6]);                        // 7 does not fit the square-grid window
     const cv = { kind: "semicircle", r, up: true };
     const x = pick([-r + 1, -r + 2, r - 2, r - 1].filter((v) => Math.abs(v) < r && v !== 0));
     const inside = r * r - x * x;
@@ -149,6 +151,7 @@ const SKILLS = {
       `√${C(r * r)} − ${C(Math.abs(x))}`,
     ];
     const spec = specFor([cv], { accent: ACC, ticks: "labels", labels: ["h"], include: [{ x, y }] });
+    if (!spec) return SKILLS.semiSurd();
     return iq({
       concept: "pointOnGraph", kind: "pointDrop", accent: ACC, unlockMsg: UI.snapped, techOnly: true,
       prompt: B(`P(${C(x)} ; k) lies on the semicircle h. Drag P onto the graph.`,

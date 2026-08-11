@@ -178,6 +178,7 @@ const SKILLS = {
     const a = pick([randParabola(), randLine(), randSemicircle()]);
     const b = pick([randLine(), randExp(), randParabola()]);
     const win = windowFor([a, b]);
+    if (!win) return SKILLS.productSign();
     const spec = specFor([a, b], { win, accent: ACC, ticks: true, labels: ["f", "g"], asymLabels: true });
     const cuts = criticalXs([a, b], win.xmin, win.xmax);
     if (cuts.length < 2 || cuts.length > 4) return SKILLS.productSign();
@@ -243,9 +244,14 @@ const SKILLS = {
     const f = makeFn(cv);
     /* the sample x must sit CLEARLY above or below the axis — a point on
        (or near) an x-intercept makes "positive or negative?" a lie, and
-       the app once marked f(x)=0 as "negative" because of exactly this */
-    const cands = [win.xmin + 1, win.xmin + 2, win.xmax - 2, win.xmax - 1]
-      .filter((v) => Number.isFinite(f(v)) && Math.abs(f(v)) >= 0.6 && f(v) > win.ymin && f(v) < win.ymax);
+       the app once marked f(x)=0 as "negative" because of exactly this.
+       It must also be a WHOLE number — the window's edges are no longer
+       rounded (that would break sx === sy), so candidates are built from
+       integers directly rather than from win.xmin/xmax arithmetic. */
+    const loInt = Math.ceil(win.xmin) + 1, hiInt = Math.floor(win.xmax) - 1;
+    const allInts = [];
+    for (let v = loInt; v <= hiInt; v++) allInts.push(v);
+    const cands = allInts.filter((v) => Number.isFinite(f(v)) && Math.abs(f(v)) >= 0.6 && f(v) > win.ymin && f(v) < win.ymax);
     if (!cands.length) return SKILLS.heightIdea();
     const x = pick(cands);
     const y = f(x);

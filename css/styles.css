@@ -154,6 +154,7 @@ h2{font-size:20px} h3{font-size:16px}
 .fg-axlab{font-size:11px;font-style:italic;fill:var(--g-muted)}
 .fg-curve{stroke:var(--accent);stroke-width:2.4;fill:none;stroke-linejoin:round;stroke-linecap:round}
 .fg-curve.dash{stroke-dasharray:5 4}
+.fg-curve-arrow{opacity:.9}
 .fg-asym{stroke:var(--g-muted);stroke-width:1.1;stroke-dasharray:5 4;opacity:.7}
 .fg-asymlab{font-size:10px;fill:var(--g-muted)}
 .fg-vline{stroke:var(--g-read);stroke-width:1.2;stroke-dasharray:4 3;opacity:.8}

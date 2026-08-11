@@ -30,6 +30,7 @@ function sheetSemiExp() {
   const h = { kind: "semicircle", r, up: true };
   const g = randExp();
   const win = windowFor([h, g]);
+  if (!win) return sheetSemiExp();
   const spec = specFor([h, g], { win, accent: ACC, ticks: "labels", labels: ["h", "g"], asymLabels: true });
   const lang = getLang();
   const xi = expXInt(g), yi = expYInt(g);
@@ -87,6 +88,7 @@ function sheetHypLine() {
   const f = { kind: "hyperbola", a: -r1 * r2, p: 0, q: k };
   const g = { kind: "line", a: 1, q: -(r1 + r2) + k };
   const win = windowFor([f, g]);
+  if (!win) return sheetHypLine();
   const spec = specFor([f, g], { win, accent: ACC, ticks: "labels", labels: ["f", "g"], asymLabels: true });
   const lang = getLang();
   const A = { x: r1, y: makeFn(f)(r1) }, Bpt = { x: r2, y: makeFn(f)(r2) };
@@ -142,6 +144,7 @@ function sheetHypLine() {
 function sheetParabola() {
   const cv = randParabola();
   const win = windowFor([cv]);
+  if (!win) return sheetParabola();
   const spec = specFor([cv], { win, accent: ACC, ticks: "labels", labels: ["f"] });
   const tp = paraTP(cv), opens = paraStd(cv).a > 0, roots = paraRoots(cv);
   const lang = getLang();

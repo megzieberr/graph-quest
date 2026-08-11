@@ -50,7 +50,9 @@ function nicePair() {
   let x1 = randInt(rootA - 2, rootB - 1), x2 = x1 + pick([2, 3]);
   const m = (ff(x2) - ff(x1)) / (x2 - x1);
   const g = { kind: "line", a: m, q: ff(x1) - m * x1 };
-  if (!Number.isFinite(m) || Math.abs(m) > 6) return nicePair();
+  /* steeper than this and the line runs off the top/bottom of any
+     square-grid window before crossing much width — see randLine() */
+  if (!Number.isFinite(m) || Math.abs(m) > 2) return nicePair();
   return { f, g, meets: [x1, x2].sort((u, v) => u - v), hasAsym: false };
 }
 
@@ -87,6 +89,7 @@ const SKILLS = {
        hold them (they are not "features" of either curve on its own, so
        windowFor would happily crop them out otherwise) */
     const win = windowFor([f, g], { include: meets.map((x) => ({ x, y: makeFn(g)(x) })) });
+    if (!win) return SKILLS.topSweep();
     if (meets.some((x) => x <= win.xmin + 0.5 || x >= win.xmax - 0.5)) return SKILLS.topSweep();
     const spec = specFor([f, g], { win, accent: ACC, ticks: "labels", labels: ["f", "g"], asymLabels: true });
     const cands = socketCandidates(f, g, meets, win);
@@ -202,6 +205,7 @@ const SKILLS = {
   whichCuts: () => {
     const { f, g, meets, hasAsym } = nicePair();
     const win = windowFor([f, g], { include: meets.map((x) => ({ x, y: makeFn(g)(x) })) });
+    if (!win) return SKILLS.whichCuts();
     if (meets.some((x) => x <= win.xmin + 0.5 || x >= win.xmax - 0.5)) return SKILLS.whichCuts();
     const spec = specFor([f, g], { win, accent: ACC, ticks: "labels", labels: ["f", "g"], asymLabels: true });
     const meetStr = meets.map((x) => C(x)).join(" and ");
@@ -235,6 +239,7 @@ const SKILLS = {
     const { f, g, meets, hasAsym } = nicePair();
     if (!hasAsym) return SKILLS.notation();                 // the trap needs an asymptote
     const win = windowFor([f, g], { include: meets.map((x) => ({ x, y: makeFn(g)(x) })) });
+    if (!win) return SKILLS.notation();
     if (meets.some((x) => x <= win.xmin + 0.5 || x >= win.xmax - 0.5)) return SKILLS.notation();
 
     /* shade the band between the asymptote and the intersection to its right */

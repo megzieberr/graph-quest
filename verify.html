@@ -21,13 +21,16 @@
 
 <script type="module">
 import { QUESTS, buildRound, setSemicircles } from "./js/quests/index.js";
-import { verifyFunction, renderFunction } from "./js/engine/function-graph.js";
+import { verifyFunction, renderFunction, computeFunction } from "./js/engine/function-graph.js";
 import { L, setLang } from "./js/i18n.js";
 import {
   makeFn, criticalXs, sections, signAt, intersections, paraTP, paraRoots,
   makeFn as mf, intervalStr, mergeSections,
 } from "./js/funclib.js";
-import { specFor, randParabola, randHyperbola, randExp, randLine, randSemicircle, windowFor } from "./js/quests/_graphs.js";
+import {
+  specFor, randParabola, randHyperbola, randExp, randLine, randSemicircle,
+  windowFor, features,
+} from "./js/quests/_graphs.js";
 
 const out = document.getElementById("out");
 let pass = 0, fail = 0;
@@ -42,6 +45,12 @@ function check(g, label, ok, extra = "") {
   d.textContent = `${ok ? "PASS" : "FAIL"} — ${label}${extra ? "  ·  " + extra : ""}`;
   g.appendChild(d);
   return ok;
+}
+function info(g, text) {
+  const d = document.createElement("div");
+  d.className = "line";
+  d.textContent = text;
+  g.appendChild(d);
 }
 
 const BAD = /NaN|undefined|Infinity|null/;
@@ -95,6 +104,7 @@ function strip(h) {
   for (let i = 0; i < 200; i++) {
     const A = randParabola(), Bc = randLine();
     const win = windowFor([A, Bc]);
+    if (!win) continue;                    // a rare infeasible pair — not this check's concern
     const xs = intersections(A, Bc, win.xmin, win.xmax);
     const fa = makeFn(A), fb = makeFn(Bc);
     xs.forEach((x) => { if (Math.abs(fa(x) - fb(x)) > 1e-4) { ok = false; why = `f−g = ${fa(x) - fb(x)} at x=${x}`; } });
@@ -305,6 +315,111 @@ for (const lang of ["af", "en"]) {
     });
   }
   check(g, "a semicircle is drawn round, not as a squashed ellipse", bad === 0, why);
+}
+
+/* ---------- 4c. the square-grid window guarantees (session 1) ---------- */
+{
+  const g = group("4c. Square-grid windows — sx === sy, zoom clamped, nothing cropped");
+  const FAMILIES = [
+    ["line", () => randLine()], ["parabola", () => randParabola()],
+    ["hyperbola", () => randHyperbola()], ["exp", () => randExp()],
+    ["semicircle", () => randSemicircle()],
+  ];
+
+  /* sx === sy for every window this app actually draws */
+  let bad = 0, why = "";
+  FAMILIES.forEach(([name, make]) => {
+    for (let i = 0; i < 100; i++) {
+      const cv = make();
+      const win = windowFor([cv]);
+      if (!win) { bad++; why = `${name}: a generator-approved curve got no window`; continue; }
+      const gm = computeFunction({ win, w: 360, h: 300 });
+      if (Math.abs(gm.sx - gm.sy) > 1e-6) { bad++; why = `${name}: sx=${gm.sx.toFixed(3)} sy=${gm.sy.toFixed(3)}`; }
+    }
+  });
+  check(g, "sx === sy for 100 windows of every family", bad === 0, why);
+
+  /* px/unit stays inside the readable clamp */
+  bad = 0; why = "";
+  FAMILIES.forEach(([name, make]) => {
+    for (let i = 0; i < 100; i++) {
+      const cv = make();
+      const win = windowFor([cv]);
+      if (!win) continue;
+      const gm = computeFunction({ win, w: 360, h: 300 });
+      if (gm.sx < 18 || gm.sx > 47) { bad++; why = `${name}: ${gm.sx.toFixed(1)} px/unit`; }
+    }
+  });
+  check(g, "px/unit stays within [18, 47] for 100 windows of every family", bad === 0, why);
+
+  /* the parabola's turning point never hugs the frame */
+  bad = 0; why = "";
+  for (let i = 0; i < 200; i++) {
+    const cv = randParabola();
+    const win = windowFor([cv]);
+    if (!win) continue;
+    const tp = paraTP(cv);
+    const mx = Math.min(tp.x - win.xmin, win.xmax - tp.x) / (win.xmax - win.xmin);
+    const my = Math.min(tp.y - win.ymin, win.ymax - tp.y) / (win.ymax - win.ymin);
+    if (mx < 0.08 || my < 0.08) { bad++; why = `TP margin ${(Math.min(mx, my) * 100).toFixed(1)}% of window`; }
+  }
+  check(g, "parabola TP sits ≥ 8% of the window away from every edge (200 curves)", bad === 0, why);
+
+  /* every identity feature — TP, roots, asymptote, elbows, the bend —
+     really is inside the window it was sized for */
+  bad = 0; why = "";
+  FAMILIES.forEach(([name, make]) => {
+    for (let i = 0; i < 100; i++) {
+      const cv = make();
+      const win = windowFor([cv]);
+      if (!win) continue;
+      const f = features(cv);
+      const out1 = f.xs.some((x) => x < win.xmin - 1e-6 || x > win.xmax + 1e-6)
+        || f.ys.some((y) => y < win.ymin - 1e-6 || y > win.ymax + 1e-6);
+      if (out1) { bad++; why = `${name}: an identity feature landed outside its own window`; }
+    }
+  });
+  check(g, "every identity feature is inside the window (100 curves × 5 families)", bad === 0, why);
+}
+
+/* ---------- 4d. window statistics — the ported probe ----------
+   Session-1 measured v1's windows as unreadable (median 1,5 px/unit on a
+   parabola round, 100% of parabola rounds squashed > 1,5:1). This is that
+   same probe, kept in the harness so a future regression shows up here
+   instead of needing a fresh headless script. */
+{
+  const g = group("4d. Window statistics (ported probe) — regressions show up here");
+  const SCEN = {
+    "parabola alone": () => [randParabola()],
+    "hyperbola alone": () => [randHyperbola()],
+    "exponential alone": () => [randExp()],
+    "line alone": () => [randLine()],
+    "semicircle alone": () => [randSemicircle()],
+    "parabola + line": () => [randParabola(), randLine()],
+    "hyperbola + line": () => [randHyperbola(), randLine()],
+    "exponential + line": () => [randExp(), randLine()],
+    "parabola + parabola": () => [randParabola(), randParabola()],
+  };
+  const N = 500;
+  let anySquash = false, anyOffRange = false;
+  Object.entries(SCEN).forEach(([name, make]) => {
+    const pxu = [], squash = [], nullCount = [];
+    for (let i = 0; i < N; i++) {
+      const curves = make();
+      const win = windowFor(curves);
+      if (!win) { nullCount.push(1); continue; }
+      const gm = computeFunction({ win, w: 360, h: 300 });
+      pxu.push(gm.sx);
+      squash.push(Math.max(gm.sx / gm.sy, gm.sy / gm.sx));
+    }
+    const med = (a) => (a.length ? a.slice().sort((x, y) => x - y)[Math.floor(a.length / 2)] : NaN);
+    const worstSquash = squash.length ? Math.max(...squash) : NaN;
+    if (worstSquash > 1.001) anySquash = true;
+    if (pxu.some((v) => v < 18 || v > 47)) anyOffRange = true;
+    info(g, `${name.padEnd(20)} median ${med(pxu).toFixed(1)} px/u · worst squash ${worstSquash.toFixed(3)}× · null (regenerated) ${nullCount.length}/${N}`);
+  });
+  check(g, "no window is ever squashed (square-grid forces sx = sy)", !anySquash);
+  check(g, "no window ever falls outside the [18, 47] px/unit clamp", !anyOffRange);
 }
 
 /* ---------- 5. interval notation ---------- */

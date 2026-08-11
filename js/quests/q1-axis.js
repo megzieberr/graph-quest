@@ -10,7 +10,7 @@
 import { mc, quest } from "./_shared.js";
 import { B } from "../i18n.js";
 import { pick, shuffled } from "../ui.js";
-import { specFor, randCurve } from "./_graphs.js";
+import { specFor, randCurve, windowFor } from "./_graphs.js";
 
 /* Every round shows a real graph, even this word-recognition drill.
    The learner should never be answering ABOUT graphs while staring at a
@@ -18,7 +18,14 @@ import { specFor, randCurve } from "./_graphs.js";
    is generic and unlabelled, so it never leaks the answer. */
 function refGraph() {
   const cv = randCurve(["line", "parabola", "hyperbola", "exp"]);
-  return specFor([cv], { accent: "#3aa0ff", ticks: "labels", labels: ["f"], asymLabels: true, h: 230 });
+  /* h:230 is shorter than the default canvas — a steep line that clears
+     the frame comfortably at 360×300 can still run off the top/bottom
+     here before crossing much width (the visible fraction is capped by
+     (drawH/drawW)/|a|, and this canvas has a much smaller drawH/drawW) */
+  if (cv.kind === "line" && Math.abs(cv.a) > 1) return refGraph();
+  const win = windowFor([cv], { h: 230 });
+  if (!win) return refGraph();
+  return specFor([cv], { win, accent: "#3aa0ff", ticks: "labels", labels: ["f"], asymLabels: true, h: 230 });
 }
 
 const X = "x", Y = "y", BOTH = "both";

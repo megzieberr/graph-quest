@@ -13,6 +13,7 @@ import {
   randInt, pick, parabolaFromRoots, paraTP, paraRoots, paraYInt,
   lineXInt, lineYInt, hypXInt, hypYInt, expXInt, expYInt, makeFn, C,
 } from "../funclib.js";
+import { PAD } from "../engine/function-graph.js";
 
 /* whether semicircles may appear (blipwork mount turns this off:
    the IEB Grade 11 syllabus does not include them) */
@@ -21,12 +22,18 @@ export const CONTENT = { semicircles: true };
 /* ---------------- individual curves ---------------- */
 
 export function randLine(opts = {}) {
-  const a = pick([1, -1, 2, -2, 3, -3, 0.5, -0.5]);
+  /* a steeper slope than this runs off the top/bottom of any square-grid
+     window before it has crossed much of the width — (drawH/drawW)/2 ≈
+     41% of the window stays visible at |a|=2, which is the last slope
+     that clears the "curve mostly inside its frame" verify rule */
+  const a = pick([1, -1, 2, -2, 0.5, -0.5]);
   let q = randInt(-4, 4);
   if (opts.throughOrigin === false && q === 0) q = 2;
   /* keep the x-intercept a whole number so it can be read off */
   if (!Number.isInteger(-q / a)) return randLine(opts);
-  return { kind: "line", a, q };
+  const cv = { kind: "line", a, q };
+  if (!windowFor([cv])) return randLine(opts);
+  return cv;
 }
 
 export function randParabola(opts = {}) {
@@ -35,18 +42,23 @@ export function randParabola(opts = {}) {
   if (opts.roots === false) { r1 = randInt(-3, 2); r2 = r1 + pick([2, 4]); }
   const cv = parabolaFromRoots(a, r1, r2);
   const tp = paraTP(cv);
-  if (Math.abs(tp.y) > 14) return randParabola(opts);
+  /* |yTP| ≤ 8 keeps a square-grid window's identity box inside the
+     [20,45] px/unit clamp — see windowFor()'s MARGIN comment */
+  if (Math.abs(tp.y) > 8) return randParabola(opts);
+  if (!windowFor([cv])) return randParabola(opts);
   return cv;
 }
 
 export function randHyperbola() {
   const q = pick([1, -1, 2, -2, 3, -3]);
-  const a = pick([2, -2, 4, -4, 6, -6, 8, -8]);
+  const a = pick([2, -2, 4, -4, 6, -6]);                     // |a| ≤ 6, see windowFor()
   const p = pick([0, 0, 1, -1, 2, -2]);
   if (!Number.isInteger(a / q)) return randHyperbola();     // integer x-intercept
   const xi = hypXInt({ kind: "hyperbola", a, p, q });
   if (xi === null || Math.abs(xi) > 9 || Math.abs(xi - p) < 0.6) return randHyperbola();
-  return { kind: "hyperbola", a, p, q };
+  const cv = { kind: "hyperbola", a, p, q };
+  if (!windowFor([cv])) return randHyperbola();
+  return cv;
 }
 
 /* y = a·bˣ + q, built backwards from a whole-number x-intercept */
@@ -55,13 +67,17 @@ export function randExp() {
   const a = pick([1, 1, -1, 2, 3]);
   const k = randInt(1, 2);                                   // the x-intercept
   const q = -a * b ** k;                                     // forces a·bᵏ + q = 0
-  if (Math.abs(q) > 14) return randExp();
-  return { kind: "exp", a, b, p: 0, q };
+  if (Math.abs(q) > 8) return randExp();                      // see windowFor()
+  const cv = { kind: "exp", a, b, p: 0, q };
+  if (!windowFor([cv])) return randExp();
+  return cv;
 }
 
 export function randSemicircle(opts = {}) {
   const r = pick([2, 3, 4, 5, 6]);
-  return { kind: "semicircle", r, up: opts.up ?? true };
+  const cv = { kind: "semicircle", r, up: opts.up ?? true };
+  if (!windowFor([cv])) return randSemicircle(opts);
+  return cv;
 }
 
 /* a random curve of any allowed family */
@@ -78,7 +94,12 @@ export function randCurve(kinds) {
 
 /* ---------------- features + windows ---------------- */
 
-/* every interesting x and y of a curve, used to size the window */
+/* every interesting x and y of a curve, used to size the window.
+   These are the curve's IDENTITY — not just its intercepts, but enough
+   of its shape that the window is forced to show what makes it that
+   family (a parabola's arms actually rising, a hyperbola actually
+   bending away from its asymptote, an exponential actually flattening
+   AND actually taking off). */
 export function features(cv) {
   const xs = [], ys = [];
   if (cv.kind === "line") {
@@ -88,82 +109,76 @@ export function features(cv) {
     const tp = paraTP(cv); xs.push(tp.x); ys.push(tp.y);
     paraRoots(cv).forEach((r) => xs.push(r));
     ys.push(paraYInt(cv)); xs.push(0);
+    /* ≥1 unit of visible arm-rise past the TP, on both sides */
+    const sign = Math.sign(cv.a) || 1, dx = Math.sqrt(1 / Math.abs(cv.a));
+    xs.push(tp.x - dx, tp.x + dx); ys.push(tp.y + sign);
   } else if (cv.kind === "hyperbola") {
     xs.push(cv.p); ys.push(cv.q);
     const xi = hypXInt(cv); if (xi != null) xs.push(xi);
     const yi = hypYInt(cv); if (yi != null) ys.push(yi);
+    /* both branches' near-elbows: a point that has visibly bent ELBOW_RISE
+       units away from the asymptote, one on each side of it */
+    const sign = Math.sign(cv.a);
+    const dx = Math.abs(cv.a) / ELBOW_RISE;
+    xs.push(cv.p + dx, cv.p - dx); ys.push(cv.q + sign * ELBOW_RISE, cv.q - sign * ELBOW_RISE);
   } else if (cv.kind === "exp") {
     ys.push(cv.q, expYInt(cv));
     const xi = expXInt(cv); if (xi != null) xs.push(xi);
     xs.push(0);
+    /* the "bend": where |y − q| goes from BEND_LO (still hugging the
+       asymptote) to BEND_HI (clearly away from it) */
+    const p = cv.p || 0, sign = Math.sign(cv.a), logb = Math.log(cv.b);
+    const lo = p + Math.log(BEND_LO / Math.abs(cv.a)) / logb;
+    const hi = p + Math.log(BEND_HI / Math.abs(cv.a)) / logb;
+    xs.push(lo, hi); ys.push(cv.q + sign * BEND_LO, cv.q + sign * BEND_HI);
   } else if (cv.kind === "semicircle") {
     xs.push(-cv.r, cv.r); ys.push(0, cv.up === false ? -cv.r : cv.r);
   }
   return { xs: xs.filter(Number.isFinite), ys: ys.filter(Number.isFinite) };
 }
 
-/* a window that holds every feature of every curve, with margin,
-   rounded out to whole numbers and never sillily tall or wide */
+const ELBOW_RISE = 3;      // hyperbola: units away from the asymptote a "near-elbow" claims
+const BEND_LO = 0.5, BEND_HI = 2;  // exp: |y-q| band that counts as "the bend"
+
+/* px/unit clamp (the same scale for x AND y — the square-grid rule) and
+   the margin every identity feature gets from the window's edge. 10%
+   comfortably clears the "parabola TP ≥ 8% from every edge" verify rule
+   even in the tightest case (TP sitting exactly on the feature box's
+   own edge, which it always does on the y-axis). */
+const MIN_PXU = 20, MAX_PXU = 45, MARGIN = 0.10;
+
+/* a window on the SQUARE-GRID principle: sx === sy always (forced by
+   construction, not fixed up afterwards), identity features centred with
+   a guaranteed margin, zoom clamped to [MIN_PXU, MAX_PXU]. If nothing in
+   that clamp range can hold the features, there is no window that shows
+   this curve honestly — return null so the caller regenerates a smaller
+   curve. Never zooms out past MIN_PXU to force a fit. */
 export function windowFor(curves, opts = {}) {
+  const W = opts.w || 360, H = opts.h || 300;
+  const drawW = W - PAD.L - PAD.R, drawH = H - PAD.T - PAD.B;
+
   let xs = [0], ys = [0];
   curves.forEach((cv) => { const f = features(cv); xs.push(...f.xs); ys.push(...f.ys); });
   (opts.include || []).forEach((p) => { if (p.x != null) xs.push(p.x); if (p.y != null) ys.push(p.y); });
 
-  let xmin = Math.min(...xs), xmax = Math.max(...xs);
-  let ymin = Math.min(...ys), ymax = Math.max(...ys);
-  const padX = Math.max(1.5, (xmax - xmin) * 0.22), padY = Math.max(1.5, (ymax - ymin) * 0.22);
-  xmin = Math.floor(xmin - padX); xmax = Math.ceil(xmax + padX);
-  ymin = Math.floor(ymin - padY); ymax = Math.ceil(ymax + padY);
+  const bx0 = Math.min(...xs), bx1 = Math.max(...xs);
+  const by0 = Math.min(...ys), by1 = Math.max(...ys);
+  const featW = Math.max(bx1 - bx0, 1e-6), featH = Math.max(by1 - by0, 1e-6);
 
-  /* sample the curves across the window so nothing shoots off-frame
-     unseen (a hyperbola branch, an exponential taking off) */
-  function fitY() {
-    curves.forEach((cv) => {
-      const f = makeFn(cv);
-      for (let i = 0; i <= 60; i++) {
-        const x = xmin + (i / 60) * (xmax - xmin), y = f(x);
-        if (!Number.isFinite(y)) continue;
-        if (cv.kind === "hyperbola" && Math.abs(x - cv.p) < 0.5) continue;
-        if (cv.kind === "exp" && Math.abs(y) > 40) continue;
-        ymin = Math.min(ymin, Math.max(y, ymin - 6));
-        ymax = Math.max(ymax, Math.min(y, ymax + 6));
-      }
-    });
-    ymin = Math.floor(ymin); ymax = Math.ceil(ymax);
-  }
-  fitY();
+  /* the window that gives the features exactly MARGIN on every side */
+  const wReq = featW / (1 - 2 * MARGIN), hReq = featH / (1 - 2 * MARGIN);
 
-  /* ---- keep the picture READABLE on a phone ----
-     A very wide, very short window squashes the curves into a strip and
-     crops whatever leaves it (a hyperbola + line pair did exactly that:
-     half the diagram was off-screen). The drawing area is 360×300, so
-     hold the window near that 1,2 : 1 shape — widen the short axis
-     rather than ever cropping the long one. */
-  const targetRatio = 360 / 300;
-  let w = xmax - xmin, h = ymax - ymin;
+  /* the tightest (largest) scale that still fits both requirements,
+     clamped to the readable range */
+  const s = Math.min(MAX_PXU, drawW / wReq, drawH / hReq);
+  if (s < MIN_PXU) return null;
 
-  /* A semicircle MUST look like a semicircle. The canvas is 360×300, so the
-     window has to carry the same shape or a circle is drawn as an ellipse —
-     which is a lie about the graph, not a cosmetic issue. */
-  const widen = () => {
-    const add = Math.ceil(h * targetRatio - w), right = Math.ceil(add / 2);
-    xmax += right; xmin -= (add - right);
-    /* widening x exposes MORE of the curve — a parabola's arms shoot up out
-       of frame — so the vertical fit has to be redone afterwards */
-    fitY();
-  };
-  const heighten = () => {
-    const add = Math.ceil(w / targetRatio - h), up = Math.ceil(add / 2);
-    ymax += up; ymin -= (add - up);
-  };
-
-  if (curves.some((cv) => cv.kind === "semicircle")) {
-    if (w / h > targetRatio) heighten(); else widen();
-    return { xmin, xmax, ymin, ymax };
-  }
-  if (w / h > targetRatio) heighten();
-  else if (h / w > (1 / targetRatio) * 1.9) widen();
-  return { xmin, xmax, ymin, ymax };
+  /* square grid: window shape is ALWAYS drawW:drawH at this scale —
+     there is no separate aspect-ratio fix, because there is nothing to
+     fix; sx and sy are the same number by construction. */
+  const w = drawW / s, h = drawH / s;
+  const cx = (bx0 + bx1) / 2, cy = (by0 + by1) / 2;
+  return { xmin: cx - w / 2, xmax: cx + w / 2, ymin: cy - h / 2, ymax: cy + h / 2 };
 }
 
 /* strip a spec's asymptote LABELS — for questions that ask what the
@@ -172,9 +187,12 @@ export function hideAsymLabels(spec) {
   return { ...spec, asymptotes: (spec.asymptotes || []).map((a) => ({ ...a, label: null })) };
 }
 
-/* build a ready-to-draw spec */
+/* build a ready-to-draw spec. Returns null when opts.win was not given
+   and windowFor() could not fit the curves — the caller must regenerate
+   (every quest generator already knows how: it calls itself again). */
 export function specFor(curves, opts = {}) {
   const win = opts.win || windowFor(curves, opts);
+  if (!win) return null;
   const spec = {
     win, curves: curves.map((cv, i) => ({ ...cv, tone: opts.tones ? opts.tones[i] : i === 0 ? "a" : "b" })),
     grid: opts.grid !== false,

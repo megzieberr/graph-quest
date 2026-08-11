@@ -27,13 +27,19 @@ import { fmtComma } from "../check.js";
 const N = (v) => Math.round(v * 100) / 100;
 const TONES = { a: "var(--fg-a)", b: "var(--fg-b)", c: "var(--fg-c)" };
 
+/* the plotting rectangle's inset from the canvas edge — windowFor()
+   (js/quests/_graphs.js) must use exactly these same numbers, or its
+   square-grid promise (sx === sy) breaks the moment a spec's w/h differs
+   from the 360×300 default. */
+export const PAD = { L: 16, R: 16, T: 14, B: 16 };
+
 const text = (x, y, s, cls, anchor = "middle") =>
   `<text class="${cls}" x="${N(x)}" y="${N(y)}" text-anchor="${anchor}" dominant-baseline="middle">${s}</text>`;
 
 /* ---- the one transform, plus its inverse (for pointer input) ---- */
 export function computeFunction(spec) {
   const W = spec.w || 360, H = spec.h || 300;
-  const padL = 16, padR = 16, padT = 14, padB = 16;
+  const padL = PAD.L, padR = PAD.R, padT = PAD.T, padB = PAD.B;
   const { xmin, xmax, ymin, ymax } = spec.win;
   const sx = (W - padL - padR) / (xmax - xmin);
   const sy = (H - padT - padB) / (ymax - ymin);
@@ -44,16 +50,27 @@ export function computeFunction(spec) {
   return { W, H, sx, sy, X, Y, xAt, yAt, win: spec.win, padL, padR, padT, padB };
 }
 
-/* ---- sample one curve into clipped polyline segments ----
-   Breaks at a hyperbola's asymptote and whenever the curve leaves the
-   window, so we never draw a false near-vertical connector. Semicircles
-   get their exact endpoints added so the arc really touches the x-axis. */
-export function curvePaths(cv, g) {
+/* the point on segment a→b where y crosses into [ymin,ymax] — used both
+   to clip a curve exactly at the frame and to know where an arrowhead
+   belongs (world coords in, world coords out) */
+function intersectY(a, b, ymin, ymax) {
+  const boundary = (a[1] < ymin || b[1] < ymin) ? ymin : ymax;
+  const t = (boundary - a[1]) / (b[1] - a[1]);
+  return [a[0] + t * (b[0] - a[0]), boundary];
+}
+
+/* ---- sample one curve into exactly-clipped world-coord segments ----
+   Breaks at a hyperbola's asymptote (a real domain gap — no arrow) and
+   clips precisely at ymin/ymax (the curve keeps going — arrow). The x
+   sampling never leaves [xmin,xmax], so a segment that is still "alive"
+   right at x=xmin/xmax also means the curve keeps going off the side.
+   Semicircles get their exact endpoints added so the arc really touches
+   the x-axis — that is a genuine domain edge, never an arrow. */
+function clippedSegments(cv, g) {
   const f = makeFn(cv);
   const { xmin, xmax, ymin, ymax } = g.win;
-  const span = ymax - ymin, lo = ymin - span * 0.6, hi = ymax + span * 0.6;
   const breaks = cv.kind === "hyperbola" ? [cv.p] : [];
-  const STEPS = 360, dx = (xmax - xmin) / STEPS;
+  const STEPS = 360, dx = (xmax - xmin) / STEPS, EPS = dx * 0.5;
 
   const xsAll = [];
   for (let i = 0; i <= STEPS; i++) xsAll.push(xmin + i * dx);
@@ -62,16 +79,69 @@ export function curvePaths(cv, g) {
     xsAll.sort((a, b) => a - b);
   }
 
-  const segs = [];
+  const runs = [];
   let cur = [];
   for (const x of xsAll) {
-    if (breaks.some((b) => Math.abs(x - b) < dx * 0.5)) { if (cur.length > 1) segs.push(cur); cur = []; continue; }
+    if (breaks.some((b) => Math.abs(x - b) < EPS)) { if (cur.length > 1) runs.push(cur); cur = []; continue; }
     const y = f(x);
-    if (!Number.isFinite(y) || y < lo || y > hi) { if (cur.length > 1) segs.push(cur); cur = []; continue; }
-    cur.push([g.X(x), g.Y(Math.max(ymin - span * 0.55, Math.min(ymax + span * 0.55, y)))]);
+    if (!Number.isFinite(y)) { if (cur.length > 1) runs.push(cur); cur = []; continue; }
+    cur.push([x, y]);
   }
-  if (cur.length > 1) segs.push(cur);
-  return segs.map((s) => "M " + s.map(([px, py]) => `${N(px)} ${N(py)}`).join(" L "));
+  if (cur.length > 1) runs.push(cur);
+
+  const out = [];
+  runs.forEach((run) => {
+    const segs = [];
+    let piece = null, prev = null;
+    for (const pt of run) {
+      const inside = pt[1] >= ymin && pt[1] <= ymax;
+      if (inside) {
+        if (!piece) {
+          piece = { pts: [], openStart: false, openEnd: false };
+          if (prev) { piece.pts.push(intersectY(prev, pt, ymin, ymax)); piece.openStart = true; }
+        }
+        piece.pts.push(pt);
+      } else if (piece) {
+        piece.pts.push(intersectY(prev, pt, ymin, ymax));
+        piece.openEnd = true;
+        segs.push(piece); piece = null;
+      }
+      prev = pt;
+    }
+    if (piece) segs.push(piece);
+    if (segs.length) {
+      if (Math.abs(run[0][0] - xmin) < EPS) segs[0].openStart = true;
+      if (Math.abs(run[run.length - 1][0] - xmax) < EPS) segs[segs.length - 1].openEnd = true;
+    }
+    segs.forEach((s) => { if (s.pts.length > 1) out.push(s); });
+  });
+  return out;
+}
+
+export function curvePaths(cv, g) {
+  return clippedSegments(cv, g).map((s) =>
+    "M " + s.pts.map(([x, y]) => `${N(g.X(x))} ${N(g.Y(y))}`).join(" L "));
+}
+
+/* a small triangle arrowhead, apex at pixel `to`, pointing away from `from` —
+   the hand-sketch cue that a curve keeps going past the edge of the frame */
+function arrowPath(g, from, to) {
+  const x0 = g.X(from[0]), y0 = g.Y(from[1]), x1 = g.X(to[0]), y1 = g.Y(to[1]);
+  const ang = Math.atan2(y1 - y0, x1 - x0), size = 6.5, spread = Math.PI * 0.82;
+  const p1x = x1 + size * Math.cos(ang + spread), p1y = y1 + size * Math.sin(ang + spread);
+  const p2x = x1 + size * Math.cos(ang - spread), p2y = y1 + size * Math.sin(ang - spread);
+  return `M ${N(x1)} ${N(y1)} L ${N(p1x)} ${N(p1y)} L ${N(p2x)} ${N(p2y)} Z`;
+}
+
+/* arrowheads for every place this curve visibly leaves the frame (never
+   at a genuine domain edge — an asymptote break or a semicircle's rim) */
+export function curveExitArrows(cv, g) {
+  const arrows = [];
+  clippedSegments(cv, g).forEach((s) => {
+    if (s.openStart) arrows.push(arrowPath(g, s.pts[1], s.pts[0]));
+    if (s.openEnd) arrows.push(arrowPath(g, s.pts[s.pts.length - 2], s.pts[s.pts.length - 1]));
+  });
+  return arrows;
 }
 
 export function renderFunction(spec) {
@@ -153,6 +223,9 @@ export function renderFunction(spec) {
     const stroke = cv.tone ? TONES[cv.tone] : "var(--accent)";
     curvePaths(cv, g).forEach((d) => {
       out += `<path class="fg-curve${cv.dash ? " dash" : ""}" d="${d}" style="stroke:${stroke}"/>`;
+    });
+    curveExitArrows(cv, g).forEach((d) => {
+      out += `<path class="fg-curve-arrow" d="${d}" style="fill:${stroke}"/>`;
     });
     if (cv.label && cv.labelAt !== undefined) {
       const f = makeFn(cv), lx = cv.labelAt, ly = f(lx);
