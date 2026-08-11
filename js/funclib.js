@@ -318,6 +318,20 @@ export function eqStr(cv, name = "y") {
 /* the circle equation a semicircle comes from: x² + y² = r² */
 export const circleEq = (cv) => `x² + y² = ${C(cv.r * cv.r)}`;
 
+/* y = a(x − p)² + q, written in TURNING-POINT form.
+   eqStr() always multiplies a parabola out to standard form, but a
+   discovery round is dragging the bracket itself — the learner has to
+   see (x + 3) on screen while the graph slides 3 to the LEFT. Takes a
+   TP-form spec ({a,p,q}); everything is formatted through C(). */
+export function eqTPStr(cv, name = "y") {
+  const { a, p, q } = cv;
+  const co = a === 1 ? "" : a === -1 ? "−" : C(a);
+  const inner = p === 0 ? "x" : p > 0 ? `x − ${C(p)}` : `x + ${C(-p)}`;
+  const body = p === 0 ? "x²" : `(${inner})²`;
+  const tail = q === 0 ? "" : q > 0 ? ` + ${C(q)}` : ` − ${C(-q)}`;
+  return `${name} = ${co}${body}${tail}`;
+}
+
 /* ============================================================
    DECOYS — wrong options that are wrong for a REASON
    (blipwork rule: filter by VALUE so a decoy can never equal the

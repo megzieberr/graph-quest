@@ -8,7 +8,12 @@
    one place — that is the switch the blipwork mount flips, because
    the IEB Grade 11 syllabus does not include them.
    ============================================================ */
-import { quest1, TECH } from "./q1-axis.js";
+/* q1's slot now holds session 2's discovery sliders. The v1 file
+   (q1-axis.js) still owns the TECH content flag and is retired in
+   session 4, when its replacement round lands — until then it stays
+   on disk, imported for the flag only. */
+import { questDiscover } from "./q1-discover.js";
+import { TECH } from "./q1-axis.js";
 import { quest2 } from "./q2-point.js";
 import { quest3 } from "./q3-curtain.js";
 import { quest4 } from "./q4-climb.js";
@@ -18,7 +23,7 @@ import { quest7, TECHOK, resetExam } from "./q7-exam.js";
 import { CONTENT } from "./_graphs.js";
 import { pick, shuffled } from "../ui.js";
 
-export const QUESTS = [quest1, quest2, quest3, quest4, quest5, quest6, quest7];
+export const QUESTS = [questDiscover, quest2, quest3, quest4, quest5, quest6, quest7];
 
 /* flip semicircle content on/off everywhere */
 export function setSemicircles(on) {

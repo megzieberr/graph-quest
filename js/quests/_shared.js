@@ -96,8 +96,11 @@ export function quest(id, title, blurb, skills, opts = {}) {
     rounds: opts.rounds || 6,
     techOnly: !!opts.techOnly,
     accent: opts.accent,
-    /* a quest may build a whole round in one go (exam mode does, so that
-       one round is one sketch rather than a shuffle of loose questions) */
+    /* a quest may build a whole round in one go — exam mode does (one
+       sketch, many sub-questions) and so does a lesson whose beats have
+       to arrive in a fixed order (the discovery quest) */
     buildAll: opts.buildAll || null,
+    /* …and only the exam kind promises that every item shares ONE sketch */
+    oneSketch: !!opts.oneSketch,
   };
 }

@@ -79,7 +79,7 @@ export const UI = {
   walkAgain:    B("Walk it again", "Stap dit weer"),
   climbing:     B("CLIMBING", "STYGEND"),
   descending:   B("DESCENDING", "DALEND"),
-  atStart:      B("Start dragging", "Begin sleep"),
+  atStart:      B("Start dragging", "Begin drag"),
   walkedAll:    B("You walked the whole graph", "Jy het die hele grafiek gestap"),
   finishWalk:   B("Walk all the way to the right first", "Stap eers heeltemal tot regs"),
   pullCurtain:  B("Pull the shade over the part where the graph lives", "Trek die skerm oor die deel waar die grafiek lê"),

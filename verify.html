@@ -22,7 +22,7 @@
 <script type="module">
 import { QUESTS, buildRound, setSemicircles } from "./js/quests/index.js";
 import { verifyFunction, renderFunction, computeFunction } from "./js/engine/function-graph.js";
-import { L, setLang } from "./js/i18n.js";
+import { L, UI, setLang } from "./js/i18n.js";
 import {
   makeFn, criticalXs, sections, signAt, intersections, paraTP, paraRoots,
   makeFn as mf, intervalStr, mergeSections,
@@ -141,9 +141,11 @@ for (const lang of ["af", "en"]) {
       const wantLen = q.buildAll ? items.length >= 4 : items.length === q.rounds;
       if (!wantLen) { bad++; why = `built ${items.length} (rounds=${q.rounds})`; break; }
       /* one sketch per exam round — compared by CONTENT, since a question may
-         legitimately hand out a variant (e.g. asymptote labels stripped) */
+         legitimately hand out a variant (e.g. asymptote labels stripped).
+         Only the exam kind promises this: the discovery quest also builds a
+         whole round at once, but every beat there is its own picture. */
       const sketchKey = (s) => JSON.stringify([s.win, s.curves.map((c) => [c.kind, c.a, c.b, c.p, c.q, c.c, c.r])]);
-      if (q.buildAll && !items.every((it) => sketchKey(it.graph) === sketchKey(items[0].graph))) {
+      if (q.oneSketch && !items.every((it) => sketchKey(it.graph) === sketchKey(items[0].graph))) {
         bad++; why = "exam round mixes more than one sketch"; break;
       }
       for (const it of items) {
@@ -196,6 +198,156 @@ for (const lang of ["af", "en"]) {
     }
     check(g, `${q.id}: every interactive round mounts and stays locked`, bad === 0, why);
   }
+  host.remove();
+}
+
+/* ---------- 4a. the discovery sliders (session 2) ----------
+   The mechanic's three promises, tested rather than trusted:
+   it mounts, it stays locked until the WHOLE range has been dragged,
+   and at every single stop the curve on screen is the curve funclib
+   describes. Plus the no-spoilers rule (Law 7) and her wording rulings. */
+{
+  setLang("af");
+  const g = group("4a. Discovery sliders — mount, lock, and match the maths");
+  const host = document.createElement("div");
+  host.style.position = "absolute"; host.style.left = "-9999px"; host.style.width = "360px";
+  document.body.appendChild(host);
+
+  const mountBeat = (it) => {
+    const box = document.createElement("div");
+    host.appendChild(box);
+    const fired = { n: 0 };
+    const ctl = it.build(box, () => { fired.n++; }, () => {}, () => {}, () => {});
+    return { box, ctl, fired };
+  };
+  /* read the drawn path back OUT of the SVG, run every point through the
+     inverse transform, and compare it with funclib's own value: the
+     picture on screen checked against the maths, not against a second
+     copy of the drawing code */
+  const curveOffBy = (box, spec) => {
+    const gm = computeFunction(spec), f = mf(spec.curves[0]);
+    const paths = [...box.querySelectorAll("path.fg-curve")];
+    if (!paths.length) return Infinity;
+    let worst = 0;
+    paths.forEach((p) => {
+      const nums = (p.getAttribute("d").match(/-?\d+(?:\.\d+)?/g) || []).map(Number);
+      for (let i = 0; i + 1 < nums.length; i += 2) {
+        const y = f(gm.xAt(nums[i]));
+        if (!Number.isFinite(y)) continue;
+        worst = Math.max(worst, Math.abs(y - gm.yAt(nums[i + 1])));
+      }
+    });
+    return worst;
+  };
+
+  /* the lesson always arrives whole, and always in the same order */
+  const ORDER = ["aSign", "aSize", "pShift", "qShift", "cCut", "qVsC"];
+  let bad = 0, why = "";
+  for (let rep = 0; rep < 40; rep++) {
+    let items = [];
+    try { items = buildRound("q1"); } catch (e) { bad++; why = "threw: " + e.message; break; }
+    if (items.length !== ORDER.length) { bad++; why = `built ${items.length} beats`; break; }
+    if (!items.every((it, i) => it.skillId === ORDER[i])) { bad++; why = "beats came out of lesson order"; break; }
+    if (!items.every((it) => it.type === "interactive" && it.build && it.then)) {
+      bad++; why = "a beat is not a gated interactive round"; break;
+    }
+  }
+  check(g, "all six discovery beats build, in lesson order (40 rounds)", bad === 0, why);
+
+  /* mounts, and the question stays shut until the last stop */
+  bad = 0; why = "";
+  buildRound("q1").forEach((it) => {
+    let m;
+    try { m = mountBeat(it); } catch (e) { bad++; why = `${it.skillId} threw: ${e.message}`; return; }
+    const { box, ctl, fired } = m;
+    if (!box.querySelector("svg path.fg-curve")) { bad++; why = `${it.skillId} drew no curve`; return; }
+    if (!ctl || !Array.isArray(ctl.sliders) || !ctl.sliders.length) { bad++; why = `${it.skillId} handed back no slider`; return; }
+    if (fired.n) { bad++; why = `${it.skillId} unlocked on mount`; return; }
+    /* the opening stop is interior, so the walk below really does leave
+       one stop unseen (and a learner always has somewhere to drag) */
+    ctl.sliders.forEach((s, si) => {
+      if (s.index() === 0 || s.index() === s.values().length - 1) {
+        bad++; why = `${it.skillId} slider ${si} opens on an end stop`;
+      }
+    });
+    const stops = [];
+    ctl.sliders.forEach((s, si) => s.values().forEach((_, k) => stops.push([si, k])));
+    stops.slice(0, -1).forEach(([si, k]) => ctl.sliders[si].setIndex(k));
+    if (fired.n) { bad++; why = `${it.skillId} unlocked before the whole range was dragged`; return; }
+    const [ls, lk] = stops[stops.length - 1];
+    ctl.sliders[ls].setIndex(lk);
+    if (fired.n !== 1) { bad++; why = `${it.skillId} fired done ${fired.n}× on completing the range`; }
+  });
+  check(g, "every beat mounts, opens mid-range, and stays locked until the last stop", bad === 0, why);
+
+  /* the picture at every stop: square grid, readable zoom, honest, and
+     exactly the curve funclib computes */
+  bad = 0; why = "";
+  let stopsChecked = 0, worstOff = 0;
+  buildRound("q1").forEach((it) => {
+    const { ctl } = mountBeat(it);
+    ctl.sliders.forEach((s) => {
+      const winKey = JSON.stringify(s.specs()[0].win);
+      if (!s.specs().every((sp) => JSON.stringify(sp.win) === winKey)) {
+        bad++; why = `${it.skillId}: the window changes mid-drag`;
+      }
+      s.values().forEach((v, k) => {
+        if (Math.abs(v * 2 - Math.round(v * 2)) > 1e-9) { bad++; why = `${it.skillId}: stop ${v} is neither a whole number nor a half`; }
+        s.setIndex(k);
+        const spec = s.spec(), gm = computeFunction(spec);
+        stopsChecked++;
+        if (Math.abs(gm.sx - gm.sy) > 1e-6) { bad++; why = `${it.skillId}: sx ${gm.sx.toFixed(2)} ≠ sy ${gm.sy.toFixed(2)}`; }
+        if (gm.sx < 18 || gm.sx > 47) { bad++; why = `${it.skillId}: ${gm.sx.toFixed(1)} px/unit`; }
+        const f = verifyFunction(spec).filter((r) => !r.ok);
+        if (f.length) { bad++; why = `${it.skillId}: ${f[0].label}`; }
+        const off = curveOffBy(s.graph(), spec);
+        worstOff = Math.max(worstOff, off);
+        if (!(off <= 0.01)) { bad++; why = `${it.skillId}: drawn curve is ${off.toFixed(3)} off funclib`; }
+      });
+    });
+  });
+  check(g, `the drawn curve matches funclib at every slider stop (${stopsChecked} stops)`, bad === 0, why);
+  info(g, `worst gap between the drawn curve and funclib: ${worstOff.toExponential(1)} units`);
+
+  /* Law 7 — the app never states the finding before the learner commits */
+  bad = 0; why = "";
+  for (let rep = 0; rep < 10; rep++) {
+    buildRound("q1").forEach((it) => {
+      const said = strip(L(it.prompt || "")) + " " + strip(L(it.stem || "")) + " " + strip(L(it.coach || ""));
+      const answer = strip(L(it.then.answerLabel || ""));
+      if (answer && said.includes(answer)) { bad++; why = `${it.skillId} states its own finding up front`; }
+      if (!Array.isArray(it.then.solution) || !it.then.solution.length) { bad++; why = `${it.skillId} has no method card`; }
+      if (it.then.options.length < 3 || it.then.options.length > 4) { bad++; why = `${it.skillId} offers ${it.then.options.length} options`; }
+    });
+  }
+  check(g, "no beat reveals its finding before the commit, and every one ends in a method card", bad === 0, why);
+
+  /* her standing wording rulings, across every quest: the Afrikaans verb
+     is "drag", never "sleep"; a sentence is a "sin", never a "frase" */
+  bad = 0; why = "";
+  const strings = [];
+  const collect = (v) => { if (v != null) strings.push(strip(L(v))); };
+  for (const q of QUESTS) {
+    for (let rep = 0; rep < 4; rep++) {
+      buildRound(q.id).forEach((it) => {
+        [it.prompt, it.stem, it.coach, it.unlockMsg].forEach(collect);
+        (it.hints || []).forEach(collect);
+        const mcq = it.then || it;
+        collect(mcq.prompt); collect(mcq.answerLabel);
+        (mcq.options || []).forEach((o) => { collect(o.label); collect(o.misc); });
+        (mcq.solution || []).forEach(collect);
+        (mcq.hints || []).forEach(collect);
+        collect(mcq.hint);
+      });
+    }
+  }
+  Object.values(UI).forEach(collect);
+  strings.forEach((s) => {
+    if (/\bsleep\b/i.test(s)) { bad++; why = `"${s.slice(0, 60)}"`; }
+    if (/\bfrase\b/i.test(s)) { bad++; why = `"${s.slice(0, 60)}"`; }
+  });
+  check(g, `"drag" not "sleep", "sin" not "frase" — every learner string (${strings.length} checked)`, bad === 0, why);
+
   host.remove();
 }
 

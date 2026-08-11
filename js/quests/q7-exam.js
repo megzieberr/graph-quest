@@ -208,4 +208,4 @@ export const quest7 = quest("q7",
   B("Exam mode", "Eksamenmodus"),
   B("One sketch, every skill — the real thing", "Een skets, elke vaardigheid — die regte ding"),
   [{ id: "examSheet", concept: "exam", gen: () => nextSheet()[0] }],
-  { rounds: 6, accent: ACC, buildAll: nextSheet });
+  { rounds: 6, accent: ACC, buildAll: nextSheet, oneSketch: true });
