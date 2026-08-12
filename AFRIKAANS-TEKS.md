@@ -1,0 +1,522 @@
+# Fun Functions — al die Afrikaanse teks
+
+Reël vir regmaak: **verander net die Afrikaanse sin self** — moenie die etikette, kolpunte of ⟨…⟩ uitvee nie. ⟨…⟩ is 'n getal of naam wat die speletjie self invul. Los reëls wat reg is net so. Ek werk elke verandering terug in die kode in.
+
+
+## Quest 1 · Ontdek (parabool-skuiwers)
+
+- Drag dit deur die hele reeks — die opsies maak eers oop as jy elke stop gesien het.
+- Wat het jy gesien?
+- **[regte antwoord]** a positief → arms OP (happy); a negatief → arms AF (sad)
+- **[vraag]** Drag a. Wat gebeur?
+- **[wenk]** Sit a op 2 en kyk na die arms. Sit dit dan op −2.
+- Het die draaipunt beweeg? Of het net die arms omgedraai?
+- **[afleier]** a positief → arms AF (sad); a negatief → arms OP (happy)
+- **[nudge (na verkeerde keuse)]** Kyk weer na a = 1 en a = −1 — watter een is happy?
+- **[afleier]** Die teken van a skuif die grafiek op en af
+- **[nudge (na verkeerde keuse)]** Die draaipunt het heeltyd presies waar dit was gebly.
+- **[afleier]** Die teken van a maak die arms nouer of wyer
+- **[nudge (na verkeerde keuse)]** Dis wat die GROOTTE van a doen, nie sy teken nie.
+- **[metodekaart]** a besluit watter kant toe die arms wys.
+- a > 0 → happy (arms op). a < 0 → sad (arms af).
+- Die draaipunt beweeg nie — die grafiek draai net om.
+- **[regte antwoord]** Groter a → die arms kom NADER aan mekaar (nouer)
+- **[vraag]** a bly hier positief. Drag a. Wat gebeur?
+- **[wenk]** Vergelyk a = 0,5 met a = 3. Hoe ver uitmekaar is die arms bo in die prent?
+- Kyk na die draaipunt terwyl jy drag. Beweeg dit hoegenaamd?
+- **[afleier]** Groter a → die arms gaan VERDER uitmekaar (wyer)
+- **[nudge (na verkeerde keuse)]** By a = 3 het die grafiek amper dadelik bo uit die raam geskiet — dis 'n nou een.
+- **[afleier]** a skuif die grafiek op en af
+- **[nudge (na verkeerde keuse)]** Die draaipunt het heeltyd op sy plek gebly.
+- **[afleier]** a draai die grafiek onderstebo
+- **[nudge (na verkeerde keuse)]** Dis wat 'n NEGATIEWE a doen. Hier het a heeltyd positief gebly.
+- **[metodekaart]** Hoe groter |a|, hoe nouer die parabool.
+- Tussen 0 en 1 werk dit andersom: a = 0,5 is wyer as a = 1.
+- Die draaipunt beweeg nooit nie — a verander net die vorm.
+- **[regte antwoord]** p skuif die grafiek links en regs — en die hakie wys die TEENOORGESTELDE teken: (x − 2) skuif 2 na regs
+- **[vraag]** Drag p. Kyk na die hakie en die draaipunt saam.
+- **[wenk]** Sit p op 2. Lees die hakie hardop, lees dan die draaipunt.
+- Sit p nou op −2. Watter kant toe het die grafiek gegaan, en wat sê die hakie nou?
+- **[afleier]** (x − 2) skuif 2 na LINKS; (x + 2) skuif 2 na regs
+- **[nudge (na verkeerde keuse)]** Lees die draaipunt se x toe die hakie (x − 2) gelees het. Dit was aan die regterkant.
+- **[afleier]** p skuif die grafiek op en af
+- **[nudge (na verkeerde keuse)]** Die draaipunt se hoogte het nooit verander nie — net sy x.
+- **[afleier]** p maak die arms nouer of wyer
+- **[nudge (na verkeerde keuse)]** Die vorm het heelpad presies dieselfde gebly; die grafiek het net sywaarts gereis.
+- **[metodekaart]** p is die x van die draaipunt.
+- **[metodekaart]** Die hakie lees (x − p), dus wys dit die teenoorgestelde teken as die skuif: (x − 3) beteken p = 3 en die grafiek sit 3 na REGS.
+- (x + 3) beteken p = −3: 3 na LINKS.
+- **[regte antwoord]** q skuif die HELE grafiek op en af. q is die y van die draaipunt.
+- **[vraag]** Drag q. Hou jou oog op die draaipunt.
+- **[wenk]** Sit q op 3, dan op −3. Lees elke keer die draaipunt.
+- Vergelyk die draaipunt se y met die getal in die skuiwer.
+- **[afleier]** q skuif die grafiek links en regs
+- **[nudge (na verkeerde keuse)]** Die draaipunt se x het heelpad op dieselfde getal gebly.
+- **[afleier]** q is die y-afsnit
+- **[nudge (na verkeerde keuse)]** Kyk waar hierdie grafiek die y-as sny — dit was nooit dieselfde getal as q nie.
+- **[afleier]** q maak die arms nouer of wyer
+- **[nudge (na verkeerde keuse)]** Die vorm het nooit verander nie; die hele prent het net op en af gereis.
+- **[metodekaart]** q is die y van die draaipunt.
+- **[metodekaart]** Verander q en die hele grafiek ry op of af — die vorm bly presies dieselfde.
+- **[regte antwoord]** c is die y-afsnit — die grafiek sny die y-as by c
+- **[vraag]** Drag c. Kyk waar die grafiek die y-as sny.
+- **[wenk]** Die gemerkte punt lê op die y-as. Lees dit by c = 3 en weer by c = −3.
+- Vergelyk daardie punt nou met die draaipunt. Is hulle dieselfde getal?
+- **[afleier]** c is die y van die draaipunt
+- **[nudge (na verkeerde keuse)]** Die draaipunt se y was elke enkele keer 'n ander getal as c.
+- **[afleier]** c skuif die grafiek links en regs
+- **[nudge (na verkeerde keuse)]** Die draaipunt se x het nooit geroer nie.
+- **[afleier]** c maak die arms nouer of wyer
+- **[nudge (na verkeerde keuse)]** Die vorm het presies dieselfde gebly; die prent het net op en af gereis.
+- **[metodekaart]** By y = ax² + bx + c is die c die y-afsnit: die grafiek sny die y-as presies by c.
+- Dit ry ook die hele grafiek op en af — maar die getal wat dit merk, is die y-afsnit, nie die draaipunt nie.
+- **[regte antwoord]** q is die y van die draaipunt; c is die y-afsnit
+- **[byskrif]** Albei panele begin as dieselfde parabool: ⟨…⟩
+- **[vraag]** Drag q in die boonste paneel en c in die onderste een. Wat is die verskil?
+- **[wenk]** Elke paneel het een punt gemerk. Lees daardie punt terwyl jy drag.
+- In die boonste paneel, vergelyk q met die gemerkte punt. In die onderste een, vergelyk c met sy gemerkte punt.
+- **[titel]** Draaipunt-vorm
+- **[titel]** Standaardvorm
+- **[afleier]** c is die y van die draaipunt; q is die y-afsnit
+- **[nudge (na verkeerde keuse)]** Jy het hulle omgeruil. Die hakie-vorm hou die draaipunt vas.
+- **[afleier]** q en c doen presies dieselfde werk
+- **[nudge (na verkeerde keuse)]** Albei ry die grafiek op en af — maar elkeen merk 'n ander punt.
+- **[afleier]** q skuif op en af; c skuif links en regs
+- **[nudge (na verkeerde keuse)]** Nie een paneel het ooit sywaarts beweeg nie.
+- **[metodekaart]** Draaipunt-vorm y = a(x − p)² + q: q is die y van die draaipunt.
+- Standaardvorm y = ax² + bx + c: c is die y-afsnit.
+- Albei skuif die grafiek op en af. Hulle hou net aan twee verskillende punte vas.
+- Ontdek
+- Drag een getal en kyk wat dit doen
+- **[intro-les]** Dis 'n parabool. Sy vergelyking dra drie getalle: a, p en q — ⟨…⟩.
+- **[intro-les]** Elke ronde vries twee van hulle en gee jou EEN skuiwer.
+- **[intro-les]** Drag deur die hele reeks en kyk mooi. Daarna kies jy self wat jy gesien het — hierdie app vertel dit nie eerste vir jou nie.
+
+## Quest 2 · Ontdek 2 (lyn · hiperbool · eksponensieel)
+
+- Drag dit deur die hele reeks — die opsies maak eers oop as jy elke stop gesien het.
+- Wat het jy gesien?
+- **[regte antwoord]** m positief → die lyn styg van links na regs (toenemend); m negatief → dit daal (afnemend)
+- **[vraag]** Drag m. Wat gebeur met die lyn?
+- **[wenk]** Sit m op 2 en kyk na die lyn. Sit dit dan op −2.
+- Het die y-afsnit beweeg? Of het net die rigting van die lyn verander?
+- **[afleier]** m positief → die lyn daal; m negatief → dit styg
+- **[nudge (na verkeerde keuse)]** Kyk weer na m = 1 en m = −1 — watter een styg?
+- **[afleier]** die teken van m skuif die lyn op en af
+- **[nudge (na verkeerde keuse)]** Die lyn het heeltyd deur dieselfde y-afsnit gegaan.
+- **[afleier]** die teken van m maak die lyn steiler of platter
+- **[nudge (na verkeerde keuse)]** Dis wat die GROOTTE van m doen, nie sy teken nie.
+- **[metodekaart]** m besluit watter kant toe die lyn gaan.
+- m > 0 → toenemend (styg van links na regs). m < 0 → afnemend (daal).
+- Die y-afsnit het nooit beweeg nie — net die rigting het omgedraai.
+- **[regte antwoord]** Groter m → die lyn is STEILER
+- **[vraag]** m bly hier positief. Drag m. Wat gebeur?
+- **[wenk]** Vergelyk m = 0,5 met m = 2. Hoe steil is die lyn elke keer?
+- Kyk na die y-afsnit terwyl jy drag. Beweeg dit hoegenaamd?
+- **[afleier]** Groter m → die lyn is PLATTER
+- **[nudge (na verkeerde keuse)]** By m = 2 het die lyn amper regop geskiet — vergelyk dit met m = 0,5.
+- **[afleier]** m skuif die lyn op en af
+- **[nudge (na verkeerde keuse)]** Die y-afsnit het heeltyd op sy plek gebly.
+- **[afleier]** m draai die lyn onderstebo
+- **[nudge (na verkeerde keuse)]** Dis wat 'n NEGATIEWE m doen. Hier het m heeltyd positief gebly.
+- **[metodekaart]** Hoe groter m, hoe steiler die lyn.
+- Tussen 0 en 1 werk dit andersom: m = 0,5 is platter as m = 1.
+- Die y-afsnit beweeg nooit nie — m verander net die steilheid.
+- **[regte antwoord]** c skuif die HELE lyn op en af. c is die y-afsnit.
+- **[vraag]** Drag c. Kyk waar die lyn die y-as sny.
+- **[wenk]** Lees die gemerkte punt by c = 3, dan weer by c = −3.
+- Vergelyk nou die lyn se steilheid by daardie twee stoppe. Het dit verander?
+- **[afleier]** c verander die lyn se steilheid
+- **[nudge (na verkeerde keuse)]** Die lyn het heeltyd presies ewe steil gebly — net sy hoogte het verander.
+- **[afleier]** c is die x-afsnit
+- **[nudge (na verkeerde keuse)]** Kyk waar die lyn die y-as sny, nie die x-as nie.
+- **[afleier]** c draai die lyn om
+- **[nudge (na verkeerde keuse)]** Die lyn het nooit onderstebo gedraai nie — dit het net op en af gery.
+- **[metodekaart]** c is die y-afsnit — die lyn sny die y-as presies by c.
+- Verander c en die hele lyn ry op of af — die steilheid bly presies dieselfde.
+- **[regte antwoord]** a positief → die arms lê regs-bo & links-onder van die kruis; a negatief → links-bo & regs-onder
+- **[vraag]** Drag a. In watter hoeke lê die arms?
+- **[wenk]** Sit a op 3 en kyk na die twee arms teenoor die kruis. Sit dit dan op −3.
+- Het die kruis beweeg? Of het net die arms van hoeke verruil?
+- **[afleier]** a positief → links-bo & regs-onder; a negatief → regs-bo & links-onder
+- **[nudge (na verkeerde keuse)]** Kyk weer na a = 3 — in watter hoek lê die arm eintlik, daar bo-regs?
+- **[afleier]** die teken van a skuif die stippellyn-kruis
+- **[nudge (na verkeerde keuse)]** Die kruis het heeltyd presies op dieselfde plek gebly — net die arms het omgeruil.
+- **[afleier]** die teken van a beheer hoe naby die arms aan die kruis lê
+- **[nudge (na verkeerde keuse)]** Dis die GROOTTE van a, nie sy teken nie.
+- **[metodekaart]** a besluit in watter paar hoeke die twee arms lê.
+- a > 0 → regs-bo & links-onder. a < 0 → links-bo & regs-onder.
+- Die stippellyn-kruis beweeg nooit nie — net die arms swaai na die ander paar hoeke.
+- **[regte antwoord]** p skuif die vertikale (stippel) asimptoot sywaarts — dit sit altyd by x = p
+- **[vraag]** Drag p. Kyk na die vertikale stippellyn.
+- **[wenk]** Sit p op 2. Lees die x-waarde waar die vertikale stippellyn sit.
+- Sit p nou op −2. Het die horisontale stippellyn hoegenaamd beweeg?
+- **[afleier]** p skuif die horisontale (stippel) asimptoot op en af
+- **[nudge (na verkeerde keuse)]** Kyk net na die horisontale stippellyn — dit het nooit beweeg nie.
+- **[afleier]** p verander in watter hoeke die arms lê
+- **[nudge (na verkeerde keuse)]** Die arms het heeltyd in dieselfde paar hoeke gebly — net die hele prent het sywaarts geskuif.
+- **[afleier]** p maak die arms nouer of losser om die kruis
+- **[nudge (na verkeerde keuse)]** Dis wat a doen, nie p nie.
+- **[metodekaart]** p is die x van die vertikale asimptoot.
+- Drag p en die hele prent — arms, kruis en al — ry saam met dit sywaarts.
+- **[regte antwoord]** q skuif die horisontale (stippel) asimptoot op en af — dit sit altyd by y = q
+- **[vraag]** Drag q. Kyk na die horisontale stippellyn.
+- **[wenk]** Sit q op 2. Lees die y-waarde waar die horisontale stippellyn sit.
+- Sit q nou op −2. Het die vertikale stippellyn hoegenaamd beweeg?
+- **[afleier]** q skuif die vertikale (stippel) asimptoot sywaarts
+- **[nudge (na verkeerde keuse)]** Kyk net na die vertikale stippellyn — dit het nooit beweeg nie.
+- **[afleier]** q verander in watter hoeke die arms lê
+- **[nudge (na verkeerde keuse)]** Die arms het heeltyd in dieselfde paar hoeke gebly — net die hele prent het op en af gery.
+- **[afleier]** q maak die arms nouer of losser om die kruis
+- **[nudge (na verkeerde keuse)]** Dis wat a doen, nie q nie.
+- **[metodekaart]** q is die y van die horisontale asimptoot.
+- Drag q en die hele prent — arms, kruis en al — ry saam met dit op en af.
+- **[regte antwoord]** a positief → die kurwe lê BO die asimptoot; a negatief → ONDER dit
+- **[vraag]** Drag a. Aan watter kant van die stippellyn lê die kurwe?
+- **[wenk]** Sit a op 2 en kyk bo of onder die stippellyn. Sit dit dan op −2.
+- Het die stippel-asimptootlyn self beweeg?
+- **[afleier]** a positief → onder die asimptoot; a negatief → bo dit
+- **[nudge (na verkeerde keuse)]** Kyk weer na a = 2 — lê die kurwe bo of onder die stippellyn daar?
+- **[afleier]** a beheer opstyg teenoor land
+- **[nudge (na verkeerde keuse)]** Dis wat b doen, nie a nie.
+- **[afleier]** a skuif die stippellyn op en af
+- **[nudge (na verkeerde keuse)]** Die stippellyn het nooit beweeg nie — net aan watter kant die kurwe lê het verander.
+- **[metodekaart]** a besluit aan watter kant van die asimptoot die hele kurwe lê.
+- a > 0 → bo die asimptoot. a < 0 → onder dit.
+- **[regte antwoord]** b tussen 0 en 1 → die kurwe LAND op die asimptoot soos x groei; b groter as 1 → dit STYG OP weg van die asimptoot
+- **[vraag]** Drag b. Kyk hoe die kurwe optree soos x groei (na regs).
+- **[wenk]** Sit b op 0,5 en kyk na die regterkant van die kurwe. Sit dit dan op 2.
+- By b = 0,5, kom die kurwe nader aan die stippellyn of verder weg, na regs toe?
+- **[afleier]** b tussen 0 en 1 → styg op; b groter as 1 → land
+- **[nudge (na verkeerde keuse)]** Kyk weer na b = 0,5 aan die regterkant — land dit op die stippellyn of vlieg dit weg?
+- **[afleier]** b skuif die stippellyn op en af
+- **[nudge (na verkeerde keuse)]** q doen dit — die stippellyn het nooit beweeg terwyl jy b gedrag het nie.
+- **[afleier]** b besluit aan watter kant van die asimptoot die kurwe lê
+- **[nudge (na verkeerde keuse)]** Dis wat a doen, nie b nie.
+- **[metodekaart]** b besluit hoe die kurwe optree soos x groei.
+- 0 < b < 1 → land op die asimptoot. b > 1 → styg op weg daarvan.
+- b is nooit nul of negatief nie.
+- **[regte antwoord]** q skuif die HELE kurwe — en sy asimptoot — op en af. Die asimptoot sit altyd by y = q.
+- **[vraag]** Drag q. Kyk na die stippel-asimptootlyn.
+- **[wenk]** Sit q op 2. Lees die y-waarde waar die stippellyn sit.
+- Sit q nou op −2. Het die kurwe se vorm verander, of net sy hoogte?
+- **[afleier]** q beheer opstyg teenoor land
+- **[nudge (na verkeerde keuse)]** Dis wat b doen — die kurwe se vorm het nooit verander terwyl jy q gedrag het nie.
+- **[afleier]** q besluit aan watter kant van die asimptoot die kurwe lê
+- **[afleier]** q is die y-afsnit
+- **[nudge (na verkeerde keuse)]** Kyk waar hierdie kurwe die y-as sny — dit was nooit dieselfde getal as q nie.
+- **[metodekaart]** q is die y van die asimptoot.
+- **[metodekaart]** Verander q en die hele prent ry saam met dit op of af — die vorm bly presies dieselfde.
+- Ontdek 2
+- Lyn, hiperbool, eksponensieel — drag een getal en kyk
+
+## Quest 3 · Vinnige Oë (vergelyking-flitse)
+
+- Geen
+- Waar is die horisontale asimptoot?
+- Waar is die vertikale asimptoot?
+- Wat is die simmetrie-as?
+- horisontale asimptoot
+- vertikale asimptoot
+- simmetrie-as
+- reguit lyn
+- parabool
+- hiperbool
+- eksponensiële grafiek
+- Net 'n hiperbool of 'n eksponensiële grafiek het 'n horisontale asimptoot.
+- Net 'n hiperbool het 'n vertikale asimptoot.
+- Die simmetrie-as geld net vir 'n parabool, gelees uit die hakie-vorm a(x − p)² + q.
+- **[regte antwoord]** Dis 'n ⟨…⟩ — dit het geen ⟨…⟩ nie.
+- Dis 'n ⟨…⟩. Sy ⟨…⟩ is ⟨…⟩.
+- Vinnige Oë
+- Flits — noem die asimptoot of simmetrie-as, geen prent nie
+
+## Quest 4 · Lees die gebied
+
+- Drag die punt van links na regs. Dit gaan nie terug nie.
+- Niks het opgelig nie — die grafiek is nie aan daardie kant nie. Probeer die ander kant.
+- Goed — probeer nou ook die ander kant.
+- Reg lyn — die definisieversameling lê op die x-as. Trek nou die skerm.
+- Reg lyn — die waardeversameling lê op die y-as. Trek nou die skerm.
+- Definisieversameling lê op die x-as — tik die ander lyn.
+- Waardeversameling lê op die y-as — tik die ander lyn.
+- Vir watter waardes van x is f stygend?
+- Vir watter waardes van x is f dalend?
+- Vir watter waardes van x is ⟨…⟩ stygend?
+- Vir watter waardes van x is ⟨…⟩ dalend?
+- So waar het jou hand OP gegaan?
+- So waar het jou hand AF gegaan?
+- **[wenk]** Die draai gebeur by x = ⟨…⟩.
+- **[antwoord-etiket]** f is ⟨…⟩ vir ⟨…⟩
+- Jou hand het nooit gedraai nie. Dus, vir watter x?
+- **[wenk]** 'n Eksponensiële grafiek het geen draaipunt nie — dit gaan net een rigting, vir sy HELE definisieversameling.
+- **[antwoord-etiket]** g is ⟨…⟩ vir ⟨…⟩
+- **[instruksie]** Stap die tak waarop jy die punt sien — links na regs.
+- **[wenk]** Hierdie tak kruis nooit x = ⟨…⟩ nie — die asimptoot is die grens.
+- **[wenk]** Die bokant van die halfsirkel is by x = 0. Daar draai dit.
+- **[nudge (na verkeerde keuse)]** Daai is die afdelings waar die grafiek ONDER die x-as lê — hierdie vraag vra vir bo.
+- Daai is die afdelings waar die grafiek BO die x-as lê — hierdie vraag vra vir onder.
+- **[nudge (na verkeerde keuse)]** Die antwoord moet x-waardes wees — die grafiek se HOOGTE is f(x), maar WAAR dit gebeur is 'n x.
+- **[nudge (na verkeerde keuse)]** 'n Streng sluit nooit die grens in nie — die grafiek is daar presies OP die as.
+- Vir watter waardes van x is f(x) > 0?
+- Vir watter waardes van x is f(x) < 0?
+- **[wenk]** Kyk waar die grafiek BO die x-as geteken is.
+- Kyk waar die grafiek ONDER die x-as geteken is.
+- Skryf dit as x-waardes, links na regs.
+- **[titel]** Wat is die waardeversameling van ⟨…⟩?
+- **[titel]** Wat is die definisieversameling van ⟨…⟩?
+- **[instruksie]** Eerste: op watter as lê die waardeversameling?
+- **[afleier]** Skryf nou die waardeversameling.
+- **[wenk]** Die draaipunt WORD bereik, so die teken sluit dit in: ≥ of ≤.
+- **[wenk]** Die grafiek kom nader en nader aan die asimptoot maar raak dit nooit — geen streep onder die teken nie.
+- **[afleier]** So wat is die waardeversameling?
+- **[wenk]** Daar is grafiek bo die lyn ÉN onder dit. Net een hoogte kom nie voor nie: die asimptoot self.
+- **[instruksie]** Eerste: op watter as lê die definisieversameling?
+- **[afleier]** So wat is die definisieversameling?
+- **[wenk]** Definisieversameling = x-waardes. Daar is grafiek links en regs van die lyn — net die lyn self ontbreek.
+- **[wenk]** 'n Halfsirkel hou aan albei kante op — dit bereik werklik 0 en werklik die bokant. Albei tekens kry 'n streep.
+- **[afleier]** Skryf nou die definisieversameling.
+- **[wenk]** Lees waar die grafiek begin en waar dit ophou op die x-as. Albei punte word bereik.
+- **[vraag]** (⟨…⟩ ; k) lê op f. Tik x = ⟨…⟩ op die skets.
+- **[instruksie]** Tik die x-as by x = ⟨…⟩.
+- So wat is k?
+- **[wenk]** Volg die stippellyn op vanaf die as tot by die kurwe, lees dan die hoogte.
+- **[antwoord-etiket]** k = ⟨…⟩
+- Lees die gebied
+- Een grafiek, een ding om na te kyk — baie herhalings
+- **[intro-les]** Hierdie soektog gaan oor EEN ding op 'n slag van 'n grafiek AFLEES — geen uitwerk nie, net kyk.
+- **[intro-les]** Sommige rondtes STAP jy 'n punt van links na regs — dit gaan nie terugtoe nie, so jou hand styg en daal presies soos die grafiek.
+- **[intro-les]** Vir definisie- en waardeversameling tik jy eers die AS waarop jou antwoord lê — x vir definisieversameling, y vir waardeversameling. Tik die verkeerde een en niks gebeur nie, probeer net weer.
+- **[intro-les]** Elke antwoord word altyd in x-waardes geskryf, of reguit van die prent afgelees. Reg?
+
+## Quest 5 · Op die grafiek
+
+- **[vraag]** P(⟨…⟩ ; k) lê op f. Drag P op die grafiek.
+- So wat is k?
+- **[wenk]** Vervang x = ⟨…⟩ in f(x) en werk die antwoord uit.
+- **[antwoord-etiket]** k = ⟨…⟩, dus is P ⟨…⟩
+- **[vraag]** P(k ; ⟨…⟩) lê op f. Drag P op die grafiek.
+- **[wenk]** Stel f(x) = ⟨…⟩ en los op vir x.
+- **[regte antwoord]** Vervang x = ⟨…⟩ en werk f(⟨…⟩) uit
+- P(⟨…⟩ ; k) lê op f. Watter stap gee vir jou k?
+- **[afleier]** Vervang y = ⟨…⟩ en los op vir x
+- **[nudge (na verkeerde keuse)]** ⟨…⟩ staan in die EERSTE plek, so dit is die x — nie die y nie.
+- **[afleier]** Stel f(x) = 0 en los op vir x
+- **[nudge (na verkeerde keuse)]** Dit kry die x-afsnit, nie 'n punt wat bo-op die kurwe lê nie.
+- Lees die y-afsnit van die grafiek af
+- **[wenk]** Volg die stippellyn af: watter koördinaat van P het hulle reeds gegee?
+- Hulle het die x gegee. Sit dit in en kyk wat uitkom.
+- **[antwoord-etiket]** k = f(⟨…⟩) = ⟨…⟩
+- **[vraag]** P(⟨…⟩ ; k) lê op die halfsirkel h. Drag P op die grafiek.
+- **[instruksie]** Net reguit op en af.
+- Die grafiek kan net OMTRENT wys waar k is. Gee k presies, in vereenvoudigde wortelvorm.
+- **[wenk]** Vervang in x² + y² = ⟨…⟩: y² = ⟨…⟩ − ⟨…⟩ = ⟨…⟩.
+- **[antwoord-etiket]** k = ⟨…⟩
+- **[regte antwoord]** ⟨…⟩ — h is net die boonste helfte, so 'n negatiewe y kan nie daarop lê nie
+- Algebraïes kry jy TWEE antwoorde. Watter een moet jy weggooi, en hoekom?
+- ⟨…⟩ — sy x is te groot
+- Nie een nie — albei lê op h
+- ⟨…⟩ — dit is buite die definisieversameling
+- **[byskrif]** h is die halfsirkel hieronder. Beide ⟨…⟩ en ⟨…⟩ voldoen aan x² + y² = 25.
+- **[wenk]** Kyk na die prentjie, nie net na die algebra nie. Waar loop h werklik?
+- **[antwoord-etiket]** Op die grafiek
+- P(5 ; k) lê op f — kry die maat
+
+## Quest 6 · Plus en minus
+
+- 'n Draaipunt is nie waar die grafiek van teken verander nie — geen lyn daar nie.
+- Die y-as is nie 'n grens nie — net x-afsnitte en asimptote kry lyne.
+- Lyne geplaas! Vul nou die tekentabel hieronder in.
+- Die rooi blokkies is verkeerd. Kyk na daardie afdeling: lê die grafiek BO die x-as (+) of ONDER (−)?
+- Nou die onderste ry: tekens DIESELFDE → +, tekens VERSKIL → −.
+- Kyk weer na die twee tekens in daardie kolom: dieselfde gee +, verskillend gee −.
+- Jy kort 'n grens — die asimptoot tel ook.
+- ⟨…⟩ van ⟨…⟩ geplaas.
+- 1. 'n Lyn deur elke x-afsnit en asimptoot.
+- 2. Merk elke afdeling: bo die x-as +, onder −.
+- 3. Produkry: dieselfde tekens +, verskillende tekens −.
+- **[nudge (na verkeerde keuse)]** Daai is die − afdelings. f(x) > 0 vra waar die grafiek BO die x-as lê — die + merke.
+- Daai is die + afdelings. f(x) < 0 vra waar die grafiek ONDER die x-as lê — die − merke.
+- **[nudge (na verkeerde keuse)]** Die antwoord moet x-waardes wees. f(x) is die hoogte, maar WAAR dit gebeur is 'n x.
+- **[nudge (na verkeerde keuse)]** 'n Streng sluit nooit die grenswaardes in nie.
+- **[vraag]** Vir watter waardes van x is f(x) > 0?
+- Vir watter waardes van x is f(x) < 0?
+- **[instruksie]** Stap 1: tik elke plek wat 'n vertikale lyn nodig het.
+- **[wenk]** Lyne gaan waar die grafiek die x-as SNY, en by asimptote — nêrens anders nie.
+- Lees dan jou + blokkies: daardie afdelings, links na regs, is die antwoord.
+- Lees dan jou − blokkies: daardie afdelings, links na regs, is die antwoord.
+- Lees die antwoord van jou + blokkies af.
+- Lees die antwoord van jou − blokkies af.
+- **[wenk]** Jou tabel het reeds die antwoord — voeg die regte afdelings saam, links na regs.
+- **[nudge (na verkeerde keuse)]** Daai kolomme het DIESELFDE tekens — die produk is positief daar.
+- Daai kolomme het VERSKILLENDE tekens — die produk is negatief daar.
+- **[nudge (na verkeerde keuse)]** 'n Streng ongelykheid sluit nooit die grense in nie.
+- ≤ en ≥ sluit WEL die x-afsnitte in (waar die produk 0 is) — maar nooit 'n asimptoot nie.
+- **[nudge (na verkeerde keuse)]** Die antwoord moet x-waardes wees, nie y nie.
+- **[vraag]** Vir watter waardes van x is f(x)·g(x) ⟨…⟩?
+- **[byskrif]** Albei grafieke kry 'n ry in die tabel.
+- **[wenk]** Lyne by elke x-afsnit van ALBEI grafieke, en by asimptote.
+- Die onderste ry doen die werk: dieselfde tekens +, verskillende tekens − ('tekens verskil').
+- Lees die antwoord van die onderste ry se − kolomme af.
+- Lees die antwoord van die onderste ry se + kolomme af.
+- **[wenk]** Die onderste ry IS die antwoord — skryf net die regte kolomme as x-intervalle.
+- **[regte antwoord]** positief — die grafiek is daar bo die x-as
+- negatief — die grafiek is daar onder die x-as
+- By x = ⟨…⟩, is f(x) positief of negatief?
+- nul
+- **[afleier]** jy kan nie van 'n skets af sê nie
+- **[nudge (na verkeerde keuse)]** Jy kan! Hoogte bo die as = positief, onder = negatief. Dis al wat f(x) beteken.
+- **[byskrif]** Die stippellyn wys hoe hoog die grafiek by daardie x is.
+- **[wenk]** f(x) is net die y-waarde — die hoogte van die grafiek by daardie x.
+- Volg die stippellyn: wys dit op vanaf die as, of af?
+- **[intro-les]** Die vraag: vir watter waardes van x is f(x) < 0? Onthou — f(x) is net die y-waarde, die HOOGTE van die grafiek.
+- **[intro-les]** Stap 1: trek 'n vertikale lyn deur ELKE x-afsnit (en elke asimptoot).
+- **[intro-les]** Stap 2: nommer die afdelings, links na regs.
+- **[intro-les]** Stap 3: merk elke afdeling — grafiek BO die x-as = +, ONDER = −.
+- **[intro-les]** Stap 4: lees af, links na regs. f(x) < 0 waar die − is: −1 < x < 3.
+- Plus en minus
+- f(x) > 0 en f(x)·g(x) < 0 — lyne, tabel, lees af
+
+## Quest 7 · Bo of onder
+
+- **[nudge (na verkeerde keuse)]** Daai is die afdelings waar f ONDER g lê — die vraag vra waar f bo lê.
+- Daai is die afdelings waar f BO g lê — die vraag vra waar f onder lê.
+- **[nudge (na verkeerde keuse)]** 'n Streng sluit nooit die grense in nie — en 'n asimptoot se x word NOOIT ingesluit nie.
+- **[nudge (na verkeerde keuse)]** Die antwoord moet x-waardes wees — ons vergelyk hoogtes, maar WAAR dit gebeur is 'n x.
+- **[vraag]** Vir watter waardes van x is f(x) > g(x)?
+- Vir watter waardes van x is f(x) < g(x)?
+- **[instruksie]** Die snylyne is reeds daar — elke snypunt, en die asimptoot. Tik nou elke afdeling: is f bo g, of onder?
+- **[wenk]** Tik 'n afdeling een keer vir +, twee keer vir −. + beteken f is daar BO g.
+- Sodra elke afdeling gestempel is, skuif die skandeerlyn oor links na regs om met die oog te toets.
+- Gestempel! Skuif nou die skandeerlyn oor, links na regs.
+- ⟨…⟩ van ⟨…⟩ gestempel.
+- Kies nou die antwoord.
+- **[wenk]** Voeg die afdelings saam wat jy + gemerk het. Die asimptoot se x word nooit ingesluit nie.
+- Voeg die afdelings saam wat jy + gemerk het, van links na regs.
+- **[metodekaart]** 1. 'n Lyn deur elke snypunt EN elke asimptoot — reeds geteken.
+- 2. Stempel elke afdeling: is f bo g (+) of onder (−)?
+- 3. Skryf die + afdelings as x-intervalle, links na regs — 'n asimptoot se x word nooit ingesluit nie.
+- **[regte antwoord]** Skryf die skakeerde strook in simbole. Wees versigtig met elke kant!
+- **[nudge (na verkeerde keuse)]** x = ⟨…⟩ is 'n vertikale asimptoot — die grafiek bereik dit nooit nie, so daardie kant kan nooit toe wees nie.
+- **[nudge (na verkeerde keuse)]** x = ⟨…⟩ is 'n werklike ontmoetpunt op albei grafieke, so dit KAN ingesluit word.
+- **[nudge (na verkeerde keuse)]** Intervalle word altyd links na regs geskryf — die kleiner getal eerste.
+- **[byskrif]** Die stippellyn aan die linkerkant is 'n asimptoot; die kolletjie aan die regterkant is waar die grafieke mekaar ontmoet.
+- **[wenk]** Lees eers die twee kante van die x-as af — wat is die getalle?
+- Nou elke teken: jy kan nooit OP 'n asimptoot staan nie (oop), maar 'n ontmoetpunt is 'n regte punt (kan toe wees).
+- **[metodekaart]** 1. Lees die linker- en regterkant van die x-as af.
+- 2. Asimptoot-kant → altyd (nooit ingesluit nie).
+- 3. Ontmoetpunt-kant → ≤ of ≥ is toegelaat.
+- **[antwoord-etiket]** Bo of onder
+- f(x) > g(x) — snylyne is reeds daar, stempel, sweep dan om te toets
+- **[intro-les]** Die vraag: vir watter waardes van x is f(x) > g(x)? In prente: WAAR lê f bo-op g?
+- **[intro-les]** Stap 1: die snylyne is reeds geteken — deur ELKE snypunt EN elke asimptoot.
+- **[intro-les]** Stap 2: nommer die afdelings, links na regs.
+- **[intro-les]** Stap 3: stempel elke afdeling — is f bo g (+) of onder (−)? ① + · ② − · ③ + · ④ −.
+- **[intro-les]** Stap 4: skuif 'n skandeerlyn links na regs oor die prent, om die stempels met jou eie oë te toets.
+- **[intro-les]** Stap 5: skryf die + afdelings, links na regs: x < −2 of 0 < x < 4. Die asimptoot se x = 0 word NOOIT ingesluit nie.
+
+## Quest 8 · Eksamenmodus
+
+- **[byskrif]** Die skets toon die halfsirkel h met middelpunt by die oorsprong, en die eksponensiële funksie g gegee deur ⟨…⟩.
+- Skryf die vergelyking van die asimptoot van g neer.
+- Bereken die x-afsnit van g.
+- Skryf die waardeversameling van g neer.
+- Skryf die definisieversameling van h neer.
+- Is g stygend of dalend? Gee 'n rede.
+- Stygend — a is positief en b = ⟨…⟩ is groter as 1
+- Dalend — a is negatief, dus is die grafiek omgekeer
+- Dalend — a is negatief
+- Stygend — a is positief
+- Stygend, dan dalend
+- Dalend — q is negatief (⟨…⟩)
+- **[regte antwoord]** Vir watter waardes van x is h(x)·g(x) ≤ 0?
+- **[byskrif]** Die skets toon die hiperbool f gegee deur ⟨…⟩ en die reguitlyn g gegee deur ⟨…⟩. Hulle sny mekaar by A en B.
+- Skryf die vergelykings van die asimptote van f neer.
+- Bereken die x-afsnit van f.
+- Skryf die koördinate van A en B neer.
+- Skryf die waardeversameling van f neer.
+- Is elke tak van f stygend of dalend?
+- Dalend — a is positief
+- Stygend — a is negatief
+- Een styg, een daal
+- Dit draai by die asimptoot
+- **[regte antwoord]** Vir watter waardes van x is f(x) > g(x)?
+- **[byskrif]** Die skets toon die parabool f met draaipunt ⟨…⟩.
+- Skryf die vergelyking van die simmetrie-as neer.
+- Skryf die x-afsnitte neer.
+- Vir watter waardes van x is f stygend?
+- **[regte antwoord]** Vir watter waardes van x is f(x) < 0?
+- Eksamenmodus
+- Een skets, elke vaardigheid — die regte ding
+
+## App-teks oral (knoppies, terugvoer, UI)
+
+- Waardeversameling
+- Fun Functions
+- Leer om die grafiek te SIEN
+- Speel
+- Begin
+- Volgende
+- Klaar
+- Kontroleer
+- Speel weer
+- Terug na die kaart
+- **[wenk]** Ek's verlore
+- **[wenk]** Nog 'n wenk
+- Dis al die wenke
+- Slaan oor
+- Kaart
+- Amper — halwe punte
+- Nie daai een nie — kyk weer, jy kry 'n tweede kans (halwe punte).
+- Hulp-modus is aan
+- Wenke maak vanself oop en elke vraag gee 'n tweede kans.
+- Comeback! Jy het aangehou probeer en dit gemaak
+- Kyk eers een saam
+- Kyk weer die les
+- Die metode
+- **[regte antwoord]** Korrek
+- **[regte antwoord]** Nie heeltemal nie
+- Die antwoord:
+- Punt
+- XP
+- Soektog
+- Voltooi eers die vorige soektog
+- klaar
+- beste
+- Herstel my vordering
+- Vee alle vordering op hierdie toestel uit?
+- Laai…
+- van
+- Drag die punt op die grafiek
+- Drag die punt sywaarts op die grafiek
+- Op die grafiek!
+- Mooi — antwoord dit nou.
+- Stap die punt van links na regs — dit gaan nie terug nie
+- Stap dit weer
+- STYGEND
+- DALEND
+- Begin drag
+- Jy het die hele grafiek gestap
+- Stap eers heeltemal tot regs
+- Trek die skerm oor die deel waar die grafiek lê
+- Merk elke stuk + of −
+- Nog te merk:
+- Tik elke plek wat 'n snylyn nodig het
+- Jy kort 'n grens
+- Een van daai het nie 'n lyn nodig nie
+- Skuif die skandeerlyn regs, afdeling vir afdeling
+- In hierdie afdeling, watter grafiek lê bo?
+- Bou die antwoord
+- die x-waarde
+- die y-waarde
+- x-as
+- y-as
+- albei
+
+## Kaart & skerms
+
+- Agt soektogte. Elkeen leer jou oë een taak — deur eers jou hand dit te laat doen.
+
+## App-raam
+
+- Kon nie stoor nie — jou vordering kan verlore gaan

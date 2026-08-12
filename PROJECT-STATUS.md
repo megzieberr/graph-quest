@@ -1,4 +1,4 @@
-# Project status — updated 2026-08-12 (overnight foreman run, batch 1 SHIPPED)
+# Project status — updated 2026-08-12 (morning: batch 1 live + wording pass prepared)
 
 **Read this first.** The v2 spec is [RUN-PLAN.md](RUN-PLAN.md); Megan's own class notes
 are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTIONS-NOTES-DIGEST.md).
@@ -46,18 +46,31 @@ are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTI
 - Ship 2026-08-12 (foreman): sw.js SHELL list completed and corrected (it still named
   the deleted q6-sweep.js, which would have broken the SW install), CACHE bumped gq-v5
   → gq-v6, pushed to main (push = deploy on this repo).
+- 2026-08-12 (morning): **Afrikaans wording pass runs via [AFRIKAANS-TEKS.md](AFRIKAANS-TEKS.md)**
+  — all 485 learner-facing Afrikaans strings extracted from source in play order, labelled
+  (vraag/wenk/afleier/nudge/metodekaart), ⟨…⟩ = runtime fill-ins. Megan edits the sentences
+  in that file; a correction session maps every change back into the code and re-runs the
+  harness. No more screenshot-by-screenshot wording fixes. The extractor lives at the
+  session scratchpad's `extract_af.py` pattern (re-derivable: parse `B("en","af")` +
+  `{en,af}` literals in map-order files) — regenerate the file after any content session.
 
 ## Pending on Megan
 
-1. 📱 15 min: **[blocking, morning]** play-test the new app on your phone — fully close
-   + reopen the PWA first (stale-icon/cache rule) — the whole point of the overnight run.
-2. 💻 2 min: [whenever] circle-geometry-game has 18 unpushed commits → run /ship there.
+1. 📱 15 min: **[blocking]** play-test the app on your phone — fully close + reopen the
+   PWA first — the whole point of the overnight run.
+2. 💻 20 min: **[blocking, feeds the correction session]** edit the sentences in
+   AFRIKAANS-TEKS.md (repo root) — only the Afrikaans words, leave labels and ⟨…⟩ alone.
+3. 💻 2 min: [whenever] circle-geometry-game has 18 unpushed commits → run /ship there.
 
 ## Next up
 
-- Her playtest verdict drives the next foreman day: wording tweaks, map order (Op die
-  grafiek now sits AFTER Lees die gebied — run-plan order, easily swapped), whether
-  Vinnige Oë / notation stay, Round D retry behavior.
+- **The correction session (she starts it):** read her edited AFRIKAANS-TEKS.md, diff it
+  against the shipped version (git has the original), map every changed sentence back to
+  its source string, re-run verify (wording checks included), commit; foreman-style ship
+  only with her go-ahead.
+- Her playtest verdict drives the next foreman day: map order (Op die grafiek now sits
+  AFTER Lees die gebied — run-plan order, easily swapped), whether Vinnige Oë / notation
+  stay, Round D retry behavior.
 - Then per RUN-PLAN "parked for later batches": transformations, finding equations,
   lengths, full inequalities batch (learner-placed cut lines return), nature of roots,
   average gradient, error-spotting, eksamenmodus rebuild.
