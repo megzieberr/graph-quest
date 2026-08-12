@@ -261,10 +261,16 @@ export function intervalStr(iv, win, openL = true, openR = true) {
   return `${C(iv.x0)} ${openL ? lt : le} x ${openR ? lt : le} ${C(iv.x1)}`;
 }
 
-/* the full answer: merged intervals joined with "or" / "of" */
+/* the full answer: merged intervals joined with "or" / "of".
+   The join word carries NON-BREAKING spaces on purpose. An option button
+   (.opt) is a flex container, and flex turns each run of text into its own
+   item with the edge spaces trimmed off — so a plain " of " rendered as
+   "x < 1of2 < x < 5" on Megan's phone (2026-08-12). A <wbr> puts back the
+   break opportunity the nbsp removes: this stays the only place the answer
+   may wrap, so an interval never splits across two lines. */
 export function joinIntervals(parts, lang = "af") {
-  const word = lang === "en" ? " or " : " of ";
-  return parts.join(word);
+  const word = lang === "en" ? " or " : " of ";
+  return parts.join(`<wbr>${word}`);
 }
 
 /* ============================================================

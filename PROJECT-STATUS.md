@@ -14,7 +14,7 @@ are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTI
   Op die grafiek (v1 q2, kept) · Plus en minus (v1 q5, kept) · Bo of onder (Round D:
   pre-drawn cuts, +/− stamping, scan line) · Eksamenmodus (v1 q7, kept).
 - v1's q1-axis / q3-curtain / q4-climb / q6-sweep are retired and deleted.
-- **verify.html: 78 checks, ALL PASS** — grown from 40, now covering the square-grid
+- **verify.html: 79 checks, ALL PASS** — grown from 40, now covering the square-grid
   window engine, slider mechanics read back off the SVG against funclib, no-spoilers
   wording, her "drag/sin" rulings, frozen-asymptote visibility, full-hand options,
   sub-in point containment, Round D cut-line exactness and scaffold gating.
@@ -71,6 +71,15 @@ are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTI
   Her ruling: ask about the branch instead — "vir watter waardes van x is hierdie
   **vlerkie** stygend?" The parabola climb still asks about f, correctly: a parabola
   has a real turning point. Never let a question name f when the answer is one wing.
+- 2026-08-12: **"x < 1of2 < x < 5"** — she caught the join word glued to its
+  neighbours in an option button. Cause (measured, not guessed): `.opt` is
+  `display:flex`, and a flex container turns each run of text into its own item
+  with the edge whitespace trimmed, so `parts.join(" of ")` lost both spaces.
+  Fix: `joinIntervals()` joins with NON-BREAKING spaces plus a `<wbr>`, which
+  keeps the join word as the answer's only line-break point. Harness check 9f
+  measures the gap and fails on a plain-space join — verified by re-running it
+  against the old string. Watch for this anywhere else text sits beside an
+  element inside a flex box.
 - 2026-08-12: AFRIKAANS-TEKS.md missed one string — `coach` in q2-point.js is built
   with `"..." + C(y) + "."` instead of a template literal, so the extractor skipped
   it. Any future extractor must handle concatenation, not just `${}`.
@@ -87,7 +96,7 @@ are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTI
 ## Next up
 
 - The wording correction session is DONE (2026-08-12): 46 of her edits + 34 sweep
-  swaps mapped into 8 source files, 78/78 harness checks pass, map read at 375 px
+  swaps mapped into 8 source files, 79/79 harness checks pass, map read at 375 px
   with no overflow. The workflow held — do it this way again, and regenerate
   AFRIKAANS-TEKS.md after any session that adds strings.
 - Her playtest verdict drives the next foreman day: map order (Op die grafiek now sits
@@ -107,7 +116,7 @@ python -m http.server 5207 --directory "C:\Users\megzi\Desktop\Claude Code Proje
 
 Then <http://localhost:5207/> (`?local=1` forces local save mode). Preview entry
 `graph-quest` (port 5207) in the nested `C:\Users\megzi\.claude\.claude\launch.json`.
-verify.html is the harness — all 78 must pass before any commit.
+verify.html is the harness — all 79 must pass before any commit.
 
 ⚠ Cache discipline (it lied to THREE reviews this build): before trusting verify.html
 in a browser, unregister the SW, delete `gq-*` caches, AND force-refetch changed modules
@@ -138,7 +147,7 @@ js/
   quests/q1-discover.js · q1b-discover2.js · qB-recognize.js · q3-region.js ·
          q2-point.js · q5-signs.js · q6-compare.js · q7-exam.js
 supabase/schema.sql   written, not run
-verify.html           the harness: 78 checks — §4b + frozen-asymptote + containment
+verify.html           the harness: 79 checks — §4b + frozen-asymptote + containment
                       + Round D exactness are never-relax rules
-sw.js                 network-first for code; SHELL precache; CACHE = gq-v7
+sw.js                 network-first for code; SHELL precache; CACHE = gq-v8
 ```

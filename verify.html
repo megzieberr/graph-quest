@@ -27,7 +27,7 @@ import { L, UI, setLang } from "./js/i18n.js";
 import { fmtComma } from "./js/check.js";
 import {
   makeFn, criticalXs, sections, signAt, intersections, paraTP, paraRoots,
-  makeFn as mf, intervalStr, mergeSections,
+  makeFn as mf, intervalStr, mergeSections, joinIntervals,
 } from "./js/funclib.js";
 import {
   specFor, randParabola, randHyperbola, randExp, randLine, randSemicircle,
@@ -1142,6 +1142,34 @@ for (const lang of ["af", "en"]) {
   const ids = QUESTS.map((q) => q.id);
   check(g, "q6's retired v1 skills (topSweep/whichCuts) are gone and the new compareSweep round is in, QUESTS still holds 8",
     !sawOld && sawNew && ids.length === 8 && ids.includes("q6"), `ids: ${ids.join(", ")}`);
+
+  /* 9f. a two-part answer must show real space around "of"/"or" INSIDE an
+     option button. .opt is display:flex, and flex trims the edge spaces off
+     a text run, so a plain " of " renders glued as "x < 1of2 < x < 5" —
+     Megan caught exactly that on her phone (2026-08-12). Measured, not
+     assumed: the gap between the two interval spans must be clearly wider
+     than the join word alone. Never relax this one. */
+  const joinBad = [];
+  for (const lang of ["af", "en"]) {
+    const word = lang === "en" ? "or" : "of";
+    const parts = ["<span class='eq'>x &lt; 1</span>", "<span class='eq'>2 &lt; x &lt; 5</span>"];
+    const probe = document.createElement("div");
+    probe.className = "opt";
+    probe.style.cssText = "width:340px;position:absolute;left:-9999px";
+    const gapOf = (html) => {
+      probe.innerHTML = html;
+      document.body.appendChild(probe);
+      const sp = probe.querySelectorAll("span.eq");
+      const gap = sp[1].getBoundingClientRect().left - sp[0].getBoundingClientRect().right;
+      probe.remove();
+      return gap;
+    };
+    const glued = gapOf(parts.join(word));           // no spaces at all
+    const real = gapOf(joinIntervals(parts, lang));  // what the app ships
+    if (!(real > glued + 4)) joinBad.push(`${lang}: glued ${glued.toFixed(1)}px vs shipped ${real.toFixed(1)}px`);
+  }
+  check(g, `a two-part answer keeps a real space each side of "of"/"or" inside a flex option button`,
+    joinBad.length === 0, joinBad.join(" · "));
 
   host.remove();
 }
