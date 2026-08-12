@@ -557,6 +557,7 @@ export function sweep(host, opts) {
   const { xmin, xmax, ymin, ymax } = g.win;
 
   let idx = -1;                                    // section the scan line is inside
+  let reached = -1;                                // furthest section ever entered
   let limit = open ? xmax : sections[0].x1;         // may not pass this until unlocked
   let x = xmin;
 
@@ -592,18 +593,28 @@ export function sweep(host, opts) {
   function enter(i) {
     if (i === idx) return;
     idx = i;
+    if (i > reached) reached = i;
     if (!plain) {
-      sections.forEach((s, k) => s._rect.setAttribute("opacity", k === i ? 1 : k < i ? 0.55 : 0));
-      sections.forEach((s, k) => s._rect.setAttribute("class", k < i ? "iv-sect done" : "iv-sect"));
+      /* the shading follows the FURTHEST point reached, not where the line
+         happens to be now — sliding back to re-check a section must never
+         un-paint the work already done */
+      sections.forEach((s, k) => s._rect.setAttribute("opacity", k === i ? 1 : k <= reached ? 0.55 : 0));
+      sections.forEach((s, k) => s._rect.setAttribute("class", k < reached ? "iv-sect done" : "iv-sect"));
     }
     buzz(14);
     if (onEnter) onEnter(sections[i], i);
   }
 
+  /* The scan line slides BOTH ways (Megan, 2026-08-12): while she is picking
+     the answer she wants to run it back over a section and look again. The
+     gate only ever limits how far RIGHT it may go — leftward is always free
+     and never un-does progress.
+     The climb is deliberately NOT like this: it stays strictly one-way so a
+     graph gets read left to right. Harness check 8b guards that; do not
+     "tidy up" the two mechanics into one. */
   drag(svg, g, ({ px }) => {
-    const want = g.xAt(px);
-    const nx = clamp(Math.max(x, want), xmin, limit);   // right-only, and never past the gate
-    if (nx <= x + 1e-9) return;
+    const nx = clamp(g.xAt(px), xmin, limit);
+    if (Math.abs(nx - x) <= 1e-9) return;
     x = nx; paint();
     const i = sections.findIndex((s) => x >= s.x0 - 1e-9 && x <= s.x1 + 1e-9);
     if (i >= 0) enter(i);
@@ -611,13 +622,15 @@ export function sweep(host, opts) {
 
   return {
     current: () => idx,
-    /* open the gate to the end of the next section */
+    /* open the gate to the end of the next section — measured from the
+       furthest section reached, so unlocking still works if she has slid
+       the line back to look at an earlier one */
     unlock() {
-      const nxt = sections[idx + 1];
+      const nxt = sections[reached + 1];
       limit = nxt ? nxt.x1 : xmax;
-      if (idx >= 0) sections[idx]._rect.setAttribute("class", "iv-sect done");
+      if (reached >= 0) sections[reached]._rect.setAttribute("class", "iv-sect done");
     },
-    isFinished: () => idx >= sections.length - 1,
+    isFinished: () => reached >= sections.length - 1,
   };
 }
 

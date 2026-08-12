@@ -162,9 +162,17 @@ const SKILLS = {
         /* ---- phase 2: sweep left to right — just the line, no shading ---- */
         function startSweep() {
           const state = { ...stamper.state() };
+          /* the scan line slides both ways now, so the last section can be
+             entered more than once — this must still advance the round
+             exactly once */
+          let finished = false;
           sweep(host, {
             spec: linedSpec, sections: secs, plain: true, open: true,
-            onEnter: (sec, i) => { if (i >= secs.length - 1) setTimeout(done, 300); },
+            onEnter: (sec, i) => {
+              if (finished || i < secs.length - 1) return;
+              finished = true;
+              setTimeout(done, 300);
+            },
           });
           /* her board method reads the ANSWER off the PAINTING — so the
              painting must survive into this phase (mount() replaced the

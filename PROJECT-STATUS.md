@@ -14,7 +14,7 @@ are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTI
   Op die grafiek (v1 q2, kept) · Plus en minus (v1 q5, kept) · Bo of onder (Round D:
   pre-drawn cuts, +/− stamping, scan line) · Eksamenmodus (v1 q7, kept).
 - v1's q1-axis / q3-curtain / q4-climb / q6-sweep are retired and deleted.
-- **verify.html: 79 checks, ALL PASS** — grown from 40, now covering the square-grid
+- **verify.html: 81 checks, ALL PASS** — grown from 40, now covering the square-grid
   window engine, slider mechanics read back off the SVG against funclib, no-spoilers
   wording, her "drag/sin" rulings, frozen-asymptote visibility, full-hand options,
   sub-in point containment, Round D cut-line exactness and scaffold gating.
@@ -80,6 +80,15 @@ are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTI
   measures the gap and fails on a plain-space join — verified by re-running it
   against the old string. Watch for this anywhere else text sits beside an
   element inside a flex box.
+- 2026-08-12: **the scan line slides BOTH ways** (her call, from the phone). While
+  she is choosing the answer she wants to run the line back over a section and
+  look again. `sweep()` dropped its `Math.max(x, want)` right-only clamp; the gate
+  still only limits how far RIGHT it may go, and a `reached` high-water mark means
+  sliding back never un-does progress or un-finishes the round. Round D's `onEnter`
+  is guarded so re-entering the last section cannot advance the round twice.
+  ⚠ **The CLIMB stays strictly one-way** — that is the headline mechanic and it is
+  what teaches left-to-right reading. Two mechanics, two rules: check 8b guards the
+  climb, check 9g guards the sweep. Never unify them.
 - 2026-08-12: AFRIKAANS-TEKS.md missed one string — `coach` in q2-point.js is built
   with `"..." + C(y) + "."` instead of a template literal, so the extractor skipped
   it. Any future extractor must handle concatenation, not just `${}`.
@@ -96,7 +105,7 @@ are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTI
 ## Next up
 
 - The wording correction session is DONE (2026-08-12): 46 of her edits + 34 sweep
-  swaps mapped into 8 source files, 79/79 harness checks pass, map read at 375 px
+  swaps mapped into 8 source files, 81/81 harness checks pass, map read at 375 px
   with no overflow. The workflow held — do it this way again, and regenerate
   AFRIKAANS-TEKS.md after any session that adds strings.
 - Her playtest verdict drives the next foreman day: map order (Op die grafiek now sits
@@ -116,7 +125,7 @@ python -m http.server 5207 --directory "C:\Users\megzi\Desktop\Claude Code Proje
 
 Then <http://localhost:5207/> (`?local=1` forces local save mode). Preview entry
 `graph-quest` (port 5207) in the nested `C:\Users\megzi\.claude\.claude\launch.json`.
-verify.html is the harness — all 79 must pass before any commit.
+verify.html is the harness — all 81 must pass before any commit.
 
 ⚠ Cache discipline (it lied to THREE reviews this build): before trusting verify.html
 in a browser, unregister the SW, delete `gq-*` caches, AND force-refetch changed modules
@@ -147,7 +156,7 @@ js/
   quests/q1-discover.js · q1b-discover2.js · qB-recognize.js · q3-region.js ·
          q2-point.js · q5-signs.js · q6-compare.js · q7-exam.js
 supabase/schema.sql   written, not run
-verify.html           the harness: 79 checks — §4b + frozen-asymptote + containment
+verify.html           the harness: 81 checks — §4b + frozen-asymptote + containment
                       + Round D exactness are never-relax rules
-sw.js                 network-first for code; SHELL precache; CACHE = gq-v8
+sw.js                 network-first for code; SHELL precache; CACHE = gq-v9
 ```

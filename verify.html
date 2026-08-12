@@ -22,7 +22,7 @@
 <script type="module">
 import { QUESTS, buildRound, setSemicircles } from "./js/quests/index.js";
 import { verifyFunction, renderFunction, computeFunction } from "./js/engine/function-graph.js";
-import { axisGate } from "./js/engine/interactive.js";
+import { axisGate, sweep } from "./js/engine/interactive.js";
 import { L, UI, setLang } from "./js/i18n.js";
 import { fmtComma } from "./js/check.js";
 import {
@@ -1170,6 +1170,47 @@ for (const lang of ["af", "en"]) {
   }
   check(g, `a two-part answer keeps a real space each side of "of"/"or" inside a flex option button`,
     joinBad.length === 0, joinBad.join(" · "));
+
+  /* 9g. the scan line slides BOTH ways. Megan asked for this while picking
+     an answer — she wants to run the line back over a section and look
+     again (2026-08-12). Sliding back must not un-finish the round either.
+     NOTE the deliberate asymmetry with check 8b: the CLIMB stays one-way
+     forever, because that is what teaches left-to-right reading. Two
+     mechanics, two rules — never unify them. */
+  {
+    const cv = randLine();
+    const win = windowFor([cv]);
+    const spec = specFor([cv], { win });
+    const midX = (win.xmin + win.xmax) / 2;
+    const secs = [
+      { x0: win.xmin, x1: midX, mid: (win.xmin + midX) / 2 },
+      { x0: midX, x1: win.xmax, mid: (midX + win.xmax) / 2 },
+    ];
+    const entered = [];
+    const box = document.createElement("div");
+    host.appendChild(box);
+    const ctl = sweep(box, { spec, sections: secs, plain: true, open: true, onEnter: (s, i) => entered.push(i) });
+    const svg = box.querySelector("svg");
+    const r = svg.getBoundingClientRect();
+    if (!r.width || !r.height) {
+      info(g, "no live layout in this environment — the scan-line drag was not probed");
+    } else {
+      const scanX = () => +svg.querySelector(".iv-scan").getAttribute("x1");
+      const fire = (type, fracX) => svg.dispatchEvent(new PointerEvent(type, {
+        bubbles: true, cancelable: true, pointerId: 1,
+        clientX: r.left + r.width * fracX, clientY: r.top + r.height * 0.5,
+      }));
+      fire("pointerdown", 0.15);
+      fire("pointermove", 0.92);
+      const atRight = scanX();
+      fire("pointermove", 0.28);
+      const backLeft = scanX();
+      check(g, "the scan line slides back to the left when dragged back, so a section can be re-checked",
+        backLeft < atRight - 1, `swept to ${atRight.toFixed(1)}px, dragged back to ${backLeft.toFixed(1)}px`);
+      check(g, "sliding the scan line back does not un-finish the round (the furthest section reached is what counts)",
+        ctl.isFinished() === true, `sections entered: ${entered.join(" → ")}`);
+    }
+  }
 
   host.remove();
 }
