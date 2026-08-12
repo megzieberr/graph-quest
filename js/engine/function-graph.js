@@ -221,11 +221,16 @@ export function renderFunction(spec) {
   /* ---- the curves ---- */
   (spec.curves || []).forEach((cv) => {
     const stroke = cv.tone ? TONES[cv.tone] : "var(--accent)";
+    /* cv.faint: reduced opacity, for a curve drawn as a "before" reference
+       next to a solid "after" one (batch 2's transformations quest) — never
+       used anywhere the curve is the only one on screen, since a faint
+       curve alone would fail the "curve is visible" spirit of the frame */
+    const op = cv.faint ? ";opacity:.42" : "";
     curvePaths(cv, g).forEach((d) => {
-      out += `<path class="fg-curve${cv.dash ? " dash" : ""}" d="${d}" style="stroke:${stroke}"/>`;
+      out += `<path class="fg-curve${cv.dash ? " dash" : ""}" d="${d}" style="stroke:${stroke}${op}"/>`;
     });
     curveExitArrows(cv, g).forEach((d) => {
-      out += `<path class="fg-curve-arrow" d="${d}" style="fill:${stroke}"/>`;
+      out += `<path class="fg-curve-arrow" d="${d}" style="fill:${stroke}${op}"/>`;
     });
     if (cv.label && cv.labelAt !== undefined) {
       const f = makeFn(cv), lx = cv.labelAt, ly = f(lx);

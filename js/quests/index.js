@@ -37,6 +37,11 @@ import { quest6 } from "./q6-compare.js";
    "Gemiddelde gradiënt" (average gradient — the gradient of the chord). */
 import { questLengths } from "./qL-lengths.js";
 import { questGradient } from "./qG-gradient.js";
+/* batch 2, session 2: transformations slots in AFTER questGradient and
+   BEFORE quest7 (Eksamenmodus) — exam mode samples everything that exists
+   before it, so it stays last. Working name "Transformasies", hers to
+   rename: see, then name, the move that turned f into its image. */
+import { questTransform } from "./qT-transform.js";
 import { quest7, TECHOK, resetExam } from "./q7-exam.js";
 import { CONTENT } from "./_graphs.js";
 import { pick, shuffled } from "../ui.js";
@@ -47,7 +52,7 @@ import { pick, shuffled } from "../ui.js";
    The map unlocks strictly in this array's order, so this array IS the order. */
 export const QUESTS = [
   questDiscover, questDiscover2, questRecognize, quest2,
-  quest3, quest5, quest6, questLengths, questGradient, quest7,
+  quest3, quest5, quest6, questLengths, questGradient, questTransform, quest7,
 ];
 
 /* flip semicircle content on/off everywhere */

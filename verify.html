@@ -29,7 +29,7 @@ import { fmtComma } from "./js/check.js";
 import {
   makeFn, criticalXs, sections, signAt, intersections, paraTP, paraRoots,
   makeFn as mf, intervalStr, mergeSections, joinIntervals,
-  lengthBetween, avgGradient, gradientStr,
+  lengthBetween, avgGradient, gradientStr, eqStr, eqTPStr, EQ,
 } from "./js/funclib.js";
 import {
   specFor, randParabola, randHyperbola, randExp, randLine, randSemicircle,
@@ -1024,12 +1024,13 @@ for (const lang of ["af", "en"]) {
     wantConcepts.every((c) => concepts.has(c)));
 
   const ids = QUESTS.map((q) => q.id);
-  /* was 8 through batch 1; batch 2 session 1 (2026-08-12) intentionally adds
-     two — qL (Lengths) and qG (Average gradient) — between q6 and q7. This
+  /* was 8 through batch 1; batch 2 session 1 (2026-08-12) added two — qL
+     (Lengths) and qG (Average gradient) — between q6 and q7; batch 2 session 2
+     (2026-08-12) added a third, qT (Transformations), right after qG. This
      literal is a roster-size regression guard, updated deliberately here, not
      relaxed: it still fails the moment a quest silently vanishes or duplicates. */
-  check(g, "QUESTS holds exactly 10 quests and q4 no longer exists as a separate quest",
-    ids.length === 10 && !ids.includes("q4"), `ids: ${ids.join(", ")}`);
+  check(g, "QUESTS holds exactly 11 quests and q4 no longer exists as a separate quest",
+    ids.length === 11 && !ids.includes("q4"), `ids: ${ids.join(", ")}`);
 }
 
 /* ---------- 9. Round D (q6) — pre-drawn cuts, stamp, sweep, scaffold-on-error (session 5) ----------
@@ -1146,8 +1147,8 @@ for (const lang of ["af", "en"]) {
     });
   }
   const ids = QUESTS.map((q) => q.id);
-  check(g, "q6's retired v1 skills (topSweep/whichCuts) are gone and the new compareSweep round is in, QUESTS holds 10 (batch 2 added qL/qG)",
-    !sawOld && sawNew && ids.length === 10 && ids.includes("q6"), `ids: ${ids.join(", ")}`);
+  check(g, "q6's retired v1 skills (topSweep/whichCuts) are gone and the new compareSweep round is in, QUESTS holds 11 (batch 2 added qL/qG/qT)",
+    !sawOld && sawNew && ids.length === 11 && ids.includes("q6"), `ids: ${ids.join(", ")}`);
 
   /* 9f. a two-part answer must show real space around "of"/"or" INSIDE an
      option button. .opt is display:flex, and flex trims the edge spaces off
@@ -1282,7 +1283,7 @@ for (const lang of ["af", "en"]) {
     offAxisBad.length === 0, offAxisBad.slice(0, 3).join(" · "));
 
   const rawUsers = [];
-  for (const f of ["./js/quests/qL-lengths.js", "./js/quests/qG-gradient.js"]) {
+  for (const f of ["./js/quests/qL-lengths.js", "./js/quests/qG-gradient.js", "./js/quests/qT-transform.js"]) {
     const src = await (await fetch(f, { cache: "reload" })).text();
     if (/randHyperbola\s*\(/.test(src.replace(/randHyperbolaOffAxis\s*\(/g, "SAFE("))) rawUsers.push(f);
     if (/kind:\s*"hyperbola"[^}]*\bp:\s*0\b/.test(src)) rawUsers.push(`${f} (hard-coded p: 0)`);
@@ -1456,6 +1457,146 @@ for (const lang of ["af", "en"]) {
     if (answer && said.includes(answer)) { bad++; why = `${it.skillId}: "${said.slice(0, 70)}" contains its own answer "${answer}"`; }
   });
   check(g, "no qG prompt/coach contains its own answer", bad === 0, why);
+}
+
+/* ---------- 13. Quest qT (Transformations) — batch 2, session 2 ----------
+   See the move, then name it (Law 1: no algebra — every option is either
+   read off a picture or built by adding/subtracting a whole number to p/q,
+   never solved for). Every check here recomputes independently of the
+   generator: it never trusts debugTransform's own arithmetic, only the
+   raw p/q values it exposes. */
+{
+  setLang("af");
+  const g = group("13. Quest qT (Transformations) — batch 2, session 2");
+
+  const REPS = 20;
+  const items = [];
+  let genBad = 0, genWhy = "";
+  for (let rep = 0; rep < REPS; rep++) {
+    let round = [];
+    try { round = buildRound("qT"); } catch (e) { genBad++; genWhy = "threw: " + e.message; break; }
+    round.forEach((it) => items.push(it));
+  }
+  check(g, `qT builds ${REPS} full rounds without throwing`, genBad === 0, genWhy);
+
+  const eqStrFor = (family, cv, name) => (family === "parabola" ? eqTPStr(cv, name) : eqStr(cv, name));
+
+  /* 13a. the image curve really is where the maths says — recomputed here
+     from the exposed base p/q and the exposed dp/dq, never trusting the
+     generator's own `image`/`correctCv`/`target` field */
+  let bad = 0, why = "", checked = 0;
+  items.forEach((it) => {
+    const dc = it.debugTransform;
+    if (!dc) { bad++; why = `${it.skillId}: no debugTransform exposed for verification`; return; }
+    if (dc.kind === "nameMove") {
+      checked++;
+      const wantP = (dc.base.p || 0) + dc.dp, wantQ = (dc.base.q || 0) + dc.dq;
+      if (dc.image.p !== wantP || dc.image.q !== wantQ) {
+        bad++; why = `${it.skillId}: image p/q (${dc.image.p};${dc.image.q}) ≠ recomputed (${wantP};${wantQ})`; return;
+      }
+    } else if (dc.kind === "pickEquation") {
+      checked++;
+      const wantP = (dc.base.p || 0) + dc.dp, wantQ = (dc.base.q || 0) + dc.dq;
+      if (dc.correctCv.p !== wantP || dc.correctCv.q !== wantQ) {
+        bad++; why = `${it.skillId}: correct option p/q (${dc.correctCv.p};${dc.correctCv.q}) ≠ recomputed (${wantP};${wantQ})`; return;
+      }
+      const gotLabel = strip(L(it.options.find((o) => o.correct).label));
+      const wantLabel = strip(EQ(eqStrFor(dc.family, dc.correctCv, "g(x)")));
+      if (gotLabel !== wantLabel) { bad++; why = `${it.skillId}: marked-correct option "${gotLabel}" ≠ recomputed "${wantLabel}"`; }
+    } else if (dc.kind === "reflection") {
+      checked++;
+      /* independent recompute of both reflections from the raw base, never
+         trusting the generator's own reflectX/reflectY output */
+      const b = dc.base;
+      const rx = dc.family === "line" ? { a: -b.a, q: -b.q } : { a: -b.a, p: b.p, q: -b.q };
+      const ry = dc.family === "line" ? { a: -b.a, q: b.q }
+        : dc.family === "parabola" ? { a: b.a, p: -b.p, q: b.q } : { a: -b.a, p: -b.p, q: b.q };
+      const want = dc.axis === "x" ? rx : ry;
+      if (dc.image.a !== want.a || (dc.image.p || 0) !== (want.p || 0) || dc.image.q !== want.q) {
+        bad++; why = `${it.skillId}: image (a=${dc.image.a},p=${dc.image.p},q=${dc.image.q}) ≠ recomputed reflection`; return;
+      }
+    } else if (dc.kind === "slideMatch") {
+      checked++;
+      const want = (dc.base[dc.axis] || 0) + (dc.axis === "p"
+        ? (dc.dir === "right" ? dc.k : dc.dir === "left" ? -dc.k : 0)
+        : (dc.dir === "up" ? dc.k : dc.dir === "down" ? -dc.k : 0));
+      if (dc.targetVal !== want) { bad++; why = `${it.skillId}: targetVal ${dc.targetVal} ≠ recomputed ${want}`; }
+    } else { bad++; why = `${it.skillId}: unknown debugTransform.kind "${dc.kind}"`; }
+  });
+  check(g, `the image/target/option curve is exactly where the maths says (${checked} rounds)`, bad === 0, why);
+
+  /* 13b. every mc round in qT deals a full hand of 4 distinct options */
+  bad = 0; why = "";
+  items.forEach((it) => {
+    const q = it.type === "interactive" ? it.then : it;
+    if (!q) return;
+    const opts = q.options;
+    if (opts.length !== 4) { bad++; why = `${it.skillId}: ${opts.length} options`; return; }
+    if (opts.filter((o) => o.correct).length !== 1) { bad++; why = `${it.skillId}: not exactly one correct option`; return; }
+    const labels = opts.map((o) => strip(L(o.label)));
+    if (new Set(labels).size !== 4) { bad++; why = `${it.skillId}: duplicate options — ${labels.join(" | ")}`; }
+  });
+  check(g, `every qT round deals a full hand of 4 distinct options with exactly one correct (${items.length} rounds)`, bad === 0, why);
+
+  /* 13c. both curves sit inside the window, whenever a picture is drawn —
+     recomputed from debugTransform's raw base/image/target, never trusting
+     the spec the generator already built */
+  bad = 0; why = "";
+  items.forEach((it) => {
+    const dc = it.debugTransform;
+    if (!dc || !dc.win) return;
+    const curves = [dc.base, dc.image, dc.target].filter(Boolean);
+    curves.forEach((cv) => {
+      const feats = features(cv);
+      feats.xs.forEach((x) => { if (x < dc.win.xmin - 1e-6 || x > dc.win.xmax + 1e-6) { bad++; why = `${it.skillId}: an x feature (${x.toFixed(2)}) of ${cv.kind} sits outside its own window`; } });
+      feats.ys.forEach((y) => { if (y < dc.win.ymin - 1e-6 || y > dc.win.ymax + 1e-6) { bad++; why = `${it.skillId}: a y feature (${y.toFixed(2)}) of ${cv.kind} sits outside its own window`; } });
+    });
+  });
+  check(g, "every drawn curve's identity features sit inside its own window", bad === 0, why);
+
+  /* 13d. no prompt/stem/coach states its own answer */
+  bad = 0; why = "";
+  items.forEach((it) => {
+    const said = strip(L(it.prompt || "")) + " " + strip(L(it.stem || "")) + " " + strip(L(it.coach || ""));
+    const q = it.type === "interactive" ? it.then : it;
+    const answer = strip(L((q && q.answerLabel) || ""));
+    if (answer && said.includes(answer)) { bad++; why = `${it.skillId}: "${said.slice(0, 70)}" contains its own answer "${answer}"`; }
+  });
+  check(g, "no qT prompt/stem/coach contains its own answer", bad === 0, why);
+
+  /* 13e. the slideMatch round's read-back matches funclib: dragging the
+     slider to the exposed target index really fires the unlock, and the
+     move it then asks the learner to name is exactly base → target,
+     recomputed from the raw axis/value pair, not copied from the item */
+  {
+    const host = document.createElement("div");
+    host.style.position = "absolute"; host.style.left = "-9999px"; host.style.width = "360px";
+    document.body.appendChild(host);
+    let bad2 = 0, why2 = "", tested = 0;
+    items.filter((it) => it.skillId === "slideMatch").forEach((it) => {
+      const dc = it.debugTransform;
+      if (!dc) { bad2++; why2 = "no debugTransform exposed"; return; }
+      const box = document.createElement("div");
+      host.appendChild(box);
+      let fired = 0;
+      let ctl;
+      try { ctl = it.build(box, () => { fired++; }, () => {}, () => {}, () => {}); }
+      catch (e) { bad2++; why2 = `threw: ${e.message}`; return; }
+      tested++;
+      if (fired) { bad2++; why2 = `${it.skillId}: unlocked on mount`; return; }
+      ctl.sliders[0].setIndex(dc.targetIdx);
+      if (fired !== 1) { bad2++; why2 = `${it.skillId}: fired done ${fired}× when the slider reached the target`; return; }
+      /* the move named in the follow-up mc() must match base → target,
+         recomputed from the raw axis/value pair funclib was handed */
+      const wantDelta = dc.targetVal - (dc.base[dc.axis] || 0);
+      const wantDir = dc.axis === "p" ? (wantDelta > 0 ? "right" : "left") : (wantDelta > 0 ? "up" : "down");
+      if (wantDir !== dc.dir || Math.abs(wantDelta) !== dc.k) {
+        bad2++; why2 = `${it.skillId}: recomputed move ${wantDir} ${Math.abs(wantDelta)} ≠ generator's ${dc.dir} ${dc.k}`;
+      }
+    });
+    check(g, `slideMatch: reaching the target index unlocks the question, and the named move matches the raw axis/value pair (${tested} rounds)`, bad2 === 0, why2);
+    host.remove();
+  }
 }
 
 document.getElementById("sum").innerHTML = fail === 0
