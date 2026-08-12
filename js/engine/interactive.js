@@ -847,6 +847,181 @@ export function tapReveal(host, opts) {
 }
 
 /* ============================================================
+   10. LENGTH REVEAL — tap to reveal a length, read not computed   ★ batch 2
+   ------------------------------------------------------------
+   Three flavours of the same idea: tapping never COMPUTES anything,
+   it only reveals the two marked spots and the segment joining them
+   — the length itself is always read off the grid in the follow-up
+   question (funclib's lengthBetween does the actual subtraction for
+   the answer key, never the learner).
+
+     mode:"v"    a vertical PQ between TWO CURVES at x = at
+                 (top minus bottom — her paper's #1 shape)
+     mode:"h"    a horizontal AB between two points on ONE curve
+                 that share a y-value
+     mode:"axis" one point on a curve to the x-axis (|y|) or the
+                 y-axis (|x|) — the OTHER coordinate is the one
+                 already given in the prompt, so the tap strip runs
+                 along the axis for the coordinate that is unknown
+                 (never spoils the answer by pre-labelling it)
+
+   opts (mode "v"):    { spec, mode:"v", curveA, curveB, at, onTap(yA,yB) }
+   opts (mode "h"):    { spec, mode:"h", y, xA, xB, onTap(xA,xB) }
+   opts (mode "axis"): { spec, mode:"axis", point:{x,y}, to:"x"|"y", onTap(len) }
+   ============================================================ */
+export function lengthReveal(host, opts) {
+  const { spec, mode } = opts;
+  const { svg, g } = mount(host, spec);
+  let tapped = false;
+  const reveal = svgEl("g");
+
+  if (mode === "v") {
+    const { curveA = 0, curveB = 1, at, onTap } = opts;
+    const fA = makeFn(spec.curves[curveA]), fB = makeFn(spec.curves[curveB]);
+    const yA = fA(at), yB = fB(at);
+    const px = N(g.X(at));
+    const knob = svgEl("circle", { class: "iv-taphint", cx: px, cy: N(g.Y(0)), r: 7 });
+    const hit = svgEl("rect", { class: "iv-hit", x: N(px - 18), y: 0, width: 36, height: g.H });
+    hit.style.cursor = "pointer";
+    svg.append(hit, knob);
+    const doReveal = () => {
+      if (tapped || !Number.isFinite(yA) || !Number.isFinite(yB)) return;
+      tapped = true;
+      knob.setAttribute("class", "iv-taphint on");
+      const seg = svgEl("line", { class: "fg-seg", x1: px, y1: N(g.Y(yA)), x2: px, y2: N(g.Y(yB)) });
+      const dotP = svgEl("circle", { class: "fg-dot", cx: px, cy: N(g.Y(yA)), r: 3.6 });
+      const dotQ = svgEl("circle", { class: "fg-dot", cx: px, cy: N(g.Y(yB)), r: 3.6 });
+      const labP = svgEl("text", { class: "fg-plab", x: N(px + 8), y: N(g.Y(yA) - 8), "text-anchor": "start" });
+      labP.textContent = "P";
+      const labQ = svgEl("text", { class: "fg-plab", x: N(px + 8), y: N(g.Y(yB) + 12), "text-anchor": "start" });
+      labQ.textContent = "Q";
+      reveal.append(seg, dotP, dotQ, labP, labQ);
+      svg.appendChild(reveal);
+      buzz(16);
+      if (onTap) onTap(yA, yB);
+    };
+    hit.addEventListener("pointerdown", (ev) => { ev.preventDefault(); ev.stopPropagation(); doReveal(); });
+    return { isTapped: () => tapped, values: () => [yA, yB] };
+  }
+
+  if (mode === "h") {
+    const { y, xA, xB, onTap } = opts;
+    const py = N(g.Y(y));
+    const knob = svgEl("circle", { class: "iv-taphint", cx: N(g.X(0)), cy: py, r: 7 });
+    const hit = svgEl("rect", { class: "iv-hit", x: 0, y: N(py - 18), width: g.W, height: 36 });
+    hit.style.cursor = "pointer";
+    svg.append(hit, knob);
+    const doReveal = () => {
+      if (tapped) return;
+      tapped = true;
+      knob.setAttribute("class", "iv-taphint on");
+      const pxA = N(g.X(xA)), pxB = N(g.X(xB));
+      const seg = svgEl("line", { class: "fg-seg", x1: pxA, y1: py, x2: pxB, y2: py });
+      const dotA = svgEl("circle", { class: "fg-dot", cx: pxA, cy: py, r: 3.6 });
+      const dotB = svgEl("circle", { class: "fg-dot", cx: pxB, cy: py, r: 3.6 });
+      const labA = svgEl("text", { class: "fg-plab", x: pxA, y: N(py - 10), "text-anchor": "middle" });
+      labA.textContent = "A";
+      const labB = svgEl("text", { class: "fg-plab", x: pxB, y: N(py - 10), "text-anchor": "middle" });
+      labB.textContent = "B";
+      reveal.append(seg, dotA, dotB, labA, labB);
+      svg.appendChild(reveal);
+      buzz(16);
+      if (onTap) onTap(xA, xB);
+    };
+    hit.addEventListener("pointerdown", (ev) => { ev.preventDefault(); ev.stopPropagation(); doReveal(); });
+    return { isTapped: () => tapped, values: () => [xA, xB] };
+  }
+
+  /* mode === "axis" */
+  const { point, to, onTap } = opts;
+  const px = N(g.X(point.x)), py = N(g.Y(point.y));
+  let hit, knob;
+  if (to === "x") {
+    /* point.x is the coordinate already given in the prompt — the
+       strip runs vertically through it, exactly like tapReveal */
+    knob = svgEl("circle", { class: "iv-taphint", cx: px, cy: N(g.Y(0)), r: 7 });
+    hit = svgEl("rect", { class: "iv-hit", x: N(px - 18), y: 0, width: 36, height: g.H });
+  } else {
+    /* point.y is given instead — the strip runs horizontally, so
+       nothing about x (the very thing being asked for) is hinted */
+    knob = svgEl("circle", { class: "iv-taphint", cx: N(g.X(0)), cy: py, r: 7 });
+    hit = svgEl("rect", { class: "iv-hit", x: 0, y: N(py - 18), width: g.W, height: 36 });
+  }
+  hit.style.cursor = "pointer";
+  svg.append(hit, knob);
+  const doReveal = () => {
+    if (tapped) return;
+    tapped = true;
+    knob.setAttribute("class", "iv-taphint on");
+    const footX = to === "x" ? px : N(g.X(0));
+    const footY = to === "x" ? N(g.Y(0)) : py;
+    const seg = svgEl("line", { class: "fg-drop", x1: px, y1: py, x2: footX, y2: footY });
+    const dot = svgEl("circle", { class: "fg-dot", cx: px, cy: py, r: 3.6 });
+    const lab = svgEl("text", { class: "fg-plab", x: N(px + 8), y: N(py - 10), "text-anchor": "start" });
+    lab.textContent = "P";
+    reveal.append(seg, dot, lab);
+    svg.appendChild(reveal);
+    buzz(16);
+    if (onTap) onTap(to === "x" ? Math.abs(point.y) : Math.abs(point.x));
+  };
+  hit.addEventListener("pointerdown", (ev) => { ev.preventDefault(); ev.stopPropagation(); doReveal(); });
+  return { isTapped: () => tapped, value: () => (to === "x" ? Math.abs(point.y) : Math.abs(point.x)) };
+}
+
+/* ============================================================
+   11. CHORD REVEAL — tap to draw the chord(s) between marked
+       points on ONE curve, then read the average gradient   ★ batch 2
+   ------------------------------------------------------------
+   Her board method: the average gradient IS the gradient of the
+   straight line (chord) joining two points on a curve. The
+   endpoints are marked from the start — nothing about WHERE they
+   are is hidden — the tap only draws the connecting line(s), as a
+   deliberate second step rather than handing it over already drawn.
+
+   opts: { spec, curve, pairs:[{x1,x2,names:[a,b]}, …], onTap(vals) }
+   vals = one [y1,y2] per pair, in the same order as `pairs`
+   ============================================================ */
+export function chordReveal(host, opts) {
+  const { spec, curve = 0, pairs, onTap } = opts;
+  const { svg, g } = mount(host, spec);
+  const f = makeFn(spec.curves[curve]);
+  let tapped = false;
+
+  const chords = pairs.map((pr) => {
+    const y1 = f(pr.x1), y2 = f(pr.x2);
+    const p1 = { x: N(g.X(pr.x1)), y: N(g.Y(y1)) }, p2 = { x: N(g.X(pr.x2)), y: N(g.Y(y2)) };
+    const dot1 = svgEl("circle", { class: "fg-dot", cx: p1.x, cy: p1.y, r: 4 });
+    const dot2 = svgEl("circle", { class: "fg-dot", cx: p2.x, cy: p2.y, r: 4 });
+    const lab1 = svgEl("text", { class: "fg-plab", x: p1.x, y: N(p1.y - 12), "text-anchor": "middle" });
+    lab1.textContent = (pr.names && pr.names[0]) || "A";
+    const lab2 = svgEl("text", { class: "fg-plab", x: p2.x, y: N(p2.y - 12), "text-anchor": "middle" });
+    lab2.textContent = (pr.names && pr.names[1]) || "B";
+    const line = svgEl("line", { class: "fg-seg", x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y });
+    svg.append(dot1, dot2, lab1, lab2);
+    return { line, p1, p2, y1, y2 };
+  });
+
+  const midx = N(chords.reduce((s, c) => s + (c.p1.x + c.p2.x) / 2, 0) / chords.length);
+  const midy = N(chords.reduce((s, c) => s + (c.p1.y + c.p2.y) / 2, 0) / chords.length);
+  const knob = svgEl("circle", { class: "iv-taphint", cx: midx, cy: midy, r: 9 });
+  const hit = svgEl("rect", { class: "iv-hit", x: 0, y: 0, width: g.W, height: g.H });
+  hit.style.cursor = "pointer";
+  svg.append(hit, knob);
+
+  const doReveal = () => {
+    if (tapped) return;
+    tapped = true;
+    knob.setAttribute("class", "iv-taphint on");
+    chords.forEach((c) => svg.insertBefore(c.line, hit));
+    buzz(16);
+    if (onTap) onTap(chords.map((c) => [c.y1, c.y2]));
+  };
+  hit.addEventListener("pointerdown", (ev) => { ev.preventDefault(); ev.stopPropagation(); doReveal(); });
+
+  return { isTapped: () => tapped, values: () => chords.map((c) => [c.y1, c.y2]) };
+}
+
+/* ============================================================
    A plain (non-interactive) graph, for the MC rounds
    ============================================================ */
 export function staticGraph(host, spec) { return mount(host, spec); }

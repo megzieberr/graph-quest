@@ -339,6 +339,38 @@ export function eqTPStr(cv, name = "y") {
 }
 
 /* ============================================================
+   LENGTHS — batch 2. A length is always |difference|, computed
+   here so a "read it off the picture" round and its answer key
+   can never disagree. No algebra: the two numbers being subtracted
+   are always ones the learner can already see (a marked point's
+   coordinate, or a curve's value at a tapped x).
+   ============================================================ */
+export const lengthBetween = (v1, v2) => Math.abs(v1 - v2);
+
+/* ============================================================
+   AVERAGE GRADIENT — batch 2. m = (y2 − y1)/(x2 − x1), the
+   gradient of the CHORD joining two points on one curve (her p59).
+   Written as a reduced whole number or a simple fraction — never a
+   decimal — so generators must pick points where the arithmetic is
+   clean (a small integer Δx dividing Δy where possible).
+   ============================================================ */
+function gcdInt(a, b) {
+  a = Math.abs(Math.round(a)); b = Math.abs(Math.round(b));
+  while (b) { [a, b] = [b, a % b]; }
+  return a || 1;
+}
+export function avgGradient(y1, y2, x1, x2) { return (y2 - y1) / (x2 - x1); }
+export function gradientStr(dy, dx) {
+  const sign = (dy < 0) !== (dx < 0) ? -1 : 1;
+  let n = Math.round(Math.abs(dy)), d = Math.round(Math.abs(dx));
+  if (n === 0) return "0";
+  const g = gcdInt(n, d);
+  n /= g; d /= g;
+  const body = d === 1 ? C(n) : frac(C(n), C(d));
+  return sign < 0 ? `−${body}` : body;
+}
+
+/* ============================================================
    DECOYS — wrong options that are wrong for a REASON
    (blipwork rule: filter by VALUE so a decoy can never equal the
    right answer numerically, only mc()'s string de-dupe is not enough)

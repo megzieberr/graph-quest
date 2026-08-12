@@ -29,6 +29,7 @@ import { fmtComma } from "./js/check.js";
 import {
   makeFn, criticalXs, sections, signAt, intersections, paraTP, paraRoots,
   makeFn as mf, intervalStr, mergeSections, joinIntervals,
+  lengthBetween, avgGradient, gradientStr,
 } from "./js/funclib.js";
 import {
   specFor, randParabola, randHyperbola, randExp, randLine, randSemicircle,
@@ -1023,8 +1024,12 @@ for (const lang of ["af", "en"]) {
     wantConcepts.every((c) => concepts.has(c)));
 
   const ids = QUESTS.map((q) => q.id);
-  check(g, "QUESTS holds exactly 8 quests and q4 no longer exists as a separate quest",
-    ids.length === 8 && !ids.includes("q4"), `ids: ${ids.join(", ")}`);
+  /* was 8 through batch 1; batch 2 session 1 (2026-08-12) intentionally adds
+     two — qL (Lengths) and qG (Average gradient) — between q6 and q7. This
+     literal is a roster-size regression guard, updated deliberately here, not
+     relaxed: it still fails the moment a quest silently vanishes or duplicates. */
+  check(g, "QUESTS holds exactly 10 quests and q4 no longer exists as a separate quest",
+    ids.length === 10 && !ids.includes("q4"), `ids: ${ids.join(", ")}`);
 }
 
 /* ---------- 9. Round D (q6) — pre-drawn cuts, stamp, sweep, scaffold-on-error (session 5) ----------
@@ -1141,8 +1146,8 @@ for (const lang of ["af", "en"]) {
     });
   }
   const ids = QUESTS.map((q) => q.id);
-  check(g, "q6's retired v1 skills (topSweep/whichCuts) are gone and the new compareSweep round is in, QUESTS still holds 8",
-    !sawOld && sawNew && ids.length === 8 && ids.includes("q6"), `ids: ${ids.join(", ")}`);
+  check(g, "q6's retired v1 skills (topSweep/whichCuts) are gone and the new compareSweep round is in, QUESTS holds 10 (batch 2 added qL/qG)",
+    !sawOld && sawNew && ids.length === 10 && ids.includes("q6"), `ids: ${ids.join(", ")}`);
 
   /* 9f. a two-part answer must show real space around "of"/"or" INSIDE an
      option button. .opt is display:flex, and flex trims the edge spaces off
@@ -1260,6 +1265,173 @@ for (const lang of ["af", "en"]) {
   }
   check(g, "no Round D asymptote is drawn on an axis, where its dashed line would be invisible",
     onAxis.length === 0, [...new Set(onAxis)].join(" · "));
+}
+
+/* ---------- 11. Quest qL (Lengths) — batch 2, session 1 ----------
+   Every length is |difference| of two numbers the learner can already
+   see (Law 1 — no algebra). The maths is checked independently of the
+   generator: recomputed from the raw marked points via funclib's own
+   lengthBetween(), never trusting the generator's own subtraction. */
+{
+  setLang("af");
+  const g = group("11. Quest qL (Lengths) — batch 2");
+
+  const REPS = 20;
+  const items = [];
+  let genBad = 0, genWhy = "";
+  for (let rep = 0; rep < REPS; rep++) {
+    let round = [];
+    try { round = buildRound("qL"); } catch (e) { genBad++; genWhy = "threw: " + e.message; break; }
+    round.forEach((it) => items.push(it));
+  }
+  check(g, `qL builds ${REPS} full rounds without throwing`, genBad === 0, genWhy);
+
+  /* 11a. independent maths: the answer is the |difference| of the raw
+     points the round exposes, recomputed here — not copied from it */
+  let bad = 0, why = "", checked = 0;
+  items.forEach((it) => {
+    const dc = it.debugLen;
+    if (!dc) { bad++; why = `${it.skillId}: no debugLen exposed for verification`; return; }
+    let expected;
+    if (dc.diff === "y") expected = lengthBetween(dc.points[0].y, dc.points[1].y);
+    else if (dc.diff === "x") expected = lengthBetween(dc.points[0].x, dc.points[1].x);
+    else if (dc.diff === "y0") expected = lengthBetween(dc.points[0].y, 0);
+    else if (dc.diff === "x0") expected = lengthBetween(dc.points[0].x, 0);
+    else { bad++; why = `${it.skillId}: unknown diff kind "${dc.diff}"`; return; }
+    checked++;
+    if (Math.abs(expected - dc.correct) > 1e-9) { bad++; why = `${it.skillId}: recomputed ${expected} ≠ generator's ${dc.correct}`; return; }
+    const got = strip(L(it.then.answerLabel || ""));
+    if (got !== fmtComma(expected)) { bad++; why = `${it.skillId}: answerLabel "${got}" ≠ recomputed ${fmtComma(expected)}`; }
+  });
+  check(g, `the answer is the independently-recomputed |difference| (${checked} rounds)`, bad === 0, why);
+
+  /* 11b. every round deals a full hand of 4 distinct options */
+  bad = 0; why = "";
+  items.forEach((it) => {
+    const opts = it.then.options;
+    if (opts.length !== 4) { bad++; why = `${it.skillId}: ${opts.length} options`; return; }
+    const labels = opts.map((o) => strip(L(o.label)));
+    if (new Set(labels).size !== 4) { bad++; why = `${it.skillId}: duplicate options — ${labels.join(" | ")}`; }
+  });
+  check(g, `every qL round deals a full hand of 4 distinct options (${items.length} rounds)`, bad === 0, why);
+
+  /* 11c. the window really contains every point the round is about —
+     windowFor() has silently cropped a round's own point before */
+  bad = 0; why = "";
+  items.forEach((it) => {
+    const dc = it.debugLen;
+    if (!dc) return;
+    dc.points.forEach((p) => {
+      if (p.x < dc.win.xmin - 1e-6 || p.x > dc.win.xmax + 1e-6 || p.y < dc.win.ymin - 1e-6 || p.y > dc.win.ymax + 1e-6) {
+        bad++; why = `${it.skillId}: point (${p.x};${p.y}) sits outside its own window`;
+      }
+    });
+  });
+  check(g, "the window contains every point a qL round is about", bad === 0, why);
+
+  /* 11d. no prompt/coach states its own answer. `stem` is deliberately
+     excluded here: it is the curve's EQUATION, and a coefficient can
+     coincidentally share a digit with a length that curve has nothing
+     to do with (e.g. f(x) = 3^x next to an unrelated answer of "3") —
+     that is not a spoiler, it is arithmetic coincidence. The real Law 7
+     promise — the instructional SENTENCE never states its own finding —
+     is what prompt+coach check. */
+  bad = 0; why = "";
+  items.forEach((it) => {
+    const said = strip(L(it.prompt || "")) + " " + strip(L(it.coach || ""));
+    const answer = strip(L(it.then.answerLabel || ""));
+    if (answer && said.includes(answer)) { bad++; why = `${it.skillId}: "${said.slice(0, 70)}" contains its own answer "${answer}"`; }
+  });
+  check(g, "no qL prompt/coach contains its own answer", bad === 0, why);
+}
+
+/* ---------- 12. Quest qG (Average gradient) — batch 2, session 1 ----------
+   m = Δy/Δx, the gradient of the chord (her p59). The maths is checked
+   independently of the generator: avgGradient()/gradientStr() recomputed
+   from the raw marked points, never trusting the generator's own dy/dx. */
+{
+  setLang("af");
+  const g = group("12. Quest qG (Average gradient) — batch 2");
+
+  const REPS = 20;
+  const items = [];
+  let genBad = 0, genWhy = "";
+  for (let rep = 0; rep < REPS; rep++) {
+    let round = [];
+    try { round = buildRound("qG"); } catch (e) { genBad++; genWhy = "threw: " + e.message; break; }
+    round.forEach((it) => items.push(it));
+  }
+  check(g, `qG builds ${REPS} full rounds without throwing`, genBad === 0, genWhy);
+
+  /* 12a. independent maths: avgGradient()/gradientStr() on the RAW
+     marked points, never the generator's own dy/dx or winner pick */
+  let bad = 0, why = "", checked = 0;
+  items.forEach((it) => {
+    const dc = it.debugGrad;
+    if (!dc) { bad++; why = `${it.skillId}: no debugGrad exposed for verification`; return; }
+    if (dc.mAB !== undefined) {
+      /* gradSteeper: two chords, four points */
+      const [A, Bp, Cp, D] = dc.points;
+      const mAB = Math.abs(avgGradient(A.y, Bp.y, A.x, Bp.x));
+      const mCD = Math.abs(avgGradient(Cp.y, D.y, Cp.x, D.x));
+      checked++;
+      if (Math.abs(mAB - dc.mAB) > 1e-9 || Math.abs(mCD - dc.mCD) > 1e-9) {
+        bad++; why = `${it.skillId}: recomputed mAB=${mAB.toFixed(3)},mCD=${mCD.toFixed(3)} ≠ generator's ${dc.mAB.toFixed(3)},${dc.mCD.toFixed(3)}`; return;
+      }
+      const wantWinner = mAB > mCD ? "AB" : "CD";
+      const gotWinner = strip(L(it.then.options.find((o) => o.correct).label));
+      if (gotWinner !== wantWinner) { bad++; why = `${it.skillId}: recomputed winner ${wantWinner} ≠ marked-correct option "${gotWinner}"`; }
+    } else {
+      /* gradNumber / gradSign: one chord, two points */
+      const [A, Bp] = dc.points;
+      const m = avgGradient(A.y, Bp.y, A.x, Bp.x);
+      checked++;
+      if (Math.abs(m * dc.dx - dc.dy) > 1e-9) { bad++; why = `${it.skillId}: recomputed Δy=${(m * dc.dx).toFixed(3)} ≠ generator's Δy=${dc.dy}`; return; }
+      const answerText = strip(L(it.then.answerLabel || ""));
+      if (it.skillId === "gradNumber") {
+        const wantStr = strip(gradientStr(dc.dy, dc.dx));
+        if (!answerText.includes(wantStr)) { bad++; why = `${it.skillId}: answerLabel "${answerText}" does not contain the recomputed gradient "${wantStr}"`; }
+      } else if (it.skillId === "gradSign") {
+        const wantWord = m > 0 ? "positief" : "negatief";
+        if (!answerText.toLowerCase().includes(wantWord)) { bad++; why = `${it.skillId}: recomputed sign "${wantWord}" is not reflected in answerLabel "${answerText}"`; }
+      }
+    }
+  });
+  check(g, `the average gradient is the independently-recomputed Δy/Δx, and the marked-correct option matches it (${checked} rounds)`, bad === 0, why);
+
+  /* 12b. every round deals a full hand of 4 distinct options */
+  bad = 0; why = "";
+  items.forEach((it) => {
+    const opts = it.then.options;
+    if (opts.length !== 4) { bad++; why = `${it.skillId}: ${opts.length} options`; return; }
+    const labels = opts.map((o) => strip(L(o.label)));
+    if (new Set(labels).size !== 4) { bad++; why = `${it.skillId}: duplicate options — ${labels.join(" | ")}`; }
+  });
+  check(g, `every qG round deals a full hand of 4 distinct options (${items.length} rounds)`, bad === 0, why);
+
+  /* 12c. the window really contains every point the round is about */
+  bad = 0; why = "";
+  items.forEach((it) => {
+    const dc = it.debugGrad;
+    if (!dc) return;
+    dc.points.forEach((p) => {
+      if (p.x < dc.win.xmin - 1e-6 || p.x > dc.win.xmax + 1e-6 || p.y < dc.win.ymin - 1e-6 || p.y > dc.win.ymax + 1e-6) {
+        bad++; why = `${it.skillId}: point (${p.x};${p.y}) sits outside its own window`;
+      }
+    });
+  });
+  check(g, "the window contains every point a qG round is about", bad === 0, why);
+
+  /* 12d. no prompt/coach states its own answer (stem excluded — see qL's
+     11d comment: an equation coefficient is not a spoiler of an unrelated
+     numeric answer, it is arithmetic coincidence) */
+  bad = 0; why = "";
+  items.forEach((it) => {
+    const said = strip(L(it.prompt || "")) + " " + strip(L(it.coach || ""));
+    const answer = strip(L(it.then.answerLabel || ""));
+    if (answer && said.includes(answer)) { bad++; why = `${it.skillId}: "${said.slice(0, 70)}" contains its own answer "${answer}"`; }
+  });
+  check(g, "no qG prompt/coach contains its own answer", bad === 0, why);
 }
 
 document.getElementById("sum").innerHTML = fail === 0

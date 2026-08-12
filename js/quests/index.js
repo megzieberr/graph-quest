@@ -30,6 +30,13 @@ import { quest5 } from "./q5-signs.js";
    cut lines are now pre-drawn by the game, the learner stamps + and −
    between the two curves, then sweeps a scan line to confirm by eye. */
 import { quest6 } from "./q6-compare.js";
+/* batch 2, session 1: two new reading quests slot in AFTER quest6 (Bo of
+   onder) and BEFORE quest7 (Eksamenmodus) — exam mode samples everything
+   that exists before it, so it stays last. Working names, hers to rename:
+   "Lengtes" (lengths — every length is a subtraction you can see) and
+   "Gemiddelde gradiënt" (average gradient — the gradient of the chord). */
+import { questLengths } from "./qL-lengths.js";
+import { questGradient } from "./qG-gradient.js";
 import { quest7, TECHOK, resetExam } from "./q7-exam.js";
 import { CONTENT } from "./_graphs.js";
 import { pick, shuffled } from "../ui.js";
@@ -40,7 +47,7 @@ import { pick, shuffled } from "../ui.js";
    The map unlocks strictly in this array's order, so this array IS the order. */
 export const QUESTS = [
   questDiscover, questDiscover2, questRecognize, quest2,
-  quest3, quest5, quest6, quest7,
+  quest3, quest5, quest6, questLengths, questGradient, quest7,
 ];
 
 /* flip semicircle content on/off everywhere */
