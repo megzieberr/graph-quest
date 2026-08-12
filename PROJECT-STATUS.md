@@ -1,4 +1,4 @@
-# Project status — updated 2026-08-12 (afternoon: her wording pass is in the code)
+# Project status — updated 2026-08-12 (her wording pass + two fixes she caught playing)
 
 **Read this first.** The v2 spec is [RUN-PLAN.md](RUN-PLAN.md); Megan's own class notes
 are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTIONS-NOTES-DIGEST.md).
@@ -20,6 +20,11 @@ are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTI
   sub-in point containment, Round D cut-line exactness and scaffold gating.
 - Progress saves are still on-device only (Supabase schema written, NOT run; no login
   screen). Nobody but Megan has the app yet.
+- **2026-08-12 session: all of her Afrikaans wording is in the code**, plus three
+  things she caught play-testing on her phone — the hyperbola "vlerkie" question,
+  the glued "1of2" join word, and the one-way scan line. All LIVE on gq-v9,
+  verified against the deployed files, not just locally. She played through and
+  said it looks great. She did NOT rule on the three open batch-1 questions below.
 
 ## Decisions
 
@@ -95,11 +100,12 @@ are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTI
 
 ## Pending on Megan
 
-1. 📱 15 min: **[blocking]** carry on play-testing on your phone — fully close + reopen
-   the PWA after the next deploy. One maths bug found so far (the vlerkie question).
-2. 💻 3 min: [whenever] three word calls I made for you — say if any is wrong:
-   the climb says "Skuif", the sliders say "Trek"; "Beweeg dit op of af?" where you
-   wrote "opwaarts" in the twin line; two "ry/gereis" lines changed to "skuif".
+1. 📱 5 min: **[blocking, this is what batch 2 waits on]** three calls, from playing it:
+   does "Op die grafiek" belong before "Lees die gebied"? do Vinnige Oë and the
+   notation skill stay? should Round D always offer the second chance, not only in Boost?
+2. 💻 3 min: [whenever] three word calls I made for her — say if any is wrong:
+   the climb says "Skuif" while the sliders say "Trek"; "Beweeg dit op of af?" where
+   she wrote "opwaarts" in the twin line; two "ry/gereis" lines changed to "skuif".
 3. 💻 2 min: [whenever] circle-geometry-game has 34 unpushed commits → run /ship there.
 
 ## Next up
@@ -108,9 +114,10 @@ are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTI
   swaps mapped into 8 source files, 81/81 harness checks pass, map read at 375 px
   with no overflow. The workflow held — do it this way again, and regenerate
   AFRIKAANS-TEKS.md after any session that adds strings.
-- Her playtest verdict drives the next foreman day: map order (Op die grafiek now sits
-  AFTER Lees die gebied — run-plan order, easily swapped), whether Vinnige Oë / notation
-  stay, Round D retry behavior.
+- **Batch 2 is NOT specced yet, on purpose** — she asked on 2026-08-12 and the answer
+  stands: get her three rulings (Pending item 1) first, then pick the next few topics
+  off the parked list below and write the plan. She has not said how big a batch she
+  wants either. Ask both before writing anything.
 - Then per RUN-PLAN "parked for later batches": transformations, finding equations,
   lengths, full inequalities batch (learner-placed cut lines return), nature of roots,
   average gradient, error-spotting, eksamenmodus rebuild.
