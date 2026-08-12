@@ -43,12 +43,20 @@ function nicePair() {
     /* hyperbola + straight line — her vb. 6 shape.
        a/x + k = x + c  meets at r1, r2 when a = −r1·r2 and c = −(r1+r2) */
     let r1 = pick([-4, -3, -2, -1]), r2 = pick([1, 2, 3, 4]);
-    const k = pick([0, 1, -1, 2]);
+    const k = pick([1, -1, 2, -2]);
     const a = -r1 * r2, c = -(r1 + r2) + k;
-    const f = { kind: "hyperbola", a, p: 0, q: k };
-    const g = { kind: "line", a: 1, q: c };
+    /* NEITHER asymptote may sit on an axis: a dashed line drawn on top of
+       the x- or y-axis is invisible, and the notation round then points at
+       something the learner cannot see ("the dashed line at the left edge
+       is an asymptote"). Same principle as the frozen-asymptote rule from
+       batch 1 — q is already non-zero above, and p shifts the whole picture
+       sideways: solving a/(x−p) + k = (x−p) + c is the p = 0 case with every
+       x moved by p, so the meeting points stay whole numbers. */
+    const p = pick([-2, -1, 1, 2]);
+    const f = { kind: "hyperbola", a, p, q: k };
+    const g = { kind: "line", a: 1, q: c - p };
     if (Math.abs(a) > 12) return nicePair();
-    return { f, g, meets: [r1, r2].sort((u, v) => u - v), hasAsym: true };
+    return { f, g, meets: [r1 + p, r2 + p].sort((u, v) => u - v), hasAsym: true };
   }
   /* parabola + straight line through two of its whole-number points */
   const rootA = randInt(-4, 0), rootB = rootA + pick([2, 3, 4]);
@@ -283,7 +291,9 @@ export const quest6 = quest("q6",
     { id: "compareSweep", concept: "compare", gen: SKILLS.compareSweep, weight: 4 },
     { id: "notation", concept: "notation", gen: SKILLS.notation },
   ],
-  { rounds: 5, accent: ACC });
+  /* alwaysSecondChance: her ruling 2026-08-12 — Round D offers the half-marks
+     retry to everyone, not only inside Boost. */
+  { rounds: 5, accent: ACC, alwaysSecondChance: true });
 
 /* ---------------- the intro lesson: her vb. 6 shape ----------------
    Cut lines → number the sections → stamp → sweep → read off, in her

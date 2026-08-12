@@ -102,5 +102,11 @@ export function quest(id, title, blurb, skills, opts = {}) {
     buildAll: opts.buildAll || null,
     /* …and only the exam kind promises that every item shares ONE sketch */
     oneSketch: !!opts.oneSketch,
+    /* a quest may hand out the half-marks second chance to EVERY learner,
+       not only to one in Boost mode — Megan's ruling for Round D
+       (2026-08-12): its questions are long enough that one slip should not
+       end the question. The scaffold-on-every-wrong-answer behaviour is
+       unchanged and app-wide; this flag only un-gates the retry. */
+    alwaysSecondChance: !!opts.alwaysSecondChance,
   };
 }

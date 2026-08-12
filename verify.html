@@ -20,7 +20,8 @@
 <div id="out"></div>
 
 <script type="module">
-import { QUESTS, buildRound, setSemicircles } from "./js/quests/index.js";
+import { QUESTS, buildRound, setSemicircles, getQuest } from "./js/quests/index.js";
+import { secondChanceAllowed } from "./js/play.js";
 import { verifyFunction, renderFunction, computeFunction } from "./js/engine/function-graph.js";
 import { axisGate, sweep } from "./js/engine/interactive.js";
 import { L, UI, setLang } from "./js/i18n.js";
@@ -1213,6 +1214,52 @@ for (const lang of ["af", "en"]) {
   }
 
   host.remove();
+}
+
+/* ---------- 10. Megan's batch-1 rulings, 2026-08-12 evening ----------
+   Two calls she made after playing batch 1 on her phone. Both are one-line
+   changes that a later refactor could silently undo, so they get their own
+   checks. Never relax either without a new ruling from her. */
+{
+  const g = group("10. her batch-1 rulings — quest order and Round D's second chance");
+
+  /* 10a. "Op die grafiek" (q2, drop a point ON a curve) must come BEFORE
+     "Lees die gebied" (q3, read regions OFF a curve). The map unlocks in
+     QUESTS order, so this array position IS the learner's path. */
+  const ids = QUESTS.map((q) => q.id);
+  const iPoint = ids.indexOf("q2"), iRegion = ids.indexOf("q3");
+  check(g, `"Op die grafiek" (q2) comes before "Lees die gebied" (q3) on the map`,
+    iPoint >= 0 && iRegion >= 0 && iPoint < iRegion, `order: ${ids.join(" → ")}`);
+
+  /* 10b. Round D hands the half-marks retry to EVERY learner; every other
+     quest still only gives it inside Boost. Checked through the real rule
+     play.js uses, not a copy of it. */
+  check(g, "Round D (q6) offers the second chance without Boost",
+    secondChanceAllowed(getQuest("q6"), false) === true);
+  const gated = QUESTS.filter((q) => q.id !== "q6" && secondChanceAllowed(q, false));
+  check(g, "every other quest still keeps the second chance Boost-only",
+    gated.length === 0, gated.length ? `un-gated: ${gated.map((q) => q.id).join(", ")}` : "");
+  check(g, "Boost still hands the second chance to every quest",
+    QUESTS.every((q) => secondChanceAllowed(q, true)));
+
+  /* 10c. no asymptote in Round D may sit ON an axis. A dashed line drawn
+     over the x- or y-axis is invisible, and the notation round explicitly
+     tells the learner to look at it ("the dashed line at the left edge is
+     an asymptote"). Found 2026-08-12 while play-testing the second chance:
+     nicePair() hard-coded p = 0, so EVERY hyperbola pair had its vertical
+     asymptote hidden under the y-axis. Same principle as the batch-1
+     frozen-asymptote rule — never relax it. */
+  const onAxis = [];
+  for (let rep = 0; rep < 30; rep++) {
+    buildRound("q6").forEach((it) => {
+      (it.graph?.asymptotes || []).forEach((as) => {
+        if (as.x === 0) onAxis.push(`${it.skillId}: vertical asymptote on the y-axis`);
+        if (as.y === 0) onAxis.push(`${it.skillId}: horizontal asymptote on the x-axis`);
+      });
+    });
+  }
+  check(g, "no Round D asymptote is drawn on an axis, where its dashed line would be invisible",
+    onAxis.length === 0, [...new Set(onAxis)].join(" · "));
 }
 
 document.getElementById("sum").innerHTML = fail === 0

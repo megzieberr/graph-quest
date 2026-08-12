@@ -34,9 +34,13 @@ import { quest7, TECHOK, resetExam } from "./q7-exam.js";
 import { CONTENT } from "./_graphs.js";
 import { pick, shuffled } from "../ui.js";
 
+/* Megan's ruling 2026-08-12 (after playing batch 1): "Op die grafiek" (quest2 —
+   drop a point ONTO a curve) comes BEFORE "Lees die gebied" (quest3 — read
+   regions OFF a curve). She places a point on a graph before she reads one.
+   The map unlocks strictly in this array's order, so this array IS the order. */
 export const QUESTS = [
-  questDiscover, questDiscover2, questRecognize, quest3,
-  quest2, quest5, quest6, quest7,
+  questDiscover, questDiscover2, questRecognize, quest2,
+  quest3, quest5, quest6, quest7,
 ];
 
 /* flip semicircle content on/off everywhere */

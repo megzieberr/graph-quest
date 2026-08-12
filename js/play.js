@@ -19,6 +19,8 @@
      · Boost mode — after 2 failed tries: hints open by themselves
        and every question gives a second chance for half marks;
        finally passing then earns a comeback bonus
+     · a quest may set alwaysSecondChance to hand out that retry to
+       every learner, Boost or not (Round D does — her ruling)
 
    Nothing is typed. Marking is always about the maths.
    ============================================================ */
@@ -49,6 +51,12 @@ export function startQuest(questId, onFinish, onQuit, opts = {}) {
   if (q.intro && (opts.forceIntro || !introSeen(q.id))) renderIntro(q);
   else render();
 }
+
+/* Who gets the half-marks second chance on a wrong first pick: anyone in
+   Boost, plus anyone playing a quest that hands it out to everybody
+   (Round D — Megan's ruling 2026-08-12). Exported so verify.html can check
+   the rule itself rather than re-implementing it. */
+export const secondChanceAllowed = (q, boost) => !!boost || !!(q && q.alwaysSecondChance);
 
 export function rerender() { if (S) render(); }
 export const isPlaying = () => !!S;
@@ -289,10 +297,11 @@ function paintOptions(q, optbox, fbslot, ladder) {
     b.type = "button";
     b.addEventListener("click", () => {
       if (S.answered) return;
-      /* Boost second chance: the first wrong pick greys out with its
+      /* Second chance: the first wrong pick greys out with its
          misconception nudge instead of ending the question; the next
-         pick is final (correct = half marks). */
-      if (S.boost && !chanceUsed && !o.correct && q.options.length > 2) {
+         pick is final (correct = half marks). Boost gives this to
+         everyone; Round D gives it always (alwaysSecondChance). */
+      if (secondChanceAllowed(S.q, S.boost) && !chanceUsed && !o.correct && q.options.length > 2) {
         chanceUsed = true;
         b.disabled = true;
         b.classList.add("bad");

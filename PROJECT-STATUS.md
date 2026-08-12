@@ -97,16 +97,49 @@ are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTI
 - 2026-08-12: AFRIKAANS-TEKS.md missed one string — `coach` in q2-point.js is built
   with `"..." + C(y) + "."` instead of a template literal, so the extractor skipped
   it. Any future extractor must handle concatenation, not just `${}`.
+- 2026-08-12 (evening): **her three batch-1 rulings, after playing it** — the gate
+  batch 2 was waiting on is now open:
+  - **Quest order SWAPS: "Op die grafiek" comes BEFORE "Lees die gebied."** She
+    places a point on a curve before she reads regions off one. New order:
+    Ontdek · Ontdek 2 · Vinnige Oë · Op die grafiek · Lees die gebied · Plus en
+    minus · Bo of onder · Eksamenmodus.
+  - **Vinnige Oë STAYS** (equation-only speed round, no picture) and the
+    **notation question inside Bo of onder STAYS** (shaded band → interval, open
+    end at the asymptote). Both were run-plan additions offered for cutting; she
+    kept both.
+  - **Round D always offers the retry at half marks** — not Boost-only. The
+    scaffold-on-every-wrong-answer behaviour is unchanged; only the second chance
+    stops being gated.
+  - Her three word calls from the wording pass are APPROVED as shipped ("Skuif"
+    on the climb vs "Trek" on the sliders; "Beweeg dit op of af?"; the two
+    "ry/gereis" → "skuif" lines). Wording of batch 1 is closed.
+  Both rulings are now IN and verified live (85/85 → 86/86 harness): the map
+  reads Op die grafiek → Lees die gebied at 375 px, and a wrong first pick in
+  Bo of onder with NO Boost greys out, keeps the other options live, and pays
+  "✓ Amper — halwe punte" on the next pick. `alwaysSecondChance` is a quest
+  flag; `secondChanceAllowed()` in play.js is the one rule, exported so the
+  harness checks the real thing.
+- 2026-08-12: **every Round D hyperbola had its vertical asymptote hidden under
+  the y-axis** — found while play-testing the second chance. `nicePair()`
+  hard-coded `p: 0` (and allowed `q: 0`), so the dashed line was drawn on top of
+  an axis, while the notation round tells the learner in words to look at it.
+  Fix: `p` is picked from ±1, ±2 and the whole picture shifts with it (solving
+  a/(x−p) + k = (x−p) + c is the p = 0 case with every x moved by p, so the
+  meeting points stay whole numbers); `q` never 0 either. New harness check 10c
+  samples 30 rounds and fails if any asymptote lands on an axis. Verified in the
+  DOM: the dashed line now sits 69 px clear of the y-axis.
+- 2026-08-12: **quest 5 still teaches the TEKENTABEL she dropped on 2026-08-09.**
+  Its blurb ("lyne, tabel, lees af") looked like a stale label, but the quest
+  really does build a sign table — "Vul nou die tekentabel hieronder in", a
+  product row, columns. So the blurb is honest and must NOT be quietly reworded;
+  the QUEST is what is out of date against her board method (cut lines + paint
+  + and − per section + read off). Left untouched, awaiting her call — see
+  Next up.
 
 ## Pending on Megan
 
-1. 📱 5 min: **[blocking, this is what batch 2 waits on]** three calls, from playing it:
-   does "Op die grafiek" belong before "Lees die gebied"? do Vinnige Oë and the
-   notation skill stay? should Round D always offer the second chance, not only in Boost?
-2. 💻 3 min: [whenever] three word calls I made for her — say if any is wrong:
-   the climb says "Skuif" while the sliders say "Trek"; "Beweeg dit op of af?" where
-   she wrote "opwaarts" in the twin line; two "ry/gereis" lines changed to "skuif".
-3. 💻 2 min: [whenever] circle-geometry-game has 34 unpushed commits → run /ship there.
+Nothing pending — cleared 2026-08-12 (her three rulings given, word calls approved,
+circle-geometry-game confirmed pushed by the portfolio sweep, not by memory).
 
 ## Next up
 
@@ -114,10 +147,25 @@ are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTI
   swaps mapped into 8 source files, 81/81 harness checks pass, map read at 375 px
   with no overflow. The workflow held — do it this way again, and regenerate
   AFRIKAANS-TEKS.md after any session that adds strings.
-- **Batch 2 is NOT specced yet, on purpose** — she asked on 2026-08-12 and the answer
-  stands: get her three rulings (Pending item 1) first, then pick the next few topics
-  off the parked list below and write the plan. She has not said how big a batch she
-  wants either. Ask both before writing anything.
+- **Her two rulings are DONE** (2026-08-12 evening, verified live, 86/86).
+- **DECISION WAITING: quest 5 vs her board method.** Quest 5 still builds the
+  tekentabel she dropped on 2026-08-09 — this is a rework (intro lesson + the
+  singleSign/productSign rounds + the harness checks that assert the table),
+  roughly one whole build session. Ask her whether batch 2 should include it,
+  or whether q5 stays as-is until later. Do not touch the blurb alone: it
+  describes the quest accurately today.
+- **BATCH 2, dispatched 2026-08-12 (foreman = Opus this run, her call; she also
+  asked for the agents to be launched from the foreman session rather than
+  pasted by hand):**
+  - Session 1 — **lengths + average gradient** (one shared mechanic: read two
+    points off the graph, do one small sum; pure reading, no algebra).
+  - Session 2 — **transformations** (reuses the batch-1 discovery slider engine).
+  - Reviewed one at a time, batch-1 style: foreman reads the diff, re-runs the
+    harness, and looks at rendered rounds before the next session starts.
+- Still parked after that: finding equations · nature of roots (both drift toward
+  algebra — they need a design pass first) · the full inequalities batch
+  (learner-placed cut lines return, engine work) · error-spotting ·
+  **eksamenmodus rebuild LAST**, once every new skill exists for it to sample.
 - Then per RUN-PLAN "parked for later batches": transformations, finding equations,
   lengths, full inequalities batch (learner-placed cut lines return), nature of roots,
   average gradient, error-spotting, eksamenmodus rebuild.
