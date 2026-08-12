@@ -33,7 +33,7 @@ import {
 } from "./js/funclib.js";
 import {
   specFor, randParabola, randHyperbola, randExp, randLine, randSemicircle,
-  windowFor, features,
+  windowFor, features, asymOnAxis, randHyperbolaOffAxis,
 } from "./js/quests/_graphs.js";
 import { answerString } from "./js/quests/_intervals.js";
 
@@ -1265,6 +1265,30 @@ for (const lang of ["af", "en"]) {
   }
   check(g, "no Round D asymptote is drawn on an axis, where its dashed line would be invisible",
     onAxis.length === 0, [...new Set(onAxis)].join(" · "));
+
+  /* 10d. the same rule for every round built after batch 1. The batch-2
+     quests draw their sketch inside a build() closure, so an item-level
+     scan would pass vacuously — these two checks guard the SOURCE of the
+     curves instead: the helper itself, and the fact that the new quest
+     files reach for it rather than the raw generator. (Foreman review fix
+     2026-08-12: session 1 used randHyperbola() and drew hyperbolas whose
+     vertical asymptote ran straight down the y-axis.) */
+  const offAxisBad = [];
+  for (let i = 0; i < 200; i++) {
+    const cv = randHyperbolaOffAxis();
+    if (asymOnAxis(cv)) offAxisBad.push(`a=${cv.a} p=${cv.p} q=${cv.q}`);
+  }
+  check(g, "randHyperbolaOffAxis() never returns a hyperbola with an asymptote on an axis (200 samples)",
+    offAxisBad.length === 0, offAxisBad.slice(0, 3).join(" · "));
+
+  const rawUsers = [];
+  for (const f of ["./js/quests/qL-lengths.js", "./js/quests/qG-gradient.js"]) {
+    const src = await (await fetch(f, { cache: "reload" })).text();
+    if (/randHyperbola\s*\(/.test(src.replace(/randHyperbolaOffAxis\s*\(/g, "SAFE("))) rawUsers.push(f);
+    if (/kind:\s*"hyperbola"[^}]*\bp:\s*0\b/.test(src)) rawUsers.push(`${f} (hard-coded p: 0)`);
+  }
+  check(g, "the batch-2 quests draw hyperbolas only through randHyperbolaOffAxis(), never the raw generator",
+    rawUsers.length === 0, rawUsers.join(" · "));
 }
 
 /* ---------- 11. Quest qL (Lengths) — batch 2, session 1 ----------

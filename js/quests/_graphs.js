@@ -68,6 +68,28 @@ export function randHyperbola() {
 }
 
 /* y = a·bˣ + q, built backwards from a whole-number x-intercept */
+/* A dashed asymptote drawn on top of an axis cannot be seen — the learner is
+   told to look at a line that is not there. Megan's batch-1 rule; it bit
+   Round D again on 2026-08-12 (every hyperbola pair had p = 0) and harness
+   check 10c now guards it. randHyperbola() still allows p = 0 for the older
+   quests that were built and reviewed with it; ANY NEW ROUND should draw its
+   hyperbolas with randHyperbolaOffAxis() instead. randExp() is already safe:
+   its q = −a·bᵏ can never be 0. */
+export function asymOnAxis(cv) {
+  if (!cv) return false;
+  if (cv.kind === "hyperbola") return cv.p === 0 || cv.q === 0;
+  if (cv.kind === "exp") return cv.q === 0;
+  return false;
+}
+
+export function randHyperbolaOffAxis() {
+  for (let i = 0; i < 60; i++) {
+    const cv = randHyperbola();
+    if (!asymOnAxis(cv)) return cv;
+  }
+  return { kind: "hyperbola", a: 6, p: 1, q: 1 };   // safe fallback, never reached in practice
+}
+
 export function randExp() {
   const b = pick([2, 2, 3]);
   const a = pick([1, 1, -1, 2, 3]);

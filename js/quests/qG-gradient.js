@@ -21,7 +21,7 @@
 import { mc, iq, quest } from "./_shared.js";
 import { B } from "../i18n.js";
 import { chordReveal } from "../engine/interactive.js";
-import { specFor, randParabola, randHyperbola, randExp, windowFor } from "./_graphs.js";
+import { specFor, randParabola, randHyperbolaOffAxis, randExp, windowFor } from "./_graphs.js";
 import { makeFn, eqStr, C, pick, isInt, shuffled, gradientStr } from "../funclib.js";
 
 const ACC = "#f472b6";
@@ -32,7 +32,7 @@ const ACC = "#f472b6";
    ------------------------------------------------------------ */
 function niceGradientPair() {
   for (let tries = 0; tries < 300; tries++) {
-    const cv = pick([randParabola(), randParabola(), randHyperbola(), randExp()]);
+    const cv = pick([randParabola(), randParabola(), randHyperbolaOffAxis(), randExp()]);
     const win = windowFor([cv]);
     if (!win) continue;
     const lo = Math.ceil(win.xmin) + 1, hi = Math.floor(win.xmax) - 1;
@@ -66,7 +66,7 @@ function niceGradientPair() {
    ------------------------------------------------------------ */
 function steeperPair() {
   for (let tries = 0; tries < 300; tries++) {
-    const cv = pick([randParabola(), randParabola(), randHyperbola(), randExp()]);
+    const cv = pick([randParabola(), randParabola(), randHyperbolaOffAxis(), randExp()]);
     const win = windowFor([cv]);
     if (!win) continue;
     const lo = Math.ceil(win.xmin) + 1, hi = Math.floor(win.xmax) - 1;

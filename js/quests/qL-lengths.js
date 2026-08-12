@@ -25,7 +25,7 @@ import { mc, iq, quest } from "./_shared.js";
 import { B } from "../i18n.js";
 import { lengthReveal } from "../engine/interactive.js";
 import {
-  specFor, randLine, randParabola, randHyperbola, randExp, windowFor,
+  specFor, randLine, randParabola, randHyperbolaOffAxis, randExp, windowFor,
 } from "./_graphs.js";
 import {
   makeFn, eqStr, C, pick, randInt, isInt, shuffled, paraTP, lengthBetween,
@@ -59,7 +59,7 @@ function niceVerticalPair() {
       f = { kind: "line", a: a1, q: randInt(-4, 4) };
       g = { kind: "line", a: a2, q: randInt(-4, 4) };
     } else if (kind === "hypLine") {
-      f = randHyperbola();
+      f = randHyperbolaOffAxis();
       g = { kind: "line", a: pick([1, -1]), q: randInt(-3, 3) };
     } else {
       f = randParabola();
@@ -123,7 +123,7 @@ function nicePointOnCurve(monotonicOnly) {
     if (kind === "line") { cv = randLine(); x = randInt(-4, 4); }
     else if (kind === "parabola") { cv = randParabola(); x = randInt(-3, 4); }
     else if (kind === "hyperbola") {
-      cv = randHyperbola();
+      cv = randHyperbolaOffAxis();
       const d = pick([1, -1, 2, -2].filter((v) => isInt(cv.a / v)));
       if (d == null) continue;
       x = cv.p + d;
@@ -291,9 +291,11 @@ export const questLengths = quest("qL",
    three short beats, one per flavour, all in her vb. 6 pair so the
    sketch is already familiar from quest 6. */
 {
-  const f = { kind: "hyperbola", a: 8, p: 0, q: 1 };
+  /* p = 1, not 0: with p = 0 the vertical asymptote is drawn straight down
+     the y-axis and cannot be seen (foreman review fix, 2026-08-12). */
+  const f = { kind: "hyperbola", a: 8, p: 1, q: 1 };
   const g0 = { kind: "line", a: 1, q: -1 };
-  const win = windowFor([f, g0], { include: [{ x: -2, y: -3 }, { x: 4, y: 3 }] });
+  const win = windowFor([f, g0], { include: [{ x: -1, y: -3 }, { x: 5, y: 3 }] });
   const base = specFor([f, g0], { win, accent: ACC, ticks: "labels", labels: ["f", "g"], asymLabels: true });
   questLengths.intro = { beats: [
     { spec: base, cap: B("This quest is about LENGTHS — and every one of them is just a subtraction of two numbers you can already see.",
