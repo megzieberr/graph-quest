@@ -24,7 +24,13 @@ are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTI
   things she caught play-testing on her phone — the hyperbola "vlerkie" question,
   the glued "1of2" join word, and the one-way scan line. All LIVE on gq-v9,
   verified against the deployed files, not just locally. She played through and
-  said it looks great. She did NOT rule on the three open batch-1 questions below.
+  said it looks great.
+- **2026-08-12 evening: her three batch-1 rulings are in, and BATCH 2 IS BUILT
+  AND SHIPPED.** The map now has **11 quests** — Lengtes, Gemiddelde gradiënt
+  and Transformasies joined between Bo of onder and Eksamenmodus. verify.html
+  is at **113 checks, all passing**. sw CACHE `gq-v12`. Foreman was Opus this
+  run (her call), two Sonnet build sessions dispatched from the foreman session
+  itself rather than pasted by hand — also her call.
 
 ## Decisions
 
@@ -136,10 +142,63 @@ are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTI
   + and − per section + read off). Left untouched, awaiting her call — see
   Next up.
 
+- 2026-08-12 (batch 2, session 1 — Sonnet, foreman-reviewed): **Lengtes** and
+  **Gemiddelde gradiënt**. Lengths is a subtraction you can see (PQ between two
+  curves, a horizontal gap, a point's distance to an axis); average gradient is
+  two points and one small sum, taught as the gradient of the chord. Both are
+  tap-to-reveal — the learner uncovers the points before answering. New engine
+  pieces: `lengthReveal()` and `chordReveal()` in interactive.js; new funclib
+  helpers `lengthBetween`/`avgGradient`/`gradientStr`.
+  - Foreman review, independent of the harness: 480 Lengths rounds (correct
+    option always matched the geometry of the two revealed points), 480 Gradient
+    rounds (Δy/Δx always matched the actual points, no horizontal chord ever
+    drawn, so no divide-by-zero decoy), every revealed point checked against the
+    drawn path itself.
+  - Review FIX: it built its sketches with `randHyperbola()`, which picks p = 0 a
+    third of the time — so a round could draw a hyperbola with its vertical
+    asymptote invisible down the y-axis, the same fault Round D had that morning.
+    `_graphs.js` now exports `asymOnAxis()` and **`randHyperbolaOffAxis()`**; the
+    new quests use it. `randHyperbola()` itself is UNCHANGED — see Pending.
+- 2026-08-12 (batch 2, session 2 — Sonnet, foreman-reviewed): **Transformasies**.
+  Four round types: name the move (faint "before" + solid "after" on one sketch),
+  reflections (y = −f(x) vs f(−x), the pair learners swap), pick the equation
+  (all four options in the SAME form, so the round is about the move and not
+  about rearranging), and a slider round where the learner slides the image onto
+  a ghost target and only THEN names what they did. `renderFunction` gained an
+  opt-in `faint` curve flag; nothing else changed for existing quests.
+  - Foreman review, independent of the harness: 420 rounds — the image curve
+    always equalled the stated move (shift by dp/dq, or −f(x) / f(−x) as
+    claimed), the correct option's **Afrikaans words matched the actual move**
+    (a "2 links" label with a rightward shift would have been caught), and the
+    slider target always matched its parameter.
+  - Review FIX: it wrote **"sywaarts"** into a hint — a word she replaced with
+    "links of regs" in her wording pass. Fixed, and the existing banned-word
+    check now covers her whole list: sleep · frase · sywaarts · hoegenaamd ·
+    tak/takke. Both new guards were negative-tested (they do fail on the bad
+    text) rather than trusted because they went green.
+- 2026-08-12: the line family is deliberately excluded from the shift rounds —
+  for a straight line, "3 right" and "3a up" are the same picture, so those
+  rounds use parabola/hyperbola/exp only. A line still appears in the reflection
+  round, where it is not degenerate. (Session 2's call; it flagged it rather
+  than hiding it.)
+- 2026-08-12: AFRIKAANS-TEKS.md rebuilt — the three new quests spliced in AND
+  the section numbering brought back in line with the shipped map order (it
+  still had Lees die gebied before Op die grafiek). Every one of the 488 old
+  bullets is still present, 592 now. It was rebuilt from the RUNNING app, not
+  by parsing source, which is why the concatenated-string blind spot from the
+  first extractor does not apply. Her edits were untouched.
+
 ## Pending on Megan
 
-Nothing pending — cleared 2026-08-12 (her three rulings given, word calls approved,
-circle-geometry-game confirmed pushed by the portfolio sweep, not by memory).
+1. 💻 5 min: [whenever] **name the three new quests.** They shipped with working
+   names — "Lengtes", "Gemiddelde gradiënt", "Transformasies". Say the word and
+   they change.
+2. 📱 10 min: [whenever] **play the three new quests** and say whether they are
+   at the right place on the map (they sit between Bo of onder and Eksamenmodus).
+3. 💻 2 min: [whenever] **two rulings waiting**: should quest 5 be reworked off
+   the tekentabel onto your board method (about one build session), and should
+   the old `randHyperbola()` stop allowing p = 0 for the batch-1 quests (it
+   touches every quest already built and reviewed with it)?
 
 ## Next up
 
@@ -147,23 +206,27 @@ circle-geometry-game confirmed pushed by the portfolio sweep, not by memory).
   swaps mapped into 8 source files, 81/81 harness checks pass, map read at 375 px
   with no overflow. The workflow held — do it this way again, and regenerate
   AFRIKAANS-TEKS.md after any session that adds strings.
-- **Her two rulings are DONE** (2026-08-12 evening, verified live, 86/86).
+- **Batch 2 is DONE and LIVE.** Her three rulings, both new-quest sessions and
+  both foreman review fixes shipped on 2026-08-12.
+- **First thing next session: her three Pending items above** — the quest names,
+  a playtest of the new three, and the two rulings. Batch 3 should not be specced
+  before the quest-5 ruling in particular, because that rework competes with new
+  topics for the same session.
 - **DECISION WAITING: quest 5 vs her board method.** Quest 5 still builds the
-  tekentabel she dropped on 2026-08-09 — this is a rework (intro lesson + the
-  singleSign/productSign rounds + the harness checks that assert the table),
-  roughly one whole build session. Ask her whether batch 2 should include it,
-  or whether q5 stays as-is until later. Do not touch the blurb alone: it
-  describes the quest accurately today.
-- **BATCH 2, dispatched 2026-08-12 (foreman = Opus this run, her call; she also
-  asked for the agents to be launched from the foreman session rather than
-  pasted by hand):**
-  - Session 1 — **lengths + average gradient** (one shared mechanic: read two
-    points off the graph, do one small sum; pure reading, no algebra).
-  - Session 2 — **transformations** (reuses the batch-1 discovery slider engine).
-  - Reviewed one at a time, batch-1 style: foreman reads the diff, re-runs the
-    harness, and looks at rendered rounds before the next session starts.
-- Still parked after that: finding equations · nature of roots (both drift toward
-  algebra — they need a design pass first) · the full inequalities batch
+  tekentabel she dropped on 2026-08-09 — a rework of the intro lesson, the
+  singleSign/productSign rounds and the harness checks that assert the table.
+  Roughly one build session. Do NOT touch its blurb alone: "lyne, tabel, lees af"
+  describes the quest accurately today, and rewording it would hide the problem.
+- **DECISION WAITING: `randHyperbola()` and p = 0.** The batch-2 quests draw
+  through `randHyperbolaOffAxis()`, but the batch-1 quests still use the raw
+  generator, which puts a vertical asymptote on the y-axis a third of the time.
+  Changing it touches every quest already built and reviewed — her call.
+- **Known harness wobble** (pre-existing, not from batch 2): the total count
+  varies 112/113 between runs because a §4 check skips a quest when a random
+  6-round draw happens to contain no interactive item. fail is always 0. Worth
+  tightening so the count is stable and nothing can hide in the skip.
+- Still parked for a later batch: finding equations · nature of roots (both drift
+  toward algebra — they need a design pass first) · the full inequalities batch
   (learner-placed cut lines return, engine work) · error-spotting ·
   **eksamenmodus rebuild LAST**, once every new skill exists for it to sample.
 - Then per RUN-PLAN "parked for later batches": transformations, finding equations,
@@ -208,10 +271,12 @@ js/
                              sweep(+plain/open) · comparePaint · axisGate · tapReveal
   quests/_shared.js (mc dedupes options) · _graphs.js (windowFor: square-grid, returns
                     null → regenerate; generators self-constrain) · _intervals.js
-  quests/q1-discover.js · q1b-discover2.js · qB-recognize.js · q3-region.js ·
-         q2-point.js · q5-signs.js · q6-compare.js · q7-exam.js
+  quests/q1-discover.js · q1b-discover2.js · qB-recognize.js · q2-point.js ·
+         q3-region.js · q5-signs.js · q6-compare.js · qL-lengths.js ·
+         qG-gradient.js · qT-transform.js · q7-exam.js      ← map order
 supabase/schema.sql   written, not run
-verify.html           the harness: 81 checks — §4b + frozen-asymptote + containment
-                      + Round D exactness are never-relax rules
-sw.js                 network-first for code; SHELL precache; CACHE = gq-v9
+verify.html           the harness: 113 checks — §4b + frozen-asymptote +
+                      containment + Round D exactness + §10's rulings/asymptote
+                      guards are never-relax rules
+sw.js                 network-first for code; SHELL precache; CACHE = gq-v12
 ```

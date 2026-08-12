@@ -347,11 +347,21 @@ for (const lang of ["af", "en"]) {
     }
   }
   Object.values(UI).forEach(collect);
+  /* the rest of her wording pass (2026-08-12), added after batch 2 session 2
+     wrote "sywaarts" into a transformations hint: "sywaarts" → "links of
+     regs", "hoegenaamd" → "op of af", and a hyperbola's branches are
+     vlerkies — "tak"/"takke" is banned outright. */
+  const BANNED = [
+    [/\bsleep\b/i, 'use "trek", not "sleep"'],
+    [/\bfrase\b/i, 'use "sin", not "frase"'],
+    [/\bsywaarts\b/i, 'use "links of regs", not "sywaarts"'],
+    [/\bhoegenaamd\b/i, 'use "op of af", not "hoegenaamd"'],
+    [/\btakke?\b/i, 'a hyperbola has "vlerkies" — "tak/takke" is banned'],
+  ];
   strings.forEach((s) => {
-    if (/\bsleep\b/i.test(s)) { bad++; why = `"${s.slice(0, 60)}"`; }
-    if (/\bfrase\b/i.test(s)) { bad++; why = `"${s.slice(0, 60)}"`; }
+    BANNED.forEach(([re, msg]) => { if (re.test(s)) { bad++; why = `${msg} — "${s.slice(0, 60)}"`; } });
   });
-  check(g, `"drag" not "sleep", "sin" not "frase" — every learner string (${strings.length} checked)`, bad === 0, why);
+  check(g, `her banned words stay out of every learner string (${strings.length} checked)`, bad === 0, why);
 
   host.remove();
 }

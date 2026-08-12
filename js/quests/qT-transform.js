@@ -184,8 +184,10 @@ function nameMoveRound() {
         graph: spec,
         stem: B("Dashed = f (before). Solid = the image (after).",
                 "Stippellyn = f (voor). Vol lyn = die beeld (na)."),
-        hints: [B("Compare where the marked feature sits now against before — sideways, or up/down?",
-                  "Vergelyk waar die kenmerk nou sit teenoor voorheen — sywaarts, of op/af?")],
+        /* "sywaarts" is one of the words Megan replaced in her wording pass
+           (2026-08-12): it becomes "links of regs". */
+        hints: [B("Compare where the marked feature sits now against before — left or right, or up/down?",
+                  "Vergelyk waar die kenmerk nou sit teenoor voorheen — links of regs, of op of af?")],
         solution: [moveSentence(dir, k)],
         answerLabel: correct,
       });

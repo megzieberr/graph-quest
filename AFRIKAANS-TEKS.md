@@ -2,9 +2,7 @@
 
 Reël vir regmaak: **verander net die Afrikaanse sin self** — moenie die etikette, kolpunte of ⟨…⟩ uitvee nie. ⟨…⟩ is 'n getal of naam wat die speletjie self invul. Los reëls wat reg is net so. Ek werk elke verandering terug in die kode in.
 
-
 ## Quest 1 · Ontdek (parabool-skuiwers)
-
 - Trek dit deur die hele reeks — die opsies maak eers oop as jy elke stop gesien het.
 - Wat het jy gesien?
 - **[regte antwoord]** a positief → arms OP (happy); a negatief → arms AF (sad)
@@ -93,7 +91,6 @@ Reël vir regmaak: **verander net die Afrikaanse sin self** — moenie die etike
 - **[intro-les]** Trek deur die hele reeks en kyk mooi. Daarna kies jy self wat jy gesien het — hierdie app vertel dit nie eerste vir jou nie.
 
 ## Quest 2 · Ontdek 2 (lyn · hiperbool · eksponensieel)
-
 - Trek dit deur die hele reeks — die opsies maak eers oop as jy elke stop gesien het.
 - Wat het jy gesien?
 - **[regte antwoord]** m positief → die lyn styg van links na regs (toenemend); m negatief → dit daal (afnemend)
@@ -211,7 +208,6 @@ Reël vir regmaak: **verander net die Afrikaanse sin self** — moenie die etike
 - Lyn, hiperbool, eksponensieel — skuif een getal en kyk
 
 ## Quest 3 · Vinnige Oë (vergelyking-flitse)
-
 - Geen
 - Waar is die horisontale asimptoot?
 - Waar is die vertikale asimptoot?
@@ -231,8 +227,39 @@ Reël vir regmaak: **verander net die Afrikaanse sin self** — moenie die etike
 - Vinnige Oë
 - Flits — noem die asimptoot of simmetrie-as, geen prent nie
 
-## Quest 4 · Lees die gebied
+## Quest 4 · Op die grafiek
+- **[vraag]** P(⟨…⟩ ; k) lê op f. Trek P op die grafiek.
+- So wat is k?
+- **[wenk]** Vervang x = ⟨…⟩ in f(x) en werk die antwoord uit.
+- **[antwoord-etiket]** k = ⟨…⟩, dus is P ⟨…⟩
+- **[vraag]** P(k ; ⟨…⟩) lê op f. Trek P op die grafiek.
+- **[wenk]** Stel f(x) = ⟨…⟩ en los op vir x.
+- **[regte antwoord]** Vervang x = ⟨…⟩ en werk f(⟨…⟩) uit
+- P(⟨…⟩ ; k) lê op f. Watter stap gee vir jou k?
+- **[afleier]** Vervang y = ⟨…⟩ en los op vir x
+- **[nudge (na verkeerde keuse)]** ⟨…⟩ staan in die EERSTE plek, so dit is die x — nie die y nie.
+- **[afleier]** Stel f(x) = 0 en los op vir x
+- **[nudge (na verkeerde keuse)]** Dit kry die x-afsnit, nie 'n punt wat bo-op die kurwe lê nie.
+- Lees die y-afsnit van die grafiek af
+- **[wenk]** Volg die stippellyn af: watter koördinaat van P het hulle reeds gegee?
+- Hulle het die x gegee. Sit dit in en kyk wat uitkom.
+- **[antwoord-etiket]** k = f(⟨…⟩) = ⟨…⟩
+- **[vraag]** P(⟨…⟩ ; k) lê op die halfsirkel h. Trek P op die grafiek.
+- **[instruksie]** Net reguit op en af.
+- Die grafiek kan net OMTRENT wys waar k is. Gee k presies, in vereenvoudigde wortelvorm.
+- **[wenk]** Vervang in x² + y² = ⟨…⟩: y² = ⟨…⟩ − ⟨…⟩ = ⟨…⟩.
+- **[antwoord-etiket]** k = ⟨…⟩
+- **[regte antwoord]** ⟨…⟩ — h is net die boonste helfte, so 'n negatiewe y kan nie daarop lê nie
+- Algebraïes kry jy TWEE antwoorde. Watter een moet jy weggooi, en hoekom?
+- ⟨…⟩ — sy x is te groot
+- Nie een nie — albei lê op h
+- ⟨…⟩ — dit is buite die definisieversameling
+- **[byskrif]** h is die halfsirkel hieronder. Beide ⟨…⟩ en ⟨…⟩ voldoen aan x² + y² = 25.
+- **[wenk]** Kyk na die prentjie, nie net na die algebra nie. Waar loop h werklik?
+- **[antwoord-etiket]** Op die grafiek
+- P(5 ; k) lê op f — kry die maat
 
+## Quest 5 · Lees die gebied
 - Skuif die punt van links na regs. Dit gaan nie terug nie.
 - Niks het opgelig nie — die grafiek is nie aan daardie kant nie. Probeer die ander kant.
 - Goed — probeer nou ook die ander kant.
@@ -292,41 +319,7 @@ Reël vir regmaak: **verander net die Afrikaanse sin self** — moenie die etike
 - **[intro-les]** Vir definisie- en waardeversameling klik jy eers die AS waarop jou antwoord lê — x vir definisieversameling, y vir waardeversameling. Klik op die verkeerde een en niks gebeur nie, probeer net weer.
 - **[intro-les]** Elke antwoord word altyd in x-waardes geskryf, of reguit van die prent afgelees. Reg?
 
-## Quest 5 · Op die grafiek
-
-- **[vraag]** P(⟨…⟩ ; k) lê op f. Trek P op die grafiek.
-- So wat is k?
-- **[wenk]** Vervang x = ⟨…⟩ in f(x) en werk die antwoord uit.
-- **[antwoord-etiket]** k = ⟨…⟩, dus is P ⟨…⟩
-- **[vraag]** P(k ; ⟨…⟩) lê op f. Trek P op die grafiek.
-- **[wenk]** Stel f(x) = ⟨…⟩ en los op vir x.
-- **[regte antwoord]** Vervang x = ⟨…⟩ en werk f(⟨…⟩) uit
-- P(⟨…⟩ ; k) lê op f. Watter stap gee vir jou k?
-- **[afleier]** Vervang y = ⟨…⟩ en los op vir x
-- **[nudge (na verkeerde keuse)]** ⟨…⟩ staan in die EERSTE plek, so dit is die x — nie die y nie.
-- **[afleier]** Stel f(x) = 0 en los op vir x
-- **[nudge (na verkeerde keuse)]** Dit kry die x-afsnit, nie 'n punt wat bo-op die kurwe lê nie.
-- Lees die y-afsnit van die grafiek af
-- **[wenk]** Volg die stippellyn af: watter koördinaat van P het hulle reeds gegee?
-- Hulle het die x gegee. Sit dit in en kyk wat uitkom.
-- **[antwoord-etiket]** k = f(⟨…⟩) = ⟨…⟩
-- **[vraag]** P(⟨…⟩ ; k) lê op die halfsirkel h. Trek P op die grafiek.
-- **[instruksie]** Net reguit op en af.
-- Die grafiek kan net OMTRENT wys waar k is. Gee k presies, in vereenvoudigde wortelvorm.
-- **[wenk]** Vervang in x² + y² = ⟨…⟩: y² = ⟨…⟩ − ⟨…⟩ = ⟨…⟩.
-- **[antwoord-etiket]** k = ⟨…⟩
-- **[regte antwoord]** ⟨…⟩ — h is net die boonste helfte, so 'n negatiewe y kan nie daarop lê nie
-- Algebraïes kry jy TWEE antwoorde. Watter een moet jy weggooi, en hoekom?
-- ⟨…⟩ — sy x is te groot
-- Nie een nie — albei lê op h
-- ⟨…⟩ — dit is buite die definisieversameling
-- **[byskrif]** h is die halfsirkel hieronder. Beide ⟨…⟩ en ⟨…⟩ voldoen aan x² + y² = 25.
-- **[wenk]** Kyk na die prentjie, nie net na die algebra nie. Waar loop h werklik?
-- **[antwoord-etiket]** Op die grafiek
-- P(5 ; k) lê op f — kry die maat
-
 ## Quest 6 · Plus en minus
-
 - 'n Draaipunt is nie waar die grafiek van teken verander nie — geen lyn daar nie.
 - Die y-as is nie 'n grens nie — net x-afsnitte en asimptote kry lyne.
 - Lyne geplaas! Vul nou die tekentabel hieronder in.
@@ -381,7 +374,6 @@ Reël vir regmaak: **verander net die Afrikaanse sin self** — moenie die etike
 - f(x) > 0 en f(x)·g(x) < 0 — lyne, tabel, lees af
 
 ## Quest 7 · Bo of onder
-
 - **[nudge (na verkeerde keuse)]** Daai is die afdelings waar f ONDER g lê — die vraag vra waar f bo lê.
 - Daai is die afdelings waar f BO g lê — die vraag vra waar f onder lê.
 - **[nudge (na verkeerde keuse)]** 'n Streng sluit nooit die grense in nie — en 'n asimptoot se x word NOOIT ingesluit nie.
@@ -418,8 +410,117 @@ Reël vir regmaak: **verander net die Afrikaanse sin self** — moenie die etike
 - **[intro-les]** Stap 4: skuif 'n skandeerlyn links na regs oor die prent, om die stempels met jou eie oë te toets.
 - **[intro-les]** Stap 5: skryf die + afdelings, links na regs: x < −2 of 0 < x < 4. Die asimptoot se x = 0 word NOOIT ingesluit nie.
 
-## Quest 8 · Eksamenmodus
+## Quest 8 · Lengtes
+- Elke lengte is 'n aftrekking wat jy kan sien
+- Hierdie soektog gaan oor LENGTES — en elkeen is net 'n aftrekking van twee getalle wat jy reeds kan sien.
+- Klik op die skets om die twee gemerkte punte en die lyn tussen hulle te wys — niks word vir jou uitgewerk nie.
+- Lees dan elke punt se hoogte (of posisie) van die rooster af, en trek af: bo min onder, of regs min links.
+- **[vraag]** P lê op f en Q lê op g, altwee by x = ⟨…⟩. Klik om hulle te wys, kry dan die lengte van PQ.
+- **[afrigter]** Klik op x = ⟨…⟩ op die skets.
+- **[vraag]** Wat is die lengte van PQ?
+- **[nudge (na verkeerde keuse)]** PQ is die VERSKIL tussen die twee hoogtes, nie hul som nie.
+- **[nudge (na verkeerde keuse)]** 'n Lengte kan nooit negatief wees nie — die twee hoogtes is die verkeerde kant om afgetrek.
+- **[nudge (na verkeerde keuse)]** Dit is net P se hoogte — Q se hoogte moet nog daarvan afgetrek word.
+- **[wenk]** Lees P se hoogte en Q se hoogte van die rooster af, trek dan af — bo min onder.
+- **[vraag]** P lê op f by x = ⟨…⟩. Klik om dit te vind, lees dan sy lengte tot by die x-as.
+- **[vraag]** Wat is die lengte van P tot by die x-as?
+- **[nudge (na verkeerde keuse)]** 'n Lengte is nooit negatief nie — los die teken.
+- **[nudge (na verkeerde keuse)]** Dit is P se x-koördinaat, nie sy hoogte bo of onder die x-as nie.
+- **[wenk]** Tel die roosterblokkies van P reguit af (of op) tot by die x-as.
+- **[vraag]** A en B lê op f, altwee by y = ⟨…⟩. Klik om hulle te wys, kry dan die lengte van AB.
+- **[afrigter]** Klik op die hoogte y = ⟨…⟩ op die skets.
+- **[vraag]** Wat is die lengte van AB?
+- **[nudge (na verkeerde keuse)]** Dit is net die helfte van die wydte — AB loop van A heeltemal oor tot by B.
+- **[nudge (na verkeerde keuse)]** Dit is net B se x-koördinaat op sy eie — die lengte is die GAPING tussen A en B.
+- **[nudge (na verkeerde keuse)]** Dit is die hoogte wat A en B deel, nie die gaping tussen hul x-waardes nie.
+- **[wenk]** Lees A se x en B se x van die rooster af, trek dan af — regs min links.
+- **[vraag]** P lê op f by y = ⟨…⟩. Klik om dit te vind, lees dan sy lengte tot by die y-as.
+- **[vraag]** Wat is die lengte van P tot by die y-as?
+- **[nudge (na verkeerde keuse)]** Dit is P se y-koördinaat, nie sy afstand van die y-as nie.
+- **[wenk]** Tel die roosterblokkies van P reguit oor tot by die y-as.
 
+## Quest 9 · Gemiddelde gradiënt
+- Die gradiënt van die koord — lees twee punte, doen een klein som
+- Die gemiddelde gradiënt tussen twee punte op 'n kurwe is die gradiënt van die reguit LYN wat hulle verbind — die koord.
+- Klik op die skets om die koord te teken — niks word vir jou uitgewerk nie, jy sien net die lyn.
+- Lees dan elke punt se hoogte van die rooster af: gemiddelde gradiënt = Δy oor Δx.
+- **[vraag]** A en B lê op f. Klik om die koord AB te teken. Voor jy 'n getal uitwerk — is sy gemiddelde gradiënt positief of negatief?
+- **[afrigter]** Klik op die skets om die lyn deur A en B te teken.
+- **[vraag]** Net van die prentjie af — positief of negatief?
+- **[regte antwoord]** negatief — die koord daal van A na B
+- **[afleier]** positief — die koord styg van A na B
+- **[afleier]** nul — dit is plat
+- **[afleier]** jy kan nie sonder om uit te werk sê nie
+- **[nudge (na verkeerde keuse)]** Jy kan! 'n Koord wat links na regs styg het 'n positiewe gradiënt, een wat daal het 'n negatiewe — geen uitwerk nodig nie.
+- **[wenk]** Volg die geteken koord met jou oog, links na regs — styg of daal dit?
+- **[vraag]** A en B lê op f. Klik om die koord AB te teken, kry dan sy gemiddelde gradiënt.
+- **[vraag]** Wat is die gemiddelde gradiënt van AB?
+- **[nudge (na verkeerde keuse)]** Dit is Δx oor Δy — die gradiënt is andersom: Δy OOR Δx.
+- **[nudge (na verkeerde keuse)]** Dit gebruik net B se eie koördinate — die gradiënt het die VERANDERING van A na B nodig.
+- **[nudge (na verkeerde keuse)]** Die teken het omgeswaai — Δy is B se hoogte MINUS A s'n, nie andersom nie.
+- **[regte antwoord]** m = ⟨…⟩
+- **[wenk]** Gemiddelde gradiënt = Δy oor Δx — B se hoogte min A s'n, oor B se x min A s'n.
+- **[vraag]** Twee koorde is op f gemerk. Klik om hulle te teken, sê dan watter een STEILER is.
+- **[afrigter]** Klik op die skets om albei koorde te teken.
+- **[vraag]** Watter koord het die steiler gemiddelde gradiënt — AB of CD?
+- **[afleier]** hulle is ewe steil
+- **[nudge (na verkeerde keuse)]** Kyk weer — een styg (of daal) skerper oor sy eie wydte. Hulle is nie gelyk nie.
+- **[nudge (na verkeerde keuse)]** Jy kan! Die steiler koord styg of daal skerper — geen uitwerk nodig om met die oog te sien watter een wen nie.
+- **[regte antwoord]** AB is steiler
+- **[wenk]** Die steiler koord lyk nader aan vertikaal — vergelyk hoeveel elkeen styg oor sy eie wydte.
+- **[nudge (na verkeerde keuse)]** Dit gebruik net A se eie koördinate — die gradiënt het die VERANDERING van A na B nodig.
+- **[regte antwoord]** CD is steiler
+
+## Quest 10 · Transformasies
+- Sien die skuif, noem dit dan
+- Dis f. Elke ronde in hierdie soektog begin met so 'n prent.
+- Nou verskyn sy BEELD vol, terwyl f stippellyn en vaal bly — die voor en na, op een skets.
+- Die vergelyking word nooit uitgebrei of vereenvoudig nie — dit bly altyd in dieselfde vorm. Jou werk is om die skuif te SIEN.
+- **[vraag]** f is stippellyn. Watter spieëling is die vol grafiek?
+- **[stam]** Stippellyn = f. Vol lyn = die gespieëlde beeld.
+- **[afleier]** y = −f(x) — omgeflip oor die x-as
+- **[nudge (na verkeerde keuse)]** Kyk na die twee flips apart: −f(x) draai die vorm onderstebo; f(−x) draai dit links-regs om. Watter een het hier eintlik gebeur?
+- **[afleier]** dis dieselfde grafiek as f, net weer geteken
+- **[nudge (na verkeerde keuse)]** Kyk weer — die vol grafiek lê nie bo-op die stippellyn een nie.
+- **[afleier]** f is geskuif, nie gespieël nie
+- **[nudge (na verkeerde keuse)]** 'n Skuif hou dieselfde vorm dieselfde kant toe — hierdie een is 'n spieëlbeeld, nie 'n skuif nie.
+- **[regte antwoord]** y = f(−x) — omgeflip oor die y-as
+- **[wenk]** Vergelyk watter kant toe die arms wys — het dit onderstebo omgeflip, of het net die draaipunt se x verander?
+- **[vraag]** Skuif die getal totdat die vol grafiek presies op die stippellyn-teiken beland.
+- **[afrigter]** Trek totdat die twee grafieke presies opmekaar val.
+- **[wenk]** Kyk na die kenmerk van die vol grafiek — beland dit al op die stippellyn een?
+- **[vraag]** Watter skuif het jy pas gemaak?
+- **[regte antwoord]** ⟨…⟩ regs
+- **[afleier]** ⟨…⟩ links
+- **[nudge (na verkeerde keuse)]** Kyk weer — die kenmerk het die ANDER kant toe beweeg op dieselfde as.
+- **[afleier]** ⟨…⟩ op
+- **[nudge (na verkeerde keuse)]** Daardie as het nooit beweeg nie — kyk of die kenmerk se x verander het, of net sy y.
+- **[afleier]** ⟨…⟩ af
+- **[metodekaart]** f het ⟨…⟩ regs geskuif.
+- **[vraag]** Wat het met f gebeur?
+- **[stam]** Stippellyn = f (voor). Vol lyn = die beeld (na).
+- **[wenk]** Vergelyk waar die kenmerk nou sit teenoor voorheen — links of regs, of op of af?
+- **[metodekaart]** f het ⟨…⟩ op geskuif.
+- **[vraag]** Skuif ⟨…⟩ op. Wat is g(x)?
+- **[nudge (na verkeerde keuse)]** Reg letter, verkeerde teken.
+- **[nudge (na verkeerde keuse)]** Verkeerde letter — dis nie die een wat hierdie skuif verander nie.
+- **[nudge (na verkeerde keuse)]** Verkeerde letter, en ook die verkeerde teken.
+- **[wenk]** Watter letter verander hierdie skuif eintlik — p of q?
+- **[wenk]** Op of regs is 'n PLUS op daardie letter; af of links is 'n MINUS.
+- **[metodekaart]** p skuif die grafiek links/regs. q skuif dit op/af.
+- **[metodekaart]** Hierdie skuif verander q met +⟨…⟩.
+- **[wenk]** Vergelyk in watter paar hoeke die vlerkies lê — het dit verruil, of het die vlerkies na die spieël-x geskuif?
+- **[vraag]** Skuif ⟨…⟩ regs. Wat is g(x)?
+- **[metodekaart]** Hierdie skuif verander p met +⟨…⟩.
+- **[metodekaart]** f het ⟨…⟩ af geskuif.
+- **[vraag]** Skuif ⟨…⟩ af. Wat is g(x)?
+- **[metodekaart]** Hierdie skuif verander q met ⟨…⟩.
+- **[wenk]** Vergelyk die lyn se rigting, en waar dit die y-as sny.
+- **[vraag]** Skuif ⟨…⟩ links. Wat is g(x)?
+- **[metodekaart]** Hierdie skuif verander p met ⟨…⟩.
+- **[metodekaart]** f het ⟨…⟩ links geskuif.
+
+## Quest 11 · Eksamenmodus
 - **[byskrif]** Die skets toon die halfsirkel h met middelpunt by die oorsprong, en die eksponensiële funksie g gegee deur ⟨…⟩.
 - Skryf die vergelyking van die asimptoot van g neer.
 - Bereken die x-afsnit van g.
@@ -453,7 +554,6 @@ Reël vir regmaak: **verander net die Afrikaanse sin self** — moenie die etike
 - Een skets, elke vaardigheid — die regte ding
 
 ## App-teks oral (knoppies, terugvoer, UI)
-
 - Waardeversameling
 - Fun Functions
 - Leer om die grafiek te SIEN
@@ -517,9 +617,7 @@ Reël vir regmaak: **verander net die Afrikaanse sin self** — moenie die etike
 - albei
 
 ## Kaart & skerms
-
 - Agt soektogte. Elkeen leer jou oë een taak — deur eers jou hand dit te laat doen.
 
 ## App-raam
-
 - Kon nie stoor nie — jou vordering kan verlore gaan
