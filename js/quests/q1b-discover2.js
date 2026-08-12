@@ -44,7 +44,7 @@ import {
 const ACC = "#7b5cff";
 
 const DRAGALL = B("Drag it through the whole range — the options only open once you have seen every stop.",
-                  "Drag dit deur die hele reeks — die opsies maak eers oop as jy elke stop gesien het.");
+                  "Trek dit deur die hele reeks — die opsies maak eers oop as jy elke stop gesien het.");
 const SAWWHAT = B("What did you see?", "Wat het jy gesien?");
 
 /* ------------------------------------------------------------
@@ -120,7 +120,7 @@ const BEATS = {
       pointsOf: lineYPoint,
       eqOf: (m) => EQ(eqStr(lineCv(m, c), "f(x)")),
       stem: EQ("f(x) = mx + c"),
-      prompt: B("Drag m. What happens to the line?", "Drag m. Wat gebeur met die lyn?"),
+      prompt: B("Drag m. What happens to the line?", "Trek m. Wat gebeur met die lyn?"),
       hints: [
         B("Park m on 2 and watch the line. Then park it on −2.",
           "Sit m op 2 en kyk na die lyn. Sit dit dan op −2."),
@@ -147,7 +147,7 @@ const BEATS = {
         B("m &gt; 0 → increasing (climbs left to right). m &lt; 0 → decreasing (falls).",
           "m &gt; 0 → toenemend (styg van links na regs). m &lt; 0 → afnemend (daal)."),
         B("The y-intercept never moved — only the direction flipped.",
-          "Die y-afsnit het nooit beweeg nie — net die rigting het omgedraai."),
+          "Die y-afsnit het nooit beweeg nie — net die rigting het verander."),
       ],
     });
   }),
@@ -164,12 +164,12 @@ const BEATS = {
       eqOf: (m) => EQ(eqStr(lineCv(m, c), "f(x)")),
       stem: EQ("f(x) = mx + c"),
       prompt: B("m stays positive here. Drag m. What happens?",
-                "m bly hier positief. Drag m. Wat gebeur?"),
+                "m bly hier positief. Trek m. Wat gebeur?"),
       hints: [
         B("Compare m = 0,5 with m = 2. How steep is the line each time?",
           "Vergelyk m = 0,5 met m = 2. Hoe steil is die lyn elke keer?"),
         B("Watch the y-intercept while you drag. Does it move at all?",
-          "Kyk na die y-afsnit terwyl jy drag. Beweeg dit hoegenaamd?"),
+          "Kyk na die y-afsnit terwyl jy trek. Beweeg dit opwaarts?"),
       ],
       correct,
       wrongs: [
@@ -206,7 +206,7 @@ const BEATS = {
       eqOf: (c) => EQ(eqStr(lineCv(m, c), "f(x)")),
       stem: EQ("f(x) = mx + c"),
       prompt: B("Drag c. Watch where the line crosses the y-axis.",
-                "Drag c. Kyk waar die lyn die y-as sny."),
+                "Trek c. Kyk waar die lyn die y-as sny."),
       hints: [
         B("Read the marked point at c = 3, then again at c = −3.",
           "Lees die gemerkte punt by c = 3, dan weer by c = −3."),
@@ -223,13 +223,13 @@ const BEATS = {
                   "Kyk waar die lyn die y-as sny, nie die x-as nie.") },
         { label: B("c flips the line over", "c draai die lyn om"),
           misc: B("The line never turned upside down — it only rode up and down.",
-                  "Die lyn het nooit onderstebo gedraai nie — dit het net op en af gery.") },
+                  "Die lyn het nooit onderstebo gedraai nie — dit het net op en af geskuif.") },
       ],
       method: [
         B("c is the y-intercept — the line crosses the y-axis exactly at c.",
           "c is die y-afsnit — die lyn sny die y-as presies by c."),
         B("Change c and the whole line rides up or down — the steepness stays exactly the same.",
-          "Verander c en die hele lyn ry op of af — die steilheid bly presies dieselfde."),
+          "Verander c en die hele lyn skuif op of af — die steilheid bly presies dieselfde."),
       ],
     });
   }),
@@ -244,7 +244,7 @@ const BEATS = {
        but a frozen one must be visibly its own line. */
     const p = pick([-1, 1]), q = pick([-2, -1, 1, 2]);
     const correct = B("a positive → the branches sit top-right & bottom-left of the cross; a negative → top-left & bottom-right",
-                      "a positief → die arms lê regs-bo & links-onder van die kruis; a negatief → links-bo & regs-onder");
+                      "a positief → die vlerkies lê regs-bo & links-onder van die kruis; a negatief → links-bo & regs-onder");
     return beat({
       id: "hypSign", name: "a",
       values: [-4, -3, -2, -1, 1, 2, 3, 4],
@@ -252,34 +252,34 @@ const BEATS = {
       eqOf: (a) => EQ(eqStr(hypCv(a, p, q), "f(x)")),
       stem: EQ("f(x) = a/(x − p) + q"),
       prompt: B("Drag a. Which corners do the branches sit in?",
-                "Drag a. In watter hoeke lê die arms?"),
+                "Trek a. In watter hoeke lê die vlerkies?"),
       hints: [
         B("Park a on 3 and look at the two branches against the dashed cross. Then park it on −3.",
-          "Sit a op 3 en kyk na die twee arms teenoor die kruis. Sit dit dan op −3."),
+          "Sit a op 3 en kyk na die twee vlerkies teenoor die kruis. Sit dit dan op −3."),
         B("Did the dashed cross move? Or did only the branches swap corners?",
-          "Het die kruis beweeg? Of het net die arms van hoeke verruil?"),
+          "Het die kruis beweeg? Of het net die vlerkies van hoeke verruil?"),
       ],
       correct,
       wrongs: [
         { label: B("a positive → top-left & bottom-right; a negative → top-right & bottom-left",
                    "a positief → links-bo & regs-onder; a negatief → regs-bo & links-onder"),
           misc: B("Look again at a = 3 — which corner is the branch actually sitting in, up on the right?",
-                  "Kyk weer na a = 3 — in watter hoek lê die arm eintlik, daar bo-regs?") },
+                  "Kyk weer na a = 3 — in watter hoek lê die vlerkie eintlik, daar bo-regs?") },
         { label: B("the sign of a moves the dashed asymptote cross",
                    "die teken van a skuif die stippellyn-kruis"),
           misc: B("The cross stayed on exactly the same spot the whole drag — only the branches flipped.",
-                  "Die kruis het heeltyd presies op dieselfde plek gebly — net die arms het omgeruil.") },
+                  "Die kruis het heeltyd presies op dieselfde plek gebly — net die vlerkies het omgeruil.") },
         { label: B("the sign of a controls how close the branches hug the cross",
-                   "die teken van a beheer hoe naby die arms aan die kruis lê"),
+                   "die teken van a beheer hoe naby die vlerkies aan die kruis lê"),
           misc: B("That is the SIZE of a, not its sign.", "Dis die GROOTTE van a, nie sy teken nie.") },
       ],
       method: [
         B("a decides which pair of corners the two branches sit in.",
-          "a besluit in watter paar hoeke die twee arms lê."),
+          "a besluit in watter paar hoeke die twee vlerkies lê."),
         B("a &gt; 0 → top-right &amp; bottom-left. a &lt; 0 → top-left &amp; bottom-right.",
           "a &gt; 0 → regs-bo &amp; links-onder. a &lt; 0 → links-bo &amp; regs-onder."),
         B("The dashed asymptote cross never moves — only the branches flip to the other pair of corners.",
-          "Die stippellyn-kruis beweeg nooit nie — net die arms swaai na die ander paar hoeke."),
+          "Die stippellyn-kruis beweeg nooit nie — net die vlerkies swaai na die ander paar hoeke."),
       ],
     });
   }),
@@ -288,7 +288,7 @@ const BEATS = {
   hypP: () => beatOrDie("hypP", () => {
     const a = pick([2, -2, 3, -3]), q = pick([-2, -1, 1, 2]);   // frozen q off the axis, see hypSign
     const correct = B("p slides the vertical (dashed) asymptote sideways — it always sits at x = p",
-                      "p skuif die vertikale (stippel) asimptoot sywaarts — dit sit altyd by x = p");
+                      "p skuif die vertikale (stippel) asimptoot links of regs — dit sit altyd by x = p");
     return beat({
       id: "hypP", name: "p",
       values: [-3, -2, -1, 0, 1, 2, 3],
@@ -296,12 +296,12 @@ const BEATS = {
       eqOf: (p) => EQ(eqStr(hypCv(a, p, q), "f(x)")),
       stem: EQ("f(x) = a/(x − p) + q"),
       prompt: B("Drag p. Watch the vertical dashed line.",
-                "Drag p. Kyk na die vertikale stippellyn."),
+                "Trek p. Kyk na die vertikale stippellyn."),
       hints: [
         B("Park p on 2. Read the x-value the dashed vertical line sits at.",
           "Sit p op 2. Lees die x-waarde waar die vertikale stippellyn sit."),
         B("Now park p on −2. Did the horizontal dashed line move at all?",
-          "Sit p nou op −2. Het die horisontale stippellyn hoegenaamd beweeg?"),
+          "Sit p nou op −2. Het die horisontale stippellyn op of af beweeg?"),
       ],
       correct,
       wrongs: [
@@ -310,17 +310,17 @@ const BEATS = {
           misc: B("Watch the horizontal dashed line only — it never moved.",
                   "Kyk net na die horisontale stippellyn — dit het nooit beweeg nie.") },
         { label: B("p changes which corners the branches sit in",
-                   "p verander in watter hoeke die arms lê"),
+                   "p verander in watter hoeke die vlerkies lê"),
           misc: B("The branches stayed in the same pair of corners the whole drag — only the whole picture slid sideways.",
-                  "Die arms het heeltyd in dieselfde paar hoeke gebly — net die hele prent het sywaarts geskuif.") },
+                  "Die vlerkies het heeltyd in dieselfde paar hoeke gebly — net die hele prent het links of regs geskuif.") },
         { label: B("p makes the branches hug the cross tighter or looser",
-                   "p maak die arms nouer of losser om die kruis"),
+                   "p maak die vlerkies nader of verder weg van die kruis"),
           misc: B("That is what a does, not p.", "Dis wat a doen, nie p nie.") },
       ],
       method: [
         B("p is the x of the vertical asymptote.", "p is die x van die vertikale asimptoot."),
         B("Drag p and the whole picture — branches, cross and all — rides sideways with it.",
-          "Drag p en die hele prent — arms, kruis en al — ry saam met dit sywaarts."),
+          "Trek p en die hele prent — vlerkies, kruis en al — skuif saam met dit links of regs."),
       ],
     });
   }),
@@ -337,31 +337,31 @@ const BEATS = {
       eqOf: (q) => EQ(eqStr(hypCv(a, p, q), "f(x)")),
       stem: EQ("f(x) = a/(x − p) + q"),
       prompt: B("Drag q. Watch the horizontal dashed line.",
-                "Drag q. Kyk na die horisontale stippellyn."),
+                "Trek q. Kyk na die horisontale stippellyn."),
       hints: [
         B("Park q on 2. Read the y-value the horizontal dashed line sits at.",
           "Sit q op 2. Lees die y-waarde waar die horisontale stippellyn sit."),
         B("Now park q on −2. Did the vertical dashed line move at all?",
-          "Sit q nou op −2. Het die vertikale stippellyn hoegenaamd beweeg?"),
+          "Sit q nou op −2. Het die vertikale stippellyn op of af beweeg?"),
       ],
       correct,
       wrongs: [
         { label: B("q slides the vertical (dashed) asymptote sideways",
-                   "q skuif die vertikale (stippel) asimptoot sywaarts"),
+                   "q skuif die vertikale (stippel) asimptoot links of regs"),
           misc: B("Watch the vertical dashed line only — it never moved.",
                   "Kyk net na die vertikale stippellyn — dit het nooit beweeg nie.") },
         { label: B("q changes which corners the branches sit in",
-                   "q verander in watter hoeke die arms lê"),
+                   "q verander in watter hoeke die vlerkies lê"),
           misc: B("The branches stayed in the same pair of corners the whole drag — only the whole picture rode up and down.",
-                  "Die arms het heeltyd in dieselfde paar hoeke gebly — net die hele prent het op en af gery.") },
+                  "Die vlerkies het heeltyd in dieselfde paar hoeke gebly — net die hele prent het op en af geskuif.") },
         { label: B("q makes the branches hug the cross tighter or looser",
-                   "q maak die arms nouer of losser om die kruis"),
+                   "q maak die vlerkies nader of verder weg van die kruis"),
           misc: B("That is what a does, not q.", "Dis wat a doen, nie q nie.") },
       ],
       method: [
         B("q is the y of the horizontal asymptote.", "q is die y van die horisontale asimptoot."),
         B("Drag q and the whole picture — branches, cross and all — rides up and down with it.",
-          "Drag q en die hele prent — arms, kruis en al — ry saam met dit op en af."),
+          "Trek q en die hele prent — vlerkies, kruis en al — skuif saam met dit op en af."),
       ],
     });
   }),
@@ -379,7 +379,7 @@ const BEATS = {
       eqOf: (a) => EQ(eqStr(expCv(a, b, q), "f(x)")),
       stem: EQ("f(x) = a·bˣ + q"),
       prompt: B("Drag a. Which side of the dashed asymptote is the curve on?",
-                "Drag a. Aan watter kant van die stippellyn lê die kurwe?"),
+                "Trek a. Aan watter kant van die stippellyn lê die kurwe?"),
       hints: [
         B("Park a on 2 and look above or below the dashed line. Then park it on −2.",
           "Sit a op 2 en kyk bo of onder die stippellyn. Sit dit dan op −2."),
@@ -426,7 +426,7 @@ const BEATS = {
       eqOf: (b) => EQ(eqStr(expCv(a, b, q), "f(x)")),
       stem: EQ("f(x) = a·bˣ + q"),
       prompt: B("Drag b. Watch how the curve behaves as x grows (to the right).",
-                "Drag b. Kyk hoe die kurwe optree soos x groei (na regs)."),
+                "Trek b. Kyk hoe die kurwe optree soos x groei (na regs)."),
       hints: [
         B("Park b on 0,5 and watch the right-hand side of the curve. Then park it on 2.",
           "Sit b op 0,5 en kyk na die regterkant van die kurwe. Sit dit dan op 2."),
@@ -442,7 +442,7 @@ const BEATS = {
         { label: B("b slides the dashed asymptote up and down",
                    "b skuif die stippellyn op en af"),
           misc: B("q does that — the dashed line never moved while you dragged b.",
-                  "q doen dit — die stippellyn het nooit beweeg terwyl jy b gedrag het nie.") },
+                  "q doen dit — die stippellyn het nooit beweeg terwyl jy b getrek het nie.") },
         { label: B("b decides which side of the asymptote the curve sits on",
                    "b besluit aan watter kant van die asimptoot die kurwe lê"),
           misc: B("That is what a does, not b.", "Dis wat a doen, nie b nie.") },
@@ -469,7 +469,7 @@ const BEATS = {
       eqOf: (q) => EQ(eqStr(expCv(a, b, q), "f(x)")),
       stem: EQ("f(x) = a·bˣ + q"),
       prompt: B("Drag q. Watch the dashed asymptote line.",
-                "Drag q. Kyk na die stippel-asimptootlyn."),
+                "Trek q. Kyk na die stippel-asimptootlyn."),
       hints: [
         B("Park q on 2. Read the y-value the dashed line sits at.",
           "Sit q op 2. Lees die y-waarde waar die stippellyn sit."),
@@ -481,7 +481,7 @@ const BEATS = {
         { label: B("q controls taking off vs landing (opstyg/land)",
                    "q beheer opstyg teenoor land"),
           misc: B("That is what b does — the curve's shape never changed while you dragged q.",
-                  "Dis wat b doen — die kurwe se vorm het nooit verander terwyl jy q gedrag het nie.") },
+                  "Dis wat b doen — die kurwe se vorm het nooit verander terwyl jy q getrek het nie.") },
         { label: B("q decides which side of the asymptote the curve sits on",
                    "q besluit aan watter kant van die asimptoot die kurwe lê"),
           misc: B("That is what a does, not q.", "Dis wat a doen, nie q nie.") },
@@ -492,7 +492,7 @@ const BEATS = {
       method: [
         B("q is the y of the asymptote.", "q is die y van die asimptoot."),
         B("Change q and the whole picture rides up or down with it — the shape stays exactly the same.",
-          "Verander q en die hele prent ry saam met dit op of af — die vorm bly presies dieselfde."),
+          "Verander q en die hele prent skuif saam met dit op of af — die vorm bly presies dieselfde."),
       ],
     });
   }),
@@ -512,6 +512,6 @@ function discoverSheet2() {
 export const questDiscover2 = quest("q1b",
   B("Discover 2", "Ontdek 2"),
   B("Line, hyperbola, exponential — drag one number and watch",
-    "Lyn, hiperbool, eksponensieel — drag een getal en kyk"),
+    "Lyn, hiperbool, eksponensieel — skuif een getal en kyk"),
   [{ id: "discover2", concept: "discover", gen: () => BEATS.lineSign() }],
   { rounds: 9, accent: ACC, buildAll: discoverSheet2 });

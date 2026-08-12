@@ -134,10 +134,10 @@ const SKILLS = {
         : B("For which values of x is <span class='eq'>f(x) &lt; g(x)</span>?", "Vir watter waardes van x is <span class='eq'>f(x) &lt; g(x)</span>?"),
       stem: `<span class="eq">f(x) = ${eqStr(f, "").replace(/^\s*=\s*/, "")}</span> &nbsp;·&nbsp; <span class="eq">g(x) = ${eqStr(g, "").replace(/^\s*=\s*/, "")}</span>`,
       coach: B("The cut lines are already in — every intersection, and the asymptote. Now tap each section: is f above g, or below?",
-               "Die snylyne is reeds daar — elke snypunt, en die asimptoot. Tik nou elke afdeling: is f bo g, of onder?"),
+               "Die snylyne is reeds daar — elke snypunt, en die asimptoot. Klik nou op elke afdeling: is f bo g, of onder?"),
       hints: [
         B("Tap a section once for +, twice for −. + means f is ABOVE g there.",
-          "Tik 'n afdeling een keer vir +, twee keer vir −. + beteken f is daar BO g."),
+          "Klik op 'n afdeling een keer vir +, twee keer vir −. + beteken f is daar BO g."),
         B("Once every section is stamped, drag the scan line across left to right to check by eye.",
           "Sodra elke afdeling gestempel is, skuif die skandeerlyn oor links na regs om met die oog te toets."),
       ],

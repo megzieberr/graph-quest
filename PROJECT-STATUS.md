@@ -1,4 +1,4 @@
-# Project status — updated 2026-08-12 (morning: batch 1 live + wording pass prepared)
+# Project status — updated 2026-08-12 (afternoon: her wording pass is in the code)
 
 **Read this first.** The v2 spec is [RUN-PLAN.md](RUN-PLAN.md); Megan's own class notes
 are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTIONS-NOTES-DIGEST.md).
@@ -53,21 +53,43 @@ are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTI
   harness. No more screenshot-by-screenshot wording fixes. The extractor lives at the
   session scratchpad's `extract_af.py` pattern (re-derivable: parse `B("en","af")` +
   `{en,af}` literals in map-order files) — regenerate the file after any content session.
+- 2026-08-12 (afternoon): **her wording pass mapped back into the code.** The word
+  rulings, now house law for this app's Afrikaans:
+  - "drag" → **trek**, except where she chose **skuif** (the climb, and the two
+    map subtitles). "Stap"/"tik" as mechanics → **skuif** / **klik op**.
+  - "Stap 1:", "Stap 2:" (numbered steps) and "ry" (a table row) are NOT the same
+    words and stay — a blind find-replace breaks six intro lessons and quest 6.
+  - "sywaarts" → **links of regs**; "hoegenaamd" → **op of af**.
+  - A hyperbola's branches are **vlerkies**, never "arms" and never "takke".
+    Only a parabola has **arms**. Applies to quest 2, quest 4 and eksamenmodus.
+  - The graph "ry"/"gereis" (rides/travelled) → **skuif**, matching the four she
+    rewrote herself.
+- 2026-08-12: **maths bug she caught on her phone** — the hyperbola climb round
+  (`climbHyp`) asked "vir watter waardes van x is **f** stygend?" but marked the
+  single walked branch correct. Both branches of a hyperbola always rise together
+  or fall together, so that question can only be answered by BOTH (x ∈ ℝ, x ≠ p).
+  Her ruling: ask about the branch instead — "vir watter waardes van x is hierdie
+  **vlerkie** stygend?" The parabola climb still asks about f, correctly: a parabola
+  has a real turning point. Never let a question name f when the answer is one wing.
+- 2026-08-12: AFRIKAANS-TEKS.md missed one string — `coach` in q2-point.js is built
+  with `"..." + C(y) + "."` instead of a template literal, so the extractor skipped
+  it. Any future extractor must handle concatenation, not just `${}`.
 
 ## Pending on Megan
 
-1. 📱 15 min: **[blocking]** play-test the app on your phone — fully close + reopen the
-   PWA first — the whole point of the overnight run.
-2. 💻 20 min: **[blocking, feeds the correction session]** edit the sentences in
-   AFRIKAANS-TEKS.md (repo root) — only the Afrikaans words, leave labels and ⟨…⟩ alone.
-3. 💻 2 min: [whenever] circle-geometry-game has 18 unpushed commits → run /ship there.
+1. 📱 15 min: **[blocking]** carry on play-testing on your phone — fully close + reopen
+   the PWA after the next deploy. One maths bug found so far (the vlerkie question).
+2. 💻 3 min: [whenever] three word calls I made for you — say if any is wrong:
+   the climb says "Skuif", the sliders say "Trek"; "Beweeg dit op of af?" where you
+   wrote "opwaarts" in the twin line; two "ry/gereis" lines changed to "skuif".
+3. 💻 2 min: [whenever] circle-geometry-game has 34 unpushed commits → run /ship there.
 
 ## Next up
 
-- **The correction session (she starts it):** read her edited AFRIKAANS-TEKS.md, diff it
-  against the shipped version (git has the original), map every changed sentence back to
-  its source string, re-run verify (wording checks included), commit; foreman-style ship
-  only with her go-ahead.
+- The wording correction session is DONE (2026-08-12): 46 of her edits + 34 sweep
+  swaps mapped into 8 source files, 78/78 harness checks pass, map read at 375 px
+  with no overflow. The workflow held — do it this way again, and regenerate
+  AFRIKAANS-TEKS.md after any session that adds strings.
 - Her playtest verdict drives the next foreman day: map order (Op die grafiek now sits
   AFTER Lees die gebied — run-plan order, easily swapped), whether Vinnige Oë / notation
   stay, Round D retry behavior.
@@ -118,5 +140,5 @@ js/
 supabase/schema.sql   written, not run
 verify.html           the harness: 78 checks — §4b + frozen-asymptote + containment
                       + Round D exactness are never-relax rules
-sw.js                 network-first for code; SHELL precache; CACHE = gq-v6
+sw.js                 network-first for code; SHELL precache; CACHE = gq-v7
 ```

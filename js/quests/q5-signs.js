@@ -152,7 +152,7 @@ const SKILLS = {
         : B("For which values of x is <span class='eq'>f(x) &lt; 0</span>?", "Vir watter waardes van x is <span class='eq'>f(x) &lt; 0</span>?"),
       stem: `<span class="eq">${eqStr(cv, "f(x)")}</span>`,
       coach: B("Step 1: tap every place that needs a vertical line.",
-               "Stap 1: tik elke plek wat 'n vertikale lyn nodig het."),
+               "Stap 1: klik op elke plek wat 'n vertikale lyn nodig het."),
       hints: [
         B("Lines go where the graph CROSSES the x-axis, and at asymptotes — nowhere else.",
           "Lyne gaan waar die grafiek die x-as SNY, en by asimptote — nêrens anders nie."),
@@ -219,7 +219,7 @@ const SKILLS = {
                 `Vir watter waardes van x is <span class='eq'>f(x)·g(x) ${sym}</span>?`),
       stem: B("Both graphs get a row in the table.", "Albei grafieke kry 'n ry in die tabel."),
       coach: B("Step 1: tap every place that needs a vertical line.",
-               "Stap 1: tik elke plek wat 'n vertikale lyn nodig het."),
+               "Stap 1: klik op elke plek wat 'n vertikale lyn nodig het."),
       hints: [
         B("Lines at every x-intercept of BOTH graphs, and at asymptotes.",
           "Lyne by elke x-afsnit van ALBEI grafieke, en by asimptote."),

@@ -39,7 +39,7 @@ import { answerString, complementString, flipStrictString, asYString } from "./_
 const ACC = "#2dd4bf";
 
 const WALK = B("Drag the point from left to right. It will not go back.",
-               "Drag die punt van links na regs. Dit gaan nie terug nie.");
+               "Skuif die punt van links na regs. Dit gaan nie terug nie.");
 const WRONGWAY = B("Nothing lit up — the graph is not on that side. Try the other way.",
                    "Niks het opgelig nie — die grafiek is nie aan daardie kant nie. Probeer die ander kant.");
 const OTHERSIDE = B("Good — now try the other side too.", "Goed — probeer nou ook die ander kant.");
@@ -48,9 +48,9 @@ const TAPPED_X = B("Right line — the domain lives on the x-axis. Now pull the 
 const TAPPED_Y = B("Right line — the range lives on the y-axis. Now pull the shade.",
                    "Reg lyn — die waardeversameling lê op die y-as. Trek nou die skerm.");
 const WRONG_X = B("Domain lives on the x-axis — tap the other line.",
-                  "Definisieversameling lê op die x-as — tik die ander lyn.");
+                  "Definisieversameling lê op die x-as — klik op die ander lyn.");
 const WRONG_Y = B("Range lives on the y-axis — tap the other line.",
-                  "Waardeversameling lê op die y-as — tik die ander lyn.");
+                  "Waardeversameling lê op die y-as — klik op die ander lyn.");
 
 /* ------------------------------------------------------------
    1. INCREASING / DECREASING — v1's climb, x-value answers
@@ -76,6 +76,14 @@ const DEC_Q = B("For which values of x is f decreasing?", "Vir watter waardes va
    sketch is labelled with, never a hardcoded "f" */
 const incQFor = (name) => B(`For which values of x is ${name} increasing?`, `Vir watter waardes van x is ${name} stygend?`);
 const decQFor = (name) => B(`For which values of x is ${name} decreasing?`, `Vir watter waardes van x is ${name} dalend?`);
+/* A hyperbola's two wings ALWAYS rise together or fall together, so a
+   question about f as a whole can never be answered by one wing alone
+   (Megan caught this on her phone, 2026-08-12). The climb walks ONE wing,
+   so the question must ask about that wing — not about f. */
+const INC_WING = B("For which values of x is this branch increasing?",
+                   "Vir watter waardes van x is hierdie vlerkie stygend?");
+const DEC_WING = B("For which values of x is this branch decreasing?",
+                   "Vir watter waardes van x is hierdie vlerkie dalend?");
 const SAWUP = B("So where was your hand going UP?", "So waar het jou hand OP gegaan?");
 const SAWDOWN = B("So where was your hand going DOWN?", "So waar het jou hand AF gegaan?");
 
@@ -147,18 +155,18 @@ const CLIMB_SKILLS = {
     if (wrongs.length < 3) wrongs.push(right ? `x > ${C(cv.p + 1)}` : `x &lt; ${C(cv.p - 1)}`);
     return iq({
       concept: "increasing", kind: "climb", accent: ACC, meter: true,
-      prompt: falls ? DEC_Q : INC_Q,
+      prompt: falls ? DEC_WING : INC_WING,
       stem: `<span class="eq">${eqStr(cv, "f(x)")}</span>`,
       coach: B("Walk the branch you can see the point on — left to right.",
-               "Stap die tak waarop jy die punt sien — links na regs."),
+               "Skuif die vlerkie waarop jy die punt sien — links na regs."),
       build: (host, done, nudge, meter) => climb(host, {
         spec, curve: 0, from, to, onMove: (s) => meter(s), onDone: () => done(),
       }),
       then: mc("increasing", falls ? SAWDOWN : SAWUP, correct, wrongs,
         { hint: B(`This branch never crosses x = ${C(cv.p)} — the asymptote is the boundary.`,
-                  `Hierdie tak kruis nooit x = ${C(cv.p)} nie — die asimptoot is die grens.`),
-          answerLabel: B(`f is ${falls ? "decreasing" : "increasing"} for ${correct}`,
-                         `f is ${falls ? "dalend" : "stygend"} vir ${correct}`) }),
+                  `Hierdie vlerkie kruis nooit x = ${C(cv.p)} nie — die asimptoot is die grens.`),
+          answerLabel: B(`this branch is ${falls ? "decreasing" : "increasing"} for ${correct}`,
+                         `hierdie vlerkie is ${falls ? "dalend" : "stygend"} vir ${correct}`) }),
     });
   },
 
@@ -424,9 +432,9 @@ function subInFor(kind) {
   return iq({
     concept: "subIn", kind: "tapReveal", accent: ACC,
     prompt: B(`(${C(x)} ; k) lies on f. Tap x = ${C(x)} on the sketch.`,
-              `(${C(x)} ; k) lê op f. Tik x = ${C(x)} op die skets.`),
+              `(${C(x)} ; k) lê op f. Klik op x = ${C(x)} op die skets.`),
     stem: `<span class="eq">${eqStr(cv, "f(x)")}</span>`,
-    coach: B(`Tap the x-axis at x = ${C(x)}.`, `Tik die x-as by x = ${C(x)}.`),
+    coach: B(`Tap the x-axis at x = ${C(x)}.`, `Klik op die x-as by x = ${C(x)}.`),
     build: (host, done) => tapReveal(host, { spec, curve: 0, at: x, symbol: "k", onTap: () => done() }),
     then: mc("subIn", B("So what is k?", "So wat is k?"), correct, wrongs,
       { hint: B("Follow the dashed line up from the axis to the curve, then read the height.",
@@ -479,9 +487,9 @@ export const quest3 = quest("q3",
     { spec: base, cap: B("This quest is about READING one thing off a graph at a time — no working out, just looking.",
                          "Hierdie soektog gaan oor EEN ding op 'n slag van 'n grafiek AFLEES — geen uitwerk nie, net kyk.") },
     { spec: base, cap: B("Some rounds you WALK a point left to right — it will not go backwards, so your hand rises and falls exactly as the graph does.",
-                         "Sommige rondtes STAP jy 'n punt van links na regs — dit gaan nie terugtoe nie, so jou hand styg en daal presies soos die grafiek.") },
+                         "Sommige rondtes SKUIF jy 'n punt van links na regs — dit gaan nie terugtoe nie, so jou hand styg en daal presies soos die grafiek.") },
     { spec: base, cap: B("For domain and range, you first tap the AXIS your answer lives on — x for domain, y for range. Tap the wrong one and nothing happens, just try again.",
-                         "Vir definisie- en waardeversameling tik jy eers die AS waarop jou antwoord lê — x vir definisieversameling, y vir waardeversameling. Tik die verkeerde een en niks gebeur nie, probeer net weer.") },
+                         "Vir definisie- en waardeversameling klik jy eers die AS waarop jou antwoord lê — x vir definisieversameling, y vir waardeversameling. Klik op die verkeerde een en niks gebeur nie, probeer net weer.") },
     { spec: base, cap: B("Every answer is always written in x-values, or read straight off the picture. Ready?",
                          "Elke antwoord word altyd in x-waardes geskryf, of reguit van die prent afgelees. Reg?") },
   ] };

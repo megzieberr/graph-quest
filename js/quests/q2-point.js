@@ -67,7 +67,7 @@ const SKILLS = {
     return iq({
       concept: "pointOnGraph", kind: "pointDrop", accent: ACC, unlockMsg: UI.snapped,
       prompt: B(`P(${C(x)} ; k) lies on f. Drag P onto the graph.`,
-                `P(${C(x)} ; k) lê op f. Drag P op die grafiek.`),
+                `P(${C(x)} ; k) lê op f. Trek P op die grafiek.`),
       stem: `<span class="eq">${eqStr(cv, "f(x)")}</span>`,
       coach: B("It can only move up and down — P's x stays " + C(x) + ".",
                "Dit kan net op en af beweeg — P se x bly " + C(x) + "."),
@@ -92,10 +92,10 @@ const SKILLS = {
     return iq({
       concept: "pointOnGraph", kind: "pointDrop", accent: ACC, unlockMsg: UI.snapped,
       prompt: B(`P(k ; ${C(y)}) lies on f. Drag P onto the graph.`,
-                `P(k ; ${C(y)}) lê op f. Drag P op die grafiek.`),
+                `P(k ; ${C(y)}) lê op f. Trek P op die grafiek.`),
       stem: `<span class="eq">${eqStr(cv, "f(x)")}</span>`,
       coach: B("This one slides sideways — P's y stays " + C(y) + ".",
-               "Hierdie een gly sywaarts — P se y bly " + C(y) + "."),
+               "Hierdie een gly links of regs — P se y bly " + C(y) + "."),
       build: (host, done) => pointDrop(host, { spec, curve: 0, at: y, mode: "h", onSnap: () => done() }),
       then: mc("pointOnGraph",
         B("So what is k?", "So wat is k?"), correct, wrongs,
@@ -155,7 +155,7 @@ const SKILLS = {
     return iq({
       concept: "pointOnGraph", kind: "pointDrop", accent: ACC, unlockMsg: UI.snapped, techOnly: true,
       prompt: B(`P(${C(x)} ; k) lies on the semicircle h. Drag P onto the graph.`,
-                `P(${C(x)} ; k) lê op die halfsirkel h. Drag P op die grafiek.`),
+                `P(${C(x)} ; k) lê op die halfsirkel h. Trek P op die grafiek.`),
       stem: `<span class="eq">${circleEq(cv)}</span>`,
       coach: B("Straight up and down only.", "Net reguit op en af."),
       build: (host, done) => pointDrop(host, { spec, curve: 0, at: x, mode: "v", symbol: "k", onSnap: () => done() }),

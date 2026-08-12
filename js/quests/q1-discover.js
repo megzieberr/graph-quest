@@ -14,7 +14,7 @@
 
    THE RULE (Law 7, Circle Quest's no-spoilers rule): the screen
    shows the raw effect and nothing else. The prompt names the
-   MOVE ("Drag a. Wat gebeur?"), never the finding. The learner
+   MOVE ("Trek a. Wat gebeur?"), never the finding. The learner
    drags every stop, commits to a conclusion from four options,
    and only THEN does the method card state the fact. The app
    never announces it first.
@@ -33,7 +33,7 @@ import {
 const ACC = "#7b5cff";
 
 const DRAGALL = B("Drag it through the whole range — the options only open once you have seen every stop.",
-                  "Drag dit deur die hele reeks — die opsies maak eers oop as jy elke stop gesien het.");
+                  "Trek dit deur die hele reeks — die opsies maak eers oop as jy elke stop gesien het.");
 const SAWWHAT = B("What did you see?", "Wat het jy gesien?");
 
 /* the marked points that make the effect readable. They are the raw
@@ -112,7 +112,7 @@ const BEATS = {
       pointsOf: tpPoint,
       eqOf: (a) => EQ(eqTPStr({ a, p, q }, "f(x)")),
       stem: EQ("f(x) = a(x − p)² + q"),
-      prompt: B("Drag a. What happens?", "Drag a. Wat gebeur?"),
+      prompt: B("Drag a. What happens?", "Trek a. Wat gebeur?"),
       hints: [
         B("Park a on 2 and look at the arms. Then park it on −2.",
           "Sit a op 2 en kyk na die arms. Sit dit dan op −2."),
@@ -157,12 +157,12 @@ const BEATS = {
       eqOf: (a) => EQ(eqTPStr({ a, p, q }, "f(x)")),
       stem: EQ("f(x) = a(x − p)² + q"),
       prompt: B("a stays positive here. Drag a. What happens?",
-                "a bly hier positief. Drag a. Wat gebeur?"),
+                "a bly hier positief. Trek a. Wat gebeur?"),
       hints: [
         B("Compare a = 0,5 with a = 3. How far apart are the arms at the top of the picture?",
           "Vergelyk a = 0,5 met a = 3. Hoe ver uitmekaar is die arms bo in die prent?"),
         B("Watch the turning point while you drag. Does it move at all?",
-          "Kyk na die draaipunt terwyl jy drag. Beweeg dit hoegenaamd?"),
+          "Kyk na die draaipunt terwyl jy trek. Beweeg dit op of af?"),
       ],
       correct,
       wrongs: [
@@ -201,7 +201,7 @@ const BEATS = {
       eqOf: (p) => EQ(eqTPStr({ a, p, q }, "f(x)")),
       stem: EQ("f(x) = a(x − p)² + q"),
       prompt: B("Drag p. Watch the bracket and the turning point together.",
-                "Drag p. Kyk na die hakie en die draaipunt saam."),
+                "Trek p. Kyk na die hakie en die draaipunt saam."),
       hints: [
         B("Park p on 2. Read the bracket out loud, then read the turning point.",
           "Sit p op 2. Lees die hakie hardop, lees dan die draaipunt."),
@@ -219,12 +219,12 @@ const BEATS = {
                   "Die draaipunt se hoogte het nooit verander nie — net sy x.") },
         { label: B("p makes the arms narrower or wider", "p maak die arms nouer of wyer"),
           misc: B("The shape stayed identical the whole way; the graph only travelled sideways.",
-                  "Die vorm het heelpad presies dieselfde gebly; die grafiek het net sywaarts gereis.") },
+                  "Die vorm het heelpad presies dieselfde gebly; die grafiek het net na die kant toe beweeg.") },
       ],
       method: [
         B("p is the x of the turning point.", "p is die x van die draaipunt."),
         B("The bracket reads (x − p), so it shows the opposite sign to the move: (x − 3) means p = 3 and the graph sits 3 to the RIGHT.",
-          "Die hakie lees (x − p), dus wys dit die teenoorgestelde teken as die skuif: (x − 3) beteken p = 3 en die grafiek sit 3 na REGS."),
+          "Die hakie lees (x − p), dus wys dit die teenoorgestelde teken as die skuif: (x − 3) beteken p = 3 en die grafiek skuif 3 na REGS."),
         B("(x + 3) means p = −3: 3 to the LEFT.", "(x + 3) beteken p = −3: 3 na LINKS."),
       ],
     });
@@ -246,7 +246,7 @@ const BEATS = {
       eqOf: (q) => EQ(eqTPStr({ a, p, q }, "f(x)")),
       stem: EQ("f(x) = a(x − p)² + q"),
       prompt: B("Drag q. Keep your eye on the turning point.",
-                "Drag q. Hou jou oog op die draaipunt."),
+                "Trek q. Kyk mooi na die draaipunt."),
       hints: [
         B("Park q on 3, then on −3. Read the turning point each time.",
           "Sit q op 3, dan op −3. Lees elke keer die draaipunt."),
@@ -263,12 +263,12 @@ const BEATS = {
                   "Kyk waar hierdie grafiek die y-as sny — dit was nooit dieselfde getal as q nie.") },
         { label: B("q makes the arms narrower or wider", "q maak die arms nouer of wyer"),
           misc: B("The shape never changed; the whole picture just travelled up and down.",
-                  "Die vorm het nooit verander nie; die hele prent het net op en af gereis.") },
+                  "Die vorm het nooit verander nie; die hele prent het net op en af geskuif.") },
       ],
       method: [
         B("q is the y of the turning point.", "q is die y van die draaipunt."),
         B("Change q and the whole graph rides up or down — the shape stays exactly the same.",
-          "Verander q en die hele grafiek ry op of af — die vorm bly presies dieselfde."),
+          "Verander q en die hele grafiek skuif op of af — die vorm bly presies dieselfde."),
       ],
     });
   }),
@@ -288,7 +288,7 @@ const BEATS = {
       eqOf: (c) => EQ(eqStr({ kind: "parabola", a, b, c }, "f(x)")),
       stem: EQ("f(x) = ax² + bx + c"),
       prompt: B("Drag c. Watch where the graph cuts the y-axis.",
-                "Drag c. Kyk waar die grafiek die y-as sny."),
+                "Trek c. Kyk waar die grafiek die y-as sny."),
       hints: [
         B("The marked point sits on the y-axis. Read it at c = 3 and again at c = −3.",
           "Die gemerkte punt lê op die y-as. Lees dit by c = 3 en weer by c = −3."),
@@ -299,18 +299,18 @@ const BEATS = {
       wrongs: [
         { label: B("c is the y of the turning point", "c is die y van die draaipunt"),
           misc: B("The turning point's y was a different number from c every single time.",
-                  "Die draaipunt se y was elke enkele keer 'n ander getal as c.") },
+                  "Die draaipunt se y was elke keer 'n ander getal as c.") },
         { label: B("c slides the graph left and right", "c skuif die grafiek links en regs"),
-          misc: B("The turning point's x never budged.", "Die draaipunt se x het nooit geroer nie.") },
+          misc: B("The turning point's x never budged.", "Die draaipunt se x het nooit verander nie.") },
         { label: B("c makes the arms narrower or wider", "c maak die arms nouer of wyer"),
           misc: B("The shape stayed identical; the picture only travelled up and down.",
-                  "Die vorm het presies dieselfde gebly; die prent het net op en af gereis.") },
+                  "Die vorm het presies dieselfde gebly; die prent het net op en af geskuif.") },
       ],
       method: [
         B("In y = ax² + bx + c, the c is the y-intercept: the graph cuts the y-axis exactly at c.",
           "By y = ax² + bx + c is die c die y-afsnit: die grafiek sny die y-as presies by c."),
         B("It rides the whole graph up and down too — but the number it marks is the y-cut, not the turning point.",
-          "Dit ry ook die hele grafiek op en af — maar die getal wat dit merk, is die y-afsnit, nie die draaipunt nie."),
+          "Dit skuif ook die hele grafiek op en af — maar die getal wat dit wys, is die y-afsnit, nie die draaipunt nie."),
       ],
     });
   }),
@@ -347,11 +347,11 @@ const BEATS = {
       stem: B(`Both panels start as the same parabola: <span class="eq">${eqTPStr({ a, p, q: 0 }, "f(x)")}</span>`,
               `Albei panele begin as dieselfde parabool: <span class="eq">${eqTPStr({ a, p, q: 0 }, "f(x)")}</span>`),
       prompt: B("Drag q in the top panel and c in the bottom one. What is the difference?",
-                "Drag q in die boonste paneel en c in die onderste een. Wat is die verskil?"),
+                "Trek q in die boonste paneel en c in die onderste een. Wat is die verskil?"),
       coach: DRAGALL,
       hints: [
         B("Each panel has one point marked. Read that point while you drag.",
-          "Elke paneel het een punt gemerk. Lees daardie punt terwyl jy drag."),
+          "Elke paneel het een punt gemerk. Lees daardie punt terwyl jy die punt trek."),
         B("In the top panel, compare q with the marked point. In the bottom one, compare c with its marked point.",
           "In die boonste paneel, vergelyk q met die gemerkte punt. In die onderste een, vergelyk c met sy gemerkte punt."),
       ],
@@ -370,13 +370,13 @@ const BEATS = {
         { label: B("c is the y of the turning point; q is the y-intercept",
                    "c is die y van die draaipunt; q is die y-afsnit"),
           misc: B("You have them the wrong way round. The bracket form holds the turning point.",
-                  "Jy het hulle omgeruil. Die hakie-vorm hou die draaipunt vas.") },
+                  "Jy het hulle omgeruil. Die hakie-vorm dui die draaipunt aan.") },
         { label: B("q and c do exactly the same job", "q en c doen presies dieselfde werk"),
           misc: B("Both of them ride the graph up and down — but each one marks a different point.",
-                  "Albei ry die grafiek op en af — maar elkeen merk 'n ander punt.") },
+                  "Albei skuif die grafiek op en af — maar elkeen wys 'n ander punt.") },
         { label: B("q slides up and down; c slides left and right",
                    "q skuif op en af; c skuif links en regs"),
-          misc: B("Neither panel ever moved sideways.", "Nie een paneel het ooit sywaarts beweeg nie.") },
+          misc: B("Neither panel ever moved sideways.", "Nie een paneel het ooit links or regs beweeg nie.") },
       ], {
         wide: true, answerLabel: correct,
         solution: [
@@ -401,7 +401,7 @@ function discoverSheet() {
 
 export const questDiscover = quest("q1",
   B("Discover", "Ontdek"),
-  B("Drag one number and watch what it does", "Drag een getal en kyk wat dit doen"),
+  B("Drag one number and watch what it does", "Skuif een getal en kyk wat dit doen"),
   [{ id: "discover", concept: "discover", gen: () => BEATS.aSign() }],
   { rounds: 6, accent: ACC, buildAll: discoverSheet });
 
@@ -422,6 +422,6 @@ export const questDiscover = quest("q1",
              "Elke ronde vries twee van hulle en gee jou EEN skuiwer.") },
     { spec: base,
       cap: B("Drag through the whole range and look carefully. Then you choose what you saw — this app does not tell you first.",
-             "Drag deur die hele reeks en kyk mooi. Daarna kies jy self wat jy gesien het — hierdie app vertel dit nie eerste vir jou nie.") },
+             "Trek deur die hele reeks en kyk mooi. Daarna kies jy self wat jy gesien het — hierdie app vertel dit nie eerste vir jou nie.") },
   ] };
 }

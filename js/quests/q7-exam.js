@@ -123,7 +123,7 @@ function sheetHypLine() {
   q(B("Write down the range of f.", "Skryf die waardeversameling van f neer."),
     rangeStr(f), [`y > ${C(f.q)}`, "y ∈ ℝ", domainStr(f)], { concept: "range" });
 
-  q(B("Is each branch of f increasing or decreasing?", "Is elke tak van f stygend of dalend?"),
+  q(B("Is each branch of f increasing or decreasing?", "Is elke vlerkie van f stygend of dalend?"),
     f.a > 0 ? B("Decreasing — a is positive", "Dalend — a is positief") : B("Increasing — a is negative", "Stygend — a is negatief"),
     [f.a > 0 ? B("Increasing — a is positive", "Stygend — a is positief") : B("Decreasing — a is negative", "Dalend — a is negatief"),
      B("One rises, one falls", "Een styg, een daal"),
