@@ -136,10 +136,10 @@ function moveInstr(dir, k) {
 function moveNudge(actualDir, wrongDir) {
   const sameAxis = (actualDir === "up" || actualDir === "down") === (wrongDir === "up" || wrongDir === "down");
   return sameAxis
-    ? B("Look again — the feature moved the OTHER way on that same axis.",
-        "Kyk weer — die kenmerk het die ANDER kant toe beweeg op dieselfde as.")
-    : B("That axis never moved — check whether the feature's x changed, or only its y.",
-        "Daardie as het nooit beweeg nie — kyk of die kenmerk se x verander het, of net sy y.");
+    ? B("Look again — right axis, wrong direction.",
+        "Kyk weer — dis die regte as, maar die verkeerde rigting.")
+    : B("Wrong axis — look again: did the x change, or the y?",
+        "Dis die verkeerde as — kyk weer: het die x verander, of die y?");
 }
 function combine(a, b) {
   return {
@@ -189,8 +189,8 @@ function nameMoveRound() {
                 "Stippellyn = f (before). Soliede lyn = die beeld (after)."),
         /* "sywaarts" is one of the words Megan replaced in her wording pass
            (2026-08-12): it becomes "links of regs". */
-        hints: [B("Compare where the marked feature sits now against before — left or right, or up/down?",
-                  "Vergelyk waar die kenmerk nou sit teenoor voorheen — links of regs, of op of af?")],
+        hints: [B("Compare where it sits now with where it was — did it move left or right, or up or down?",
+                  "Vergelyk waar dit nou sit met waar dit was — het dit links of regs geskuif, of op of af?")],
         solution: [moveSentence(dir, k)],
         answerLabel: correct,
       });
@@ -242,25 +242,25 @@ function reflectionRound() {
       correct,
       [
         { label: other,
-          misc: B("Check the two reflections separately: −f(x) turns the shape upside-down; f(−x) turns it left-right. Which one actually happened here?",
-                  "Kyk na die twee refleksies apart: −f(x) draai die vorm onderstebo; f(−x) draai dit links-regs om. Watter een het hier eintlik gebeur?") },
+          misc: B("Keep the two reflections apart: −f(x) turns the graph upside-down; f(−x) swaps left and right. Which one happened here?",
+                  "Hou die twee refleksies uitmekaar: −f(x) draai die grafiek onderstebo; f(−x) ruil links en regs om. Watter een het hier gebeur?") },
         { label: B("f was shifted, not reflected", "f is geskuif, nie gereflekteer nie"),
-          misc: B("A shift keeps the same shape facing the same way — this is a reflection, not a slide.",
-                  "'n Skuif hou dieselfde vorm dieselfde kant toe — hierdie een is 'n refleksie, nie 'n skuif nie.") },
+          misc: B("With a shift the graph keeps facing the same way — this one is reflected, not shifted.",
+                  "By 'n skuif bly die grafiek dieselfde kant toe wys — hierdie een is gereflekteer, nie geskuif nie.") },
         { label: B("this is the same graph as f, just redrawn", "dis dieselfde grafiek as f, net weer geteken"),
           misc: B("Look again — the solid graph does not sit on top of the dashed one.",
-                  "Kyk weer — die soliede grafiek lê nie bo-op die stippellyn een nie.") },
+                  "Kyk weer — die soliede grafiek lê nie bo-op die stippellyn nie.") },
       ],
       {
         graph: spec, wide: true,
         stem: B("Dashed = f. Solid = the reflected image.", "Stippellyn = f. Soliede lyn = die gereflekteerde beeld."),
         hints: [
           family === "hyperbola"
-            ? B("Compare which pair of corners the branches sit in — did that swap, or did the branches slide to the mirror x?",
-                "Vergelyk in watter paar hoeke die vlerkies lê — het dit verruil, of het die vlerkies na die gereflekteerde x geskuif?")
+            ? B("Look at which two corners the branches sit in — did they swap corners, or did they only slide across?",
+                "Kyk in watter twee hoeke die vlerkies lê — het hulle omgeruil, of het hulle net geskuif?")
             : family === "parabola"
-            ? B("Compare which way the arms point — did they flip upside-down, or did only the turning point's x change?",
-                "Vergelyk watter kant toe die arms wys — is dit onderstebo gereflekteer, of het net die draaipunt se x verander?")
+            ? B("Look which way the arms point — is the graph upside-down, or did only the turning point's x change?",
+                "Kyk watter kant toe die arms wys — is die grafiek onderstebo, of het net die draaipunt se x verander?")
             : B("Compare the line's direction, and where it crosses the y-axis.",
                 "Vergelyk die lyn se rigting, en waar dit die y-as sny."),
         ],
@@ -284,7 +284,7 @@ function reflectionRound() {
 function eqNudge(kind) {
   if (kind === "axis") return B("Wrong letter — that is not the one this move changes.",
                                  "Verkeerde letter — dis nie die een wat hierdie skuif verander nie.");
-  if (kind === "sign") return B("Right letter, wrong sign.", "Reg letter, verkeerde teken.");
+  if (kind === "sign") return B("Right letter, wrong sign.", "Regte letter, verkeerde teken.");
   return B("Wrong letter, and the wrong sign too.", "Verkeerde letter, en ook die verkeerde teken.");
 }
 function pickEquationRound() {
@@ -333,9 +333,9 @@ function pickEquationRound() {
         graph: spec,
         stem: EQ(eqStrFor(family, base, "f(x)")),
         hints: [
-          B("Which letter does this move actually change — p or q?", "Watter letter verander hierdie skuif eintlik — p of q?"),
+          B("Which letter gets changed by this move — p or q?", "Watter letter word deur hierdie skuif verander — p of q?"),
           B("Up or right is a PLUS on that letter; down or left is a MINUS.",
-            "Op of regs is 'n PLUS op daardie letter; af of links is 'n MINUS."),
+            "Op of regs is 'n PLUS by daardie letter; af of links is 'n MINUS."),
         ],
         solution: [
           B("p moves the graph left/right. q moves it up/down.", "p skuif die grafiek links/regs. q skuif dit op/af."),
@@ -392,18 +392,18 @@ function slideToMatchBeat() {
 
     const built = iq({
       concept: "transform", kind: "slideMatch", accent: ACC,
-      prompt: B("Slide the number until the solid graph lands exactly on the dashed target.",
-                "Skuif die getal totdat die soliede grafiek presies op die stippellyn-teiken beland."),
+      prompt: B("Slide the number until the solid graph lies exactly on the dashed target.",
+                "Skuif die getal totdat die soliede grafiek presies op die stippellyn-teiken lê."),
       stem: EQ(eqStrFor(family, base, "f(x)")),
-      coach: B("Drag until the two graphs line up exactly.", "Trek totdat die twee grafieke presies opmekaar val."),
-      hints: [B("Watch the marked feature of the solid graph — is it landing on the dashed one yet?",
-                "Kyk na die kenmerk van die soliede grafiek — beland dit al op die stippellyn een?")],
+      coach: B("Drag until the two graphs lie exactly on top of each other.", "Trek totdat die twee grafieke presies op mekaar lê."),
+      hints: [B("Watch the marked point of the solid graph — is it on the dashed one's yet?",
+                "Kyk na die gemerkte punt van die soliede grafiek — lê dit al op die stippellyn s'n?")],
       build: (host, done) => varSlider(host, {
         name: axis, values, specOf, start: startIdx,
         onChange: ({ value }) => { if (value === targetVal) done(); },
       }),
       then: mc("transform",
-        B("What move did you just make?", "Watter skuif het jy pas gemaak?"),
+        B("What move did you just make?", "Watter skuif het jy nou net gemaak?"),
         moveLabel(dir, k), wrongs,
         { solution: [moveSentence(dir, k)], answerLabel: moveLabel(dir, k) }),
     });
@@ -445,6 +445,6 @@ export const questTransform = quest("qT",
     { spec: bothSpec, cap: B("Now its IMAGE appears solid, while f stays dashed and faint — the before and after, on one sketch.",
                               "Nou verskyn sy beeld as solied en f word 'n vaal stippellyn. Dit is die before en after op een skets.") },
     { spec: bothSpec, cap: B("The equation never gets expanded or simplified — it always stays in the same shape. Your job is to SEE the move.",
-                              "Die vergelyking word nooit uitgebrei of vereenvoudig nie — dit bly altyd in dieselfde vorm. Jou werk is om die skuif te SIEN.") },
+                              "Die vergelyking word nooit uitgebrei of vereenvoudig nie — dit bly altyd in dieselfde vorm. Jou taak is om die skuif te SIEN.") },
   ] };
 }

@@ -168,25 +168,25 @@ const SKILLS = {
       if (raw.size < 4) continue;               // a decoy collapsed onto another value — redraw
       const wrongs = [
         { label: C(-correct),
-          misc: B("A length can never be negative — the two heights got subtracted the wrong way round.",
-                  "'n Lengte kan nooit negatief wees nie — die twee hoogtes is die verkeerde kant om afgetrek.") },
+          misc: B("A length can never be negative — you subtracted the two heights the wrong way round.",
+                  "'n Lengte kan nooit negatief wees nie — jy het die twee hoogtes andersom afgetrek.") },
         { label: C(yF),
-          misc: B("That is only P's height — Q's height still has to come off it.",
-                  "Dit is net P se hoogte — Q se hoogte moet nog daarvan afgetrek word.") },
+          misc: B("That is only P's height — you still have to subtract Q's.",
+                  "Dis net P se hoogte — jy moet Q s'n nog aftrek.") },
         { label: C(Math.abs(yF) + Math.abs(yG)),
           misc: B("PQ is the DIFFERENCE between the two heights, not their sum.",
-                  "PQ is die VERSKIL tussen die twee hoogtes, nie hul som nie.") },
+                  "PQ is die VERSKIL tussen die twee hoogtes, nie hulle som nie.") },
       ];
       const built = iq({
         concept: "length", kind: "lengthReveal", accent: ACC,
         prompt: B(`P lies on f and Q lies on g, both at x = ${C(x)}. Tap to reveal them, then find the length of PQ.`,
-                  `P lê op f en Q lê op g, altwee by x = ${C(x)}. Klik om hulle te wys, kry dan die lengte van PQ.`),
+                  `P lê op f en Q lê op g, altwee by x = ${C(x)}. Klik om hulle te wys, en bepaal dan die lengte van PQ.`),
         stem: `<span class="eq">f(x) = ${eqStr(f, "").replace(/^\s*=\s*/, "")}</span> &nbsp;·&nbsp; <span class="eq">g(x) = ${eqStr(g, "").replace(/^\s*=\s*/, "")}</span>`,
         coach: B(`Tap x = ${C(x)} on the sketch.`, `Klik op x = ${C(x)} op die skets.`),
         build: (host, done) => lengthReveal(host, { spec, mode: "v", curveA: 0, curveB: 1, at: x, onTap: () => done() }),
         then: mc("length", B("What is the length of PQ?", "Wat is die lengte van PQ?"), C(correct), wrongs,
-          { hint: B("Read P's height and Q's height off the grid, then subtract — top minus bottom.",
-                    "Lees P se hoogte en Q se hoogte van die rooster af, trek dan af — bo min onder."),
+          { hint: B("Read both heights off the grid and subtract — top minus bottom.",
+                    "Lees albei hoogtes van die rooster af en trek af: boonste minus onderste."),
             answerLabel: C(correct) }),
       });
       built.debugLen = { win: spec.win, points: [{ x, y: yF }, { x, y: yG }], correct, diff: "y" };
@@ -205,25 +205,25 @@ const SKILLS = {
       if (raw.size < 4) continue;
       const wrongs = [
         { label: C(correct / 2),
-          misc: B("That is only half the width — AB runs from A all the way across to B.",
-                  "Dit is net die helfte van die wydte — AB loop van A heeltemal oor tot by B.") },
+          misc: B("That is only half of it — AB stretches the whole way from A to B.",
+                  "Dis net die helfte — AB strek die hele ent van A tot by B.") },
         { label: C(xB),
-          misc: B("That is only B's x-coordinate on its own — the length is the GAP between A and B.",
-                  "Dit is net B se x-koördinaat op sy eie — die lengte is die GAPING tussen A en B.") },
+          misc: B("That is only B's x-coordinate — the length is the GAP between A and B.",
+                  "Dis net B se x-koördinaat — die lengte is die GAPING tussen A en B.") },
         { label: C(y),
-          misc: B("That is the height A and B share, not the gap between their x-values.",
-                  "Dit is die hoogte wat A en B deel, nie die gaping tussen hul x-waardes nie.") },
+          misc: B("That is the height where A and B both lie, not the gap between their x-values.",
+                  "Dis die hoogte waar A en B albei lê, nie die gaping tussen hulle x-waardes nie.") },
       ];
       const built = iq({
         concept: "length", kind: "lengthReveal", accent: ACC,
         prompt: B(`A and B lie on f, both at y = ${C(y)}. Tap to reveal them, then find the length of AB.`,
-                  `A en B lê op f, altwee by y = ${C(y)}. Klik om hulle te wys, kry dan die lengte van AB.`),
+                  `A en B lê op f, altwee by y = ${C(y)}. Klik om hulle te wys, en bepaal dan die lengte van AB.`),
         stem: `<span class="eq">${eqStr(cv, "f(x)")}</span>`,
         coach: B(`Tap the height y = ${C(y)} on the sketch.`, `Klik op die hoogte y = ${C(y)} op die skets.`),
         build: (host, done) => lengthReveal(host, { spec, mode: "h", y, xA, xB, onTap: () => done() }),
         then: mc("length", B("What is the length of AB?", "Wat is die lengte van AB?"), C(correct), wrongs,
-          { hint: B("Read A's x and B's x off the grid, then subtract — right minus left.",
-                    "Lees A se x en B se x van die rooster af, trek dan af — regs min links."),
+          { hint: B("Read A's and B's x-values off the grid and subtract — right minus left.",
+                    "Lees A en B se x-waardes van die rooster af en trek af: regs minus links."),
             answerLabel: C(correct) }),
       });
       built.debugLen = { win: spec.win, points: [{ x: xA, y }, { x: xB, y }], correct, diff: "x" };
@@ -247,20 +247,20 @@ const SKILLS = {
       const raw = new Set([correct, -correct, Math.abs(x), correct + 1]);
       if (raw.size < 4) continue;
       const wrongs = [
-        { label: C(-correct), misc: B("A length is never negative — drop the sign.", "'n Lengte is nooit negatief nie — los die teken.") },
+        { label: C(-correct), misc: B("A length is never negative — drop the minus sign.", "'n Lengte is nooit negatief nie — los die minusteken.") },
         { label: C(Math.abs(x)),
           misc: B("That is P's x-coordinate, not its height above or below the x-axis.",
-                  "Dit is P se x-koördinaat, nie sy hoogte bo of onder die x-as nie.") },
+                  "Dis P se x-koördinaat, nie sy hoogte bo of onder die x-as nie.") },
         C(correct + 1),
       ];
       const built = iq({
         concept: "length", kind: "lengthReveal", accent: ACC,
-        prompt: B(`P lies on f at x = ${C(x)}. Tap to find it, then read its length to the x-axis.`,
-                  `P lê op f by x = ${C(x)}. Klik om dit te vind, lees dan sy lengte tot by die x-as.`),
+        prompt: B(`P lies on f at x = ${C(x)}. Tap to reveal it, then see how far it is from the x-axis.`,
+                  `P lê op f by x = ${C(x)}. Klik om dit te wys, en kyk dan hoe ver dit van die x-as af is.`),
         stem: `<span class="eq">${eqStr(cv, "f(x)")}</span>`,
         coach: B(`Tap x = ${C(x)} on the sketch.`, `Klik op x = ${C(x)} op die skets.`),
         build: (host, done) => lengthReveal(host, { spec, mode: "axis", point: { x, y }, to: "x", onTap: () => done() }),
-        then: mc("length", B("What is the length from P to the x-axis?", "Wat is die lengte van P tot by die x-as?"), C(correct), wrongs,
+        then: mc("length", B("How far is P from the x-axis?", "Hoe ver is P van die x-as af?"), C(correct), wrongs,
           { hint: B("Count the grid squares from P straight down (or up) to the x-axis.",
                     "Tel die roosterblokkies van P reguit af (of op) tot by die x-as."),
             answerLabel: C(correct) }),
@@ -282,20 +282,20 @@ const SKILLS = {
       const raw = new Set([correct, -correct, Math.abs(y), correct + 1]);
       if (raw.size < 4) continue;
       const wrongs = [
-        { label: C(-correct), misc: B("A length is never negative — drop the sign.", "'n Lengte is nooit negatief nie — los die teken.") },
+        { label: C(-correct), misc: B("A length is never negative — drop the minus sign.", "'n Lengte is nooit negatief nie — los die minusteken.") },
         { label: C(Math.abs(y)),
           misc: B("That is P's y-coordinate, not its distance from the y-axis.",
-                  "Dit is P se y-koördinaat, nie sy afstand van die y-as nie.") },
+                  "Dis P se y-koördinaat, nie sy afstand van die y-as nie.") },
         C(correct + 1),
       ];
       const built = iq({
         concept: "length", kind: "lengthReveal", accent: ACC,
-        prompt: B(`P lies on f at y = ${C(y)}. Tap to find it, then read its length to the y-axis.`,
-                  `P lê op f by y = ${C(y)}. Klik om dit te vind, lees dan sy lengte tot by die y-as.`),
+        prompt: B(`P lies on f at y = ${C(y)}. Tap to reveal it, then see how far it is from the y-axis.`,
+                  `P lê op f by y = ${C(y)}. Klik om dit te wys, en kyk dan hoe ver dit van die y-as af is.`),
         stem: `<span class="eq">${eqStr(cv, "f(x)")}</span>`,
         coach: B(`Tap the height y = ${C(y)} on the sketch.`, `Klik op die hoogte y = ${C(y)} op die skets.`),
         build: (host, done) => lengthReveal(host, { spec, mode: "axis", point: { x, y }, to: "y", onTap: () => done() }),
-        then: mc("length", B("What is the length from P to the y-axis?", "Wat is die lengte van P tot by die y-as?"), C(correct), wrongs,
+        then: mc("length", B("How far is P from the y-axis?", "Hoe ver is P van die y-as af?"), C(correct), wrongs,
           { hint: B("Count the grid squares from P straight across to the y-axis.",
                     "Tel die roosterblokkies van P reguit oor tot by die y-as."),
             answerLabel: C(correct) }),
@@ -340,10 +340,10 @@ export const questLengths = quest("qL",
   const base = specFor([f, g0], { win, accent: ACC, ticks: "labels", labels: ["f", "g"], asymLabels: true });
   questLengths.intro = { beats: [
     { spec: base, cap: B("This quest is about LENGTHS — and every one of them is just a subtraction of two numbers you can already see.",
-                         "Hierdie soektog gaan oor LENGTES — en elkeen is net 'n aftrekking van twee getalle wat jy reeds kan sien.") },
+                         "Hierdie soektog gaan oor LENGTES — en elkeen is net 'n aftrekking van twee getalle wat jy klaar kan sien.") },
     { spec: base, cap: B("Tap the sketch to reveal the two marked points and the segment joining them — nothing is computed for you.",
                          "Klik op die skets om die twee gemerkte punte en die lyn tussen hulle te wys — niks word vir jou uitgewerk nie.") },
     { spec: base, cap: B("Then read each point's height (or position) off the grid, and subtract: top minus bottom, or right minus left.",
-                         "Lees dan elke punt se hoogte (of posisie) van die rooster af, en trek af: bo min onder, of regs min links.") },
+                         "Lees dan elke punt se hoogte (of posisie) van die rooster af, en trek af: boonste minus onderste, of regs minus links.") },
   ] };
 }

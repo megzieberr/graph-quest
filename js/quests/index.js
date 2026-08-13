@@ -31,8 +31,9 @@ import { quest5 } from "./q5-signs.js";
    between the two curves, then sweeps a scan line to confirm by eye. */
 import { quest6 } from "./q6-compare.js";
 /* batch 2, session 1: two new reading quests slot in AFTER quest6 (Bo of
-   onder) and BEFORE quest7 (Eksamenmodus) — exam mode samples everything
-   that exists before it, so it stays last. Working names, hers to rename:
+   onder) and BEFORE quest7 (Eksamenmodus) — exam mode stays last (NOTE:
+   today it still deals only its three fixed batch-1 sheets — the rebuild
+   that samples every earlier skill is parked, see PROJECT-STATUS). Working names, hers to rename:
    "Lengtes" (lengths — every length is a subtraction you can see) and
    "Gemiddelde gradiënt" (average gradient — the gradient of the chord). */
 import { questLengths } from "./qL-lengths.js";
