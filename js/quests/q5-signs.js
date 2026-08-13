@@ -1,24 +1,32 @@
 /* ============================================================
-   QUEST 5 · SIGNS — f(x) > 0 and f(x)·g(x) < 0   (REBUILT)
+   QUEST 5 · SIGNS — f(x) > 0 and f(x)·g(x) < 0   ★ fix day (2026-08-13)
    ------------------------------------------------------------
-   Megan's board method, in HER order, every stage done by hand:
+   REBUILT off the TEKENTABEL onto Megan's board method (her ruling,
+   2026-08-13 — she dropped the sign table on 2026-08-09 after her
+   learners struggled with it). Her method, in order, every stage
+   done by hand:
 
      stap 1  trek 'n lyn deur ELKE x-afsnit en asimptoot
              (tap the sockets; decoys — a turning point, the
              y-axis — must NOT get a line)
-     stap 2  die afdelings nommer hulself ① ② ③
-     stap 3  vul die TEKENTABEL in: een ry per grafiek, een kolom
-             per afdeling, + of −
-     stap 4  produk: tekens DIESELFDE → +, tekens VERSKIL → −
-     stap 5  lees die antwoord van die onderste ry af, links → regs
+     stap 2  merk + en − op ELKE grafiek, per afdeling — directly
+             ON the curve, no table
+     stap 3  lees die antwoord van die merke af, links → regs
+             (a product question: where the two curves' marks are
+             the SAME the product is +, where they DIFFER it is −
+             — "tekens verskil", read by eye, never computed by
+             the app into a third row)
 
-   The app never marks silently: wrong cells go red and stay
-   until fixed. The marking IS the working.
+   The learner's marking SURVIVES into the read-off exactly as they
+   left it — mistakes included (house law from batch 1 / q6): the
+   app never blocks progress on a wrong mark, it lets a wrong
+   painting read into a wrong answer, and the feedback panel catches
+   it there.
    ============================================================ */
 import { mc, iq, quest } from "./_shared.js";
 import { B, getLang } from "../i18n.js";
-import { cutSockets, signTable } from "../engine/interactive.js";
-import { specFor, randParabola, randLine, randHyperbola, randExp, randSemicircle, windowFor } from "./_graphs.js";
+import { cutSockets, signPaint } from "../engine/interactive.js";
+import { specFor, randParabola, randLine, randHyperbola, randExp, randSemicircle, windowFor, mostlyInFrame } from "./_graphs.js";
 import { criticalXs, sections, signAt, paraTP, eqStr, C, pick, makeFn, parabolaFromRoots } from "../funclib.js";
 import { computeFunction } from "../engine/function-graph.js";
 import { answerString, complementString, flipStrictString, asYString } from "./_intervals.js";
@@ -57,8 +65,12 @@ const DECOY_MSG = {
            "Die y-as is nie 'n grens nie — net x-afsnitte en asimptote kry lyne."),
 };
 
-/* the two-phase build: sockets → sign table */
-function buildSignsFlow({ spec, cands, secs, curveIdx, names, product, tableSpec }) {
+/* the two-phase build: sockets (cut lines) → paint (+ / − on each curve).
+   Nothing is gated on getting the paint right — her board method reads
+   the ANSWER off the painting, mistakes included, so the marks the
+   learner leaves behind are exactly what carries into the mc() that
+   follows (house law from batch 1 / q6's compareSweep). */
+function buildSignsFlow({ spec, cands, secs, curveIdx, names, tableSpec }) {
   const requiredIdx = new Set(cands.map((c, i) => (c.need ? i : -1)).filter((i) => i >= 0));
   return (host, done, nudge) => {
     const sockets = cutSockets(host, {
@@ -67,20 +79,28 @@ function buildSignsFlow({ spec, cands, secs, curveIdx, names, product, tableSpec
         const same = chosen.size === requiredIdx.size && [...requiredIdx].every((i) => chosen.has(i));
         if (same) {
           sockets.reveal(requiredIdx);
-          nudge(B("Lines placed! Now fill in the sign table below.",
-                  "Lyne geplaas! Vul nou die tekentabel hieronder in."));
+          nudge(B("Lines placed! Now mark + and − on each graph, section by section.",
+                  "Lyne geplaas! Merk nou + en − op elke grafiek, afdeling vir afdeling."));
           setTimeout(() => {
-            signTable(host, { spec: tableSpec, sections: secs, curves: curveIdx, names, product }, {
-              nudge: (key) => nudge(
-                key === "signs"
-                  ? B("The red cells are wrong. Look at that section: is the graph ABOVE the x-axis (+) or BELOW it (−)?",
-                      "Die rooi blokkies is verkeerd. Kyk na daardie afdeling: lê die grafiek BO die x-as (+) of ONDER (−)?")
-                  : key === "product"
-                  ? B("Now the bottom row: signs the SAME → +, signs DIFFERENT → −.",
-                      "Nou die onderste ry: tekens DIESELFDE → +, tekens VERSKIL → −.")
-                  : B("Look at the two signs in that column again: same gives +, different gives −.",
-                      "Kyk weer na die twee tekens in daardie kolom: dieselfde gee +, verskillend gee −.")),
-              done,
+            const truth = {};
+            curveIdx.forEach((ci) => {
+              truth[ci] = {};
+              secs.forEach((s, si) => { truth[ci][si] = signAt(tableSpec.curves[ci], s.mid); });
+            });
+            const painter = signPaint(host, {
+              spec: tableSpec, sections: secs, curves: curveIdx, names,
+              onChange: (state, allMarked) => {
+                if (allMarked) {
+                  painter.reveal(truth);
+                  nudge(B("Marked! Now read the sections off your own marks.",
+                          "Gemerk! Lees nou die afdelings van jou eie merke af."));
+                  setTimeout(done, 400);
+                  return;
+                }
+                let n = 0, total = 0;
+                curveIdx.forEach((ci) => { Object.values(state[ci]).forEach((v) => { total++; if (v !== 0) n++; }); });
+                nudge(B(`Marked ${n} of ${total}.`, `${n} van ${total} gemerk.`));
+              },
             });
           }, 350);
           return;
@@ -103,11 +123,13 @@ function buildSignsFlow({ spec, cands, secs, curveIdx, names, product, tableSpec
 /* method lines shown in every feedback panel of this quest */
 const METHOD = (productQ) => [
   B("1. A line through every x-intercept and asymptote.", "1. 'n Lyn deur elke x-afsnit en asimptoot."),
-  B("2. Mark each section: above the x-axis +, below −.", "2. Merk elke afdeling: bo die x-as +, onder −."),
-  ...(productQ ? [B("3. Product row: same signs +, different signs −.", "3. Produkry: dieselfde tekens +, verskillende tekens −.")] : []),
-  B(productQ ? "4. Read the answer off the bottom row, left to right."
+  B("2. Mark each section on the graph: above the x-axis +, below −.",
+    "2. Merk elke afdeling op die grafiek: bo die x-as +, onder −."),
+  ...(productQ ? [B("3. Compare the two rows of marks: signs the SAME → +, signs DIFFERENT → −.",
+                     "3. Vergelyk die twee rye merke: tekens DIESELFDE → +, tekens VERSKIL → −.")] : []),
+  B(productQ ? "4. Read the answer off the matching sections, left to right."
              : "3. Read the answer off the marks, left to right.",
-    productQ ? "4. Lees die antwoord van die onderste ry af, links na regs."
+    productQ ? "4. Lees die antwoord van die ooreenstemmende afdelings af, links na regs."
              : "3. Lees die antwoord van die merke af, links na regs."),
 ];
 
@@ -118,6 +140,17 @@ const SKILLS = {
   singleSign: () => {
     const cv = pick([randParabola(), randParabola(), randLine(), randExp(), randHyperbola()]);
     const win = windowFor([cv]);
+    /* the same rare edge case §4b guards everywhere else: windowFor()'s own
+       identity-feature box can still leave a steep-armed parabola mostly
+       cropped once the WHOLE curve is sampled, not just its features (fix
+       day, 2026-08-13 — caught the moment this round's spec was first
+       exposed as it.graph, closing a coverage hole that used to hide it).
+       randParabola() lives in _graphs.js, out of this file's edit scope —
+       so this round rejects the rare bad draw locally instead, the same
+       way every caller of windowFor() already has to. (Null-guard first:
+       mostlyInFrame reads win.xmin, and a null window must redraw, never
+       throw — foreman review fix, 2026-08-13.) */
+    if (!win || !mostlyInFrame(cv, win)) return SKILLS.singleSign();
     const spec = specFor([cv], { win, accent: ACC, ticks: "labels", labels: ["f"], asymLabels: true });
     const cuts = criticalXs([cv], win.xmin, win.xmax);
     if (!cuts.length) return SKILLS.singleSign();
@@ -145,8 +178,8 @@ const SKILLS = {
                 "'n Streng < of > sluit nooit die grenswaardes in nie.") },
     ];
 
-    return iq({
-      concept: "signs", kind: "signTable", accent: ACC,
+    const built = iq({
+      concept: "signs", kind: "signPaint", accent: ACC,
       prompt: wantPos
         ? B("For which values of x is <span class='eq'>f(x) &gt; 0</span>?", "Vir watter waardes van x is <span class='eq'>f(x) &gt; 0</span>?")
         : B("For which values of x is <span class='eq'>f(x) &lt; 0</span>?", "Vir watter waardes van x is <span class='eq'>f(x) &lt; 0</span>?"),
@@ -157,20 +190,30 @@ const SKILLS = {
         B("Lines go where the graph CROSSES the x-axis, and at asymptotes — nowhere else.",
           "Lyne gaan waar die grafiek die x-as SNY, en by asimptote — nêrens anders nie."),
         wantPos
-          ? B("Then read your + cells: those sections, left to right, are the answer.",
-              "Lees dan jou + blokkies: daardie afdelings, links na regs, is die antwoord.")
-          : B("Then read your − cells: those sections, left to right, are the answer.",
-              "Lees dan jou − blokkies: daardie afdelings, links na regs, is die antwoord."),
+          ? B("Then read your + marks: those sections, left to right, are the answer.",
+              "Lees dan jou + merke: daardie afdelings, links na regs, is die antwoord.")
+          : B("Then read your − marks: those sections, left to right, are the answer.",
+              "Lees dan jou − merke: daardie afdelings, links na regs, is die antwoord."),
       ],
-      build: buildSignsFlow({ spec, cands, secs, curveIdx: [0], names: ["f"], product: false, tableSpec }),
+      build: buildSignsFlow({ spec, cands, secs, curveIdx: [0], names: ["f"], tableSpec }),
       then: mc("signs",
-        wantPos ? B("Read the answer off your + cells.", "Lees die antwoord van jou + blokkies af.")
-                : B("Read the answer off your − cells.", "Lees die antwoord van jou − blokkies af."),
+        wantPos ? B("Read the answer off your + marks.", "Lees die antwoord van jou + merke af.")
+                : B("Read the answer off your − marks.", "Lees die antwoord van jou − merke af."),
         correct, wrongs,
         { answerLabel: correct, solution: METHOD(false),
-          hint: B("Your table already holds the answer — join the right sections, left to right.",
-                  "Jou tabel het reeds die antwoord — voeg die regte afdelings saam, links na regs.") }),
+          hint: B("Your marks already hold the answer — join the right sections, left to right.",
+                  "Jou merke het reeds die antwoord — voeg die regte afdelings saam, links na regs.") }),
     });
+    /* verify-only: independent ground truth for the headless checks
+       (never read by play.js — an extra field on an ordinary object) */
+    built.debugCurves = { cv, win, cuts, secs, wantPos, cands };
+    /* verify-only: play.js only ever reads item.graph on a NON-interactive
+       item — an interactive item is mounted through build() instead, so
+       exposing the built spec here is pure data (§4b frame-honesty and
+       §22 off-axis now cover this round too, closing the gap the old
+       code left open). */
+    built.graph = tableSpec;
+    return built;
   },
 
   /* two graphs: the product (her "tekens verskil") */
@@ -179,6 +222,8 @@ const SKILLS = {
     const b = pick([randLine(), randExp(), randParabola()]);
     const win = windowFor([a, b]);
     if (!win) return SKILLS.productSign();
+    /* same rare-edge-case guard as singleSign — see its comment */
+    if (!mostlyInFrame(a, win) || !mostlyInFrame(b, win)) return SKILLS.productSign();
     const spec = specFor([a, b], { win, accent: ACC, ticks: true, labels: ["f", "g"], asymLabels: true });
     const cuts = criticalXs([a, b], win.xmin, win.xmax);
     if (cuts.length < 2 || cuts.length > 4) return SKILLS.productSign();
@@ -213,28 +258,31 @@ const SKILLS = {
     ];
     const sym = wantNeg ? (strict ? "&lt; 0" : "≤ 0") : (strict ? "&gt; 0" : "≥ 0");
 
-    return iq({
-      concept: "product", kind: "signTable", accent: ACC,
+    const built = iq({
+      concept: "product", kind: "signPaint", accent: ACC,
       prompt: B(`For which values of x is <span class='eq'>f(x)·g(x) ${sym}</span>?`,
                 `Vir watter waardes van x is <span class='eq'>f(x)·g(x) ${sym}</span>?`),
-      stem: B("Both graphs get a row in the table.", "Albei grafieke kry 'n ry in die tabel."),
+      stem: B("Both graphs get marked, section by section.", "Albei grafieke word gemerk, afdeling vir afdeling."),
       coach: B("Step 1: tap every place that needs a vertical line.",
                "Stap 1: klik op elke plek wat 'n vertikale lyn nodig het."),
       hints: [
         B("Lines at every x-intercept of BOTH graphs, and at asymptotes.",
           "Lyne by elke x-afsnit van ALBEI grafieke, en by asimptote."),
-        B("The bottom row does the work: same signs +, different signs − ('tekens verskil').",
-          "Die onderste ry doen die werk: dieselfde tekens +, verskillende tekens − ('tekens verskil')."),
+        B("Then compare the two rows of marks: same signs +, different signs − ('tekens verskil').",
+          "Vergelyk dan die twee rye merke: dieselfde tekens +, verskillende tekens − ('tekens verskil')."),
       ],
-      build: buildSignsFlow({ spec, cands, secs, curveIdx: [0, 1], names: ["f", "g"], product: true, tableSpec }),
+      build: buildSignsFlow({ spec, cands, secs, curveIdx: [0, 1], names: ["f", "g"], tableSpec }),
       then: mc("product",
-        wantNeg ? B("Read the answer off the bottom row's − columns.", "Lees die antwoord van die onderste ry se − kolomme af.")
-                : B("Read the answer off the bottom row's + columns.", "Lees die antwoord van die onderste ry se + kolomme af."),
+        wantNeg ? B("Where do the marks DIFFER? Read those sections off.", "Waar VERSKIL die merke? Lees daardie afdelings af.")
+                : B("Where do the marks MATCH? Read those sections off.", "Waar STEM die merke ooreen? Lees daardie afdelings af."),
         correct, wrongs,
         { answerLabel: correct, solution: METHOD(true),
-          hint: B("The bottom row IS the answer — just write the right columns as x-intervals.",
-                  "Die onderste ry IS die antwoord — skryf net die regte kolomme as x-intervalle.") }),
+          hint: B("Compare f's marks with g's marks, section by section — same gives +, different gives −.",
+                  "Vergelyk f se merke met g se merke, afdeling vir afdeling — dieselfde gee +, verskillend gee −.") }),
     });
+    built.debugCurves = { a, b, win, cuts, secs, wantNeg, strict, cands };
+    built.graph = tableSpec;
+    return built;
   },
 
   /* the idea underneath it all: f(x) IS the height */
@@ -281,9 +329,11 @@ const SKILLS = {
 };
 
 /* ---------------- the intro lesson (Kyk eers een saam) ----------------
-   A fixed worked example: f(x) = (x + 1)(x − 3), asked f(x) < 0.
-   Built once at module load; every beat re-renders the spec so the
-   method appears in HER order. */
+   Her board method, worked once: f(x) = (x + 1)(x − 3), asked f(x) < 0.
+   Cut lines → number the sections → mark + / − directly on the curve →
+   read off. No table appears anywhere — this IS the method, not a
+   simplified preview of a different one. Built once at module load;
+   every beat re-renders the spec so the method appears in HER order. */
 function buildIntro() {
   const cv = parabolaFromRoots(1, -1, 3);
   const win = windowFor([cv]);
@@ -296,7 +346,11 @@ function buildIntro() {
   const signFrag = secMids.map((m, i) => {
     const s = i === 1 ? "−" : "+";
     const y = makeFn(cv)(m);
-    const py = g.Y(Math.max(win.ymin + 1, Math.min(win.ymax - 1, y))) + (y >= 0 ? -18 : 18);
+    const rawPy = g.Y(Math.max(win.ymin + 1, Math.min(win.ymax - 1, y))) + (y >= 0 ? -18 : 18);
+    /* clamp clear of the ①②③ number row (verify's visual pass caught a
+       4px overlap here, fix day 2026-08-13 — a steep section near the
+       top edge put the + mark right under the section number) */
+    const py = Math.max(g.Y(win.ymax) + 30, Math.min(g.Y(win.ymin) - 14, rawPy));
     return `<text class="iv-sign ${s === "+" ? "plus" : "minus"}" x="${g.X(m).toFixed(1)}" y="${py.toFixed(1)}" text-anchor="middle">${s}</text>`;
   }).join("");
   return { beats: [
@@ -307,17 +361,17 @@ function buildIntro() {
     { spec: lined, frag: labFrag,
       cap: B("Step 2: number the sections, left to right.", "Stap 2: nommer die afdelings, links na regs.") },
     { spec: lined, frag: labFrag + signFrag,
-      cap: B("Step 3: mark each section — graph ABOVE the x-axis = +, BELOW = −.",
-             "Stap 3: merk elke afdeling — grafiek BO die x-as = +, ONDER = −.") },
+      cap: B("Step 3: mark each section, right on the curve — ABOVE the x-axis = +, BELOW = −.",
+             "Stap 3: merk elke afdeling, reg op die kurwe — BO die x-as = +, ONDER = −.") },
     { spec: { ...lined, shades: [{ x0: -1, x1: 3 }] }, frag: labFrag + signFrag,
-      cap: B("Step 4: read it off, left to right. <span class='eq'>f(x) &lt; 0</span> where the − is: <b class='eq'>−1 &lt; x &lt; 3</b>.",
-             "Stap 4: lees af, links na regs. <span class='eq'>f(x) &lt; 0</span> waar die − is: <b class='eq'>−1 &lt; x &lt; 3</b>.") },
+      cap: B("Step 4: read it off your own marks, left to right. <span class='eq'>f(x) &lt; 0</span> where the − is: <b class='eq'>−1 &lt; x &lt; 3</b>.",
+             "Stap 4: lees dit van jou eie merke af, links na regs. <span class='eq'>f(x) &lt; 0</span> waar die − is: <b class='eq'>−1 &lt; x &lt; 3</b>.") },
   ] };
 }
 
 export const quest5 = quest("q5",
   B("Plus and minus", "Plus en minus"),
-  B("f(x) > 0 and f(x)·g(x) < 0 — lines, table, read off", "f(x) > 0 en f(x)·g(x) < 0 — lyne, tabel, lees af"),
+  B("f(x) > 0 and f(x)·g(x) < 0 — lines, then mark the curve, then read off", "f(x) > 0 en f(x)·g(x) < 0 — lyne, merk dan die kurwe, lees dan af"),
   [
     { id: "heightIdea", concept: "signs", gen: SKILLS.heightIdea },
     { id: "singleSign", concept: "signs", gen: SKILLS.singleSign, weight: 2 },

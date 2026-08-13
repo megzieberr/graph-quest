@@ -2084,6 +2084,248 @@ for (const lang of ["af", "en"]) {
   check(g, "…and an off-axis hyperbola in the same shape is NOT flagged (the scan isn't just always failing)", scanOne(cleanItem) === false);
 }
 
+/* ---------- 23. Quest 5 rebuild — her board method: cut lines, mark the
+   curve, read off (fix day, 2026-08-13). She dropped the TEKENTABEL on
+   2026-08-09 after her learners struggled with it; her ruling today
+   authorises the rebuild. Every check below replaces an old tekentabel-
+   asserting check with an equal-or-stronger one on the new flow — the
+   ONE sanctioned replacement, nothing else relaxed. ---------- */
+{
+  setLang("af");
+  const g = group("23. Quest 5 rebuild — cut lines, mark the curve, read off (replaces the TEKENTABEL, 2026-08-13 ruling)");
+  const host = document.createElement("div");
+  host.style.position = "absolute"; host.style.left = "-9999px"; host.style.width = "360px";
+  document.body.appendChild(host);
+
+  const SKILL_IDS = ["singleSign", "productSign"];
+  const REPS = 20;
+  const gathered = { singleSign: [], productSign: [] };
+  for (let rep = 0; rep < REPS; rep++) {
+    buildRound("q5").forEach((it) => { if (SKILL_IDS.includes(it.skillId)) gathered[it.skillId].push(it); });
+  }
+  SKILL_IDS.forEach((id) => check(g, `${id} builds across ${REPS} rounds`, gathered[id].length > 0, `saw ${gathered[id].length}`));
+
+  const curvesOf = (id, dc) => (id === "singleSign" ? [dc.cv] : [dc.a, dc.b]);
+  const idxOf = (id) => (id === "singleSign" ? [0] : [0, 1]);
+
+  /* the exact predicate signPaint uses to decide a section gets a slot
+     for a given curve — recomputed independently so the test can predict
+     which rect.iv-hit belongs to which (curve, section) pair */
+  function paintNodes(curveIdx, secs, curvesArr, win) {
+    const out = [];
+    curveIdx.forEach((ci) => {
+      const f = mf(curvesArr[ci]);
+      secs.forEach((s, si) => {
+        const y = f(s.mid);
+        if (!Number.isFinite(y) || y < win.ymin || y > win.ymax) return;
+        out.push({ ci, si, y });
+      });
+    });
+    return out;
+  }
+
+  /* mount the round, place every REQUIRED cut-line socket (skip decoys),
+     wait for the paint phase to mount */
+  async function mountAndCut(it) {
+    const box = document.createElement("div");
+    host.appendChild(box);
+    let doneCalled = false;
+    it.build(box, () => { doneCalled = true; }, () => {}, () => {}, () => {});
+    const dc = it.debugCurves;
+    const hits = [...box.querySelectorAll("rect.iv-hit")];
+    dc.cands.forEach((c, i) => { if (c.need) hits[i].dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, cancelable: true })); });
+    await new Promise((r) => setTimeout(r, 420));
+    return { box, dc, isDone: () => doneCalled };
+  }
+
+  /* 23a. the cut-line candidates sit EXACTLY at a fresh criticalXs()
+     recompute — never rounded, never approximated */
+  let bad = 0, why = "", cutsChecked = 0;
+  for (const id of SKILL_IDS) {
+    for (const it of gathered[id].slice(0, 12)) {
+      const dc = it.debugCurves;
+      const fresh = criticalXs(curvesOf(id, dc), dc.win.xmin, dc.win.xmax).sort((p, q2) => p.x - q2.x);
+      const want = [...dc.cuts].sort((p, q2) => p.x - q2.x);
+      if (fresh.length !== want.length) { bad++; why = `${id}: fresh criticalXs gave ${fresh.length}, round exposed ${want.length}`; continue; }
+      fresh.forEach((c, i) => {
+        cutsChecked++;
+        if (Math.abs(c.x - want[i].x) > 1e-6) { bad++; why = `${id}: cut ${i} exposed x=${want[i].x} vs fresh recompute x=${c.x}`; }
+      });
+    }
+  }
+  check(g, `the cut-line candidates sit exactly at a fresh criticalXs() recompute (${cutsChecked} cuts checked)`, bad === 0, why);
+  {
+    const it = gathered.singleSign[0];
+    if (it) {
+      const dc = it.debugCurves;
+      const tampered = dc.cuts.map((c) => ({ ...c, x: c.x + 0.5 }));
+      const matches = tampered.length === dc.cuts.length && tampered.every((c, i) => Math.abs(c.x - dc.cuts[i].x) <= 1e-6);
+      check(g, "negative test: the exact-match cut comparison above correctly rejects a tampered (shifted) cut set", matches === false);
+    }
+  }
+
+  /* 23b. no section's midpoint sits ON a cut line — no round can ever ask
+     about a sign AT a boundary */
+  bad = 0; why = ""; let midChecked = 0;
+  for (const id of SKILL_IDS) {
+    for (const it of gathered[id]) {
+      const dc = it.debugCurves;
+      dc.secs.forEach((s) => {
+        midChecked++;
+        dc.cuts.forEach((c) => { if (Math.abs(s.mid - c.x) < 1e-6) { bad++; why = `${id}: a section mid sits exactly on a cut line`; } });
+      });
+    }
+  }
+  check(g, `no section's midpoint sits on a cut line, across every round (${midChecked} sections checked)`, bad === 0, why);
+  {
+    const cuts3 = [{ x: -1 }, { x: 3 }];
+    const onCut = (mid) => cuts3.some((c) => Math.abs(mid - c.x) < 1e-6);
+    check(g, "negative test: the mid-on-a-cut predicate above catches a section deliberately sitting on a cut", onCut(-1) === true);
+    check(g, "…and does not flag an ordinary midpoint (the predicate is not just always passing)", onCut(1) === false);
+  }
+
+  /* 23c. the paint phase numbers every section (①②③…) — the interactive.js
+     extension added for this rebuild */
+  {
+    const it = gathered.singleSign[0];
+    if (it) {
+      const { box, dc } = await mountAndCut(it);
+      const labels = [...box.querySelectorAll("text.iv-sectlab")];
+      check(g, `the paint phase numbers every section (${labels.length} labels drawn, wanted ${dc.secs.length})`, labels.length === dc.secs.length);
+    }
+  }
+
+  /* 23d. marking the TRUE sign at every section (independent of the
+     round's own truth object — recomputed raw from the exposed curve)
+     reveals every mark correct */
+  bad = 0; why = ""; let paintChecked = 0;
+  for (const id of SKILL_IDS) {
+    for (const it of gathered[id].slice(0, 8)) {
+      const { box, dc } = await mountAndCut(it);
+      const nodes = paintNodes(idxOf(id), dc.secs, curvesOf(id, dc), dc.win);
+      const hits = [...box.querySelectorAll("rect.iv-hit")];
+      if (hits.length !== nodes.length) { bad++; why = `${id}: ${hits.length} paint targets, wanted ${nodes.length}`; continue; }
+      nodes.forEach((n, i) => {
+        const taps = n.y > 0 ? 1 : 2;              // blank→+ (true +) or blank→+→− (true −)
+        for (let t = 0; t < taps; t++) hits[i].dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, cancelable: true }));
+      });
+      paintChecked += nodes.length;
+      const slots = [...box.querySelectorAll("rect.iv-signslot")];
+      if (slots.length !== nodes.length) { bad++; why = `${id}: slot count mismatch after marking`; continue; }
+      slots.forEach((s) => { if (s.style.stroke !== "var(--good)") { bad++; why = `${id}: a mark matching the true sign was revealed WRONG (stroke=${s.style.stroke})`; } });
+    }
+  }
+  check(g, `marking the TRUE sign at every section reveals every mark correct, recomputed raw from the exposed curve (${paintChecked} marks)`, bad === 0, why);
+
+  /* negative test for 23d: marking every section with the WRONG sign
+     must be revealed wrong, never silently accepted */
+  bad = 0; why = ""; let negChecked = 0;
+  for (const id of SKILL_IDS) {
+    const it = gathered[id][gathered[id].length - 1];
+    if (!it) continue;
+    const { box, dc } = await mountAndCut(it);
+    const nodes = paintNodes(idxOf(id), dc.secs, curvesOf(id, dc), dc.win);
+    const hits = [...box.querySelectorAll("rect.iv-hit")];
+    nodes.forEach((n, i) => {
+      const taps = n.y > 0 ? 2 : 1;                // deliberately the WRONG sign every time
+      for (let t = 0; t < taps; t++) hits[i].dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, cancelable: true }));
+    });
+    negChecked += nodes.length;
+    const slots = [...box.querySelectorAll("rect.iv-signslot")];
+    if (slots.some((s) => s.style.stroke === "var(--good)")) { bad++; why = `${id}: a deliberately-wrong mark was revealed as correct`; }
+  }
+  check(g, `negative test: marking every section with the WRONG sign is revealed wrong, not silently accepted (${negChecked} marks)`, bad === 0, why);
+
+  /* 23e. the painting SURVIVES into the read-off even when it is wrong —
+     house law (batch 1 / q6): the app never blocks progress on a wrong
+     mark, a wrong painting reads into a wrong answer and the feedback
+     panel (misc) catches it there, not a locked stage */
+  bad = 0; why = "";
+  for (const id of SKILL_IDS) {
+    const it = gathered[id][1] || gathered[id][0];
+    if (!it) continue;
+    const box2 = document.createElement("div");
+    host.appendChild(box2);
+    let doneCalled = false;
+    it.build(box2, () => { doneCalled = true; }, () => {}, () => {}, () => {});
+    const dc = it.debugCurves;
+    const hits0 = [...box2.querySelectorAll("rect.iv-hit")];
+    dc.cands.forEach((c, i) => { if (c.need) hits0[i].dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, cancelable: true })); });
+    await new Promise((r) => setTimeout(r, 420));
+    const nodes = paintNodes(idxOf(id), dc.secs, curvesOf(id, dc), dc.win);
+    const hits = [...box2.querySelectorAll("rect.iv-hit")];
+    nodes.forEach((n, i) => hits[i].dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, cancelable: true }))); // one tap each = "+" everywhere, wrong on some sections by construction
+    await new Promise((r) => setTimeout(r, 500));
+    if (!doneCalled) { bad++; why = `${id}: an all-"+" painting (wrong on some sections) never unlocked the read-off — progress is blocked on a wrong mark`; continue; }
+    if (!it.then || !it.then.answerLabel) { bad++; why = `${id}: no follow-up question after the paint phase`; }
+  }
+  check(g, "the read-off unlocks even when the painting is wrong on some sections — mistakes carry into the mc(), never blocking progress (house law)", bad === 0, why);
+
+  /* 23f. the correct answer matches funclib's sign analysis, recomputed
+     independently via signAt/sections — never the round's own chosen/
+     correct fields */
+  bad = 0; why = ""; let recomputed = 0;
+  gathered.singleSign.forEach((it) => {
+    const dc = it.debugCurves;
+    const secs2 = sections(dc.cuts, dc.win.xmin, dc.win.xmax);
+    const wantSign = dc.wantPos ? 1 : -1;
+    const chosen2 = secs2.filter((s) => signAt(dc.cv, s.mid) === wantSign);
+    const expected = strip(answerString(chosen2, dc.cuts, dc.win, { strict: true, lang: "af" }));
+    const got = strip(L(it.then.answerLabel || ""));
+    recomputed++;
+    if (expected !== got) { bad++; why = `singleSign: expected "${expected}" got "${got}"`; }
+  });
+  gathered.productSign.forEach((it) => {
+    const dc = it.debugCurves;
+    const secs2 = sections(dc.cuts, dc.win.xmin, dc.win.xmax);
+    const chosen2 = secs2.filter((s) => {
+      const p = signAt(dc.a, s.mid) * signAt(dc.b, s.mid);
+      return dc.wantNeg ? p < 0 : p > 0;
+    });
+    const expected = strip(answerString(chosen2, dc.cuts, dc.win, { strict: dc.strict, lang: "af" }));
+    const got = strip(L(it.then.answerLabel || ""));
+    recomputed++;
+    if (expected !== got) { bad++; why = `productSign: expected "${expected}" got "${got}"`; }
+  });
+  check(g, `the correct answer matches funclib's sign analysis, recomputed independently via signAt/sections (${recomputed} rounds)`, bad === 0, why);
+  {
+    const it = gathered.singleSign[0];
+    if (it) {
+      const dc = it.debugCurves;
+      const secs2 = sections(dc.cuts, dc.win.xmin, dc.win.xmax);
+      const flipped = secs2.filter((s) => signAt(dc.cv, s.mid) === (dc.wantPos ? -1 : 1));   // deliberately the OPPOSITE sign
+      const flippedStr = strip(answerString(flipped, dc.cuts, dc.win, { strict: true, lang: "af" }));
+      const got = strip(L(it.then.answerLabel || ""));
+      check(g, "negative test: recomputing with the OPPOSITE wanted sign gives a different string than the round's real answer (23f's comparison is not vacuously equal)", flippedStr !== got);
+    }
+  }
+
+  /* 23g. 4 distinct options ship consistently */
+  {
+    let n4 = 0, total = 0;
+    [...gathered.singleSign, ...gathered.productSign].forEach((it) => { total++; if (it.then.options.length === 4) n4++; });
+    check(g, `singleSign/productSign consistently ship 4 distinct options (${n4}/${total})`, total > 0 && n4 === total, `${n4}/${total}`);
+  }
+
+  /* 23h. regression guard — the retired tekentabel is really gone: no
+     round reports the old kind, and no <table class="sign-table"> ever
+     renders from the new build() */
+  bad = 0; why = "";
+  [...gathered.singleSign, ...gathered.productSign].forEach((it) => { if (it.kind !== "signPaint") { bad++; why = `an item reports kind:"${it.kind}", wanted "signPaint"`; } });
+  {
+    const probeBox = document.createElement("div");
+    host.appendChild(probeBox);
+    const probeIt = gathered.singleSign[0] || gathered.productSign[0];
+    if (probeIt) {
+      probeIt.build(probeBox, () => {}, () => {}, () => {}, () => {});
+      if (probeBox.querySelector("table.sign-table")) { bad++; why = "a <table class=\"sign-table\"> still renders — the tekentabel is supposed to be gone"; }
+    }
+  }
+  check(g, "every quest 5 round reports kind:\"signPaint\" (never the retired \"signTable\"), and no <table class=\"sign-table\"> renders from the new flow", bad === 0, why);
+
+  host.remove();
+}
+
 document.getElementById("sum").innerHTML = fail === 0
   ? `<span class="ok">ALL ${pass} CHECKS PASS</span>`
   : `<span class="no">${fail} FAILED</span> · ${pass} passed`;

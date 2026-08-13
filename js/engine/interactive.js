@@ -337,24 +337,50 @@ export function climb(host, opts) {
    ------------------------------------------------------------
    opts: { spec, sections, curves:[i…], onChange(state, allMarked) }
    state[curveIndex][sectionIndex] = +1 | -1 | 0 (unmarked)
+
+   Numbers the sections along the top of the graph (①②③…), same
+   labelling sweep()/signTable() already use — quest 5's rebuild
+   (fix day, 2026-08-13) puts this mechanic straight after cutSockets
+   with nothing else on screen, so the sections need their own
+   numbering rather than borrowing it from a table header that no
+   longer exists.
    ============================================================ */
 const TONES = { a: "var(--fg-a)", b: "var(--fg-b)", c: "var(--fg-c)" };
 
 export function signPaint(host, opts) {
   const { spec, sections, curves, onChange, names } = opts;
   const { svg, g } = mount(host, spec);
+  const { ymax } = g.win;
+  sections.forEach((sec, si) => {
+    const lab = svgEl("text", {
+      class: "iv-sectlab", x: N((g.X(sec.x0) + g.X(sec.x1)) / 2), y: N(g.Y(ymax) + 12),
+      "text-anchor": "middle", "dominant-baseline": "middle",
+    });
+    lab.textContent = "①②③④⑤⑥⑦⑧"[si] || String(si + 1);
+    svg.appendChild(lab);
+  });
   const state = {};
   const nodes = [];
 
+  /* two curves can sit at almost the same height in a section (quest 5's
+     product rounds — that is the whole point of the question) — a mark
+     placed purely by curve height then lands both boxes on top of each
+     other. A fixed horizontal spread per curve (only when there is more
+     than one) keeps every box tappable regardless of how close the two
+     curves happen to be; a single-curve round is untouched (offset 0).
+     Fix day, 2026-08-13 — caught during quest 5's rebuild visual pass:
+     5 of 26 sampled productSign rounds had two overlapping paint boxes. */
+  const SPREAD = 26;
   curves.forEach((ci, cidx) => {
     state[ci] = {};
     const cv = spec.curves[ci], f = makeFn(cv);
     const tone = TONES[cv.tone] || "var(--accent)";
+    const xOffset = curves.length > 1 ? (cidx - (curves.length - 1) / 2) * SPREAD : 0;
     sections.forEach((sec, si) => {
       const y = f(sec.mid);
       if (!Number.isFinite(y) || y < g.win.ymin || y > g.win.ymax) return;   // no graph here
       state[ci][si] = 0;
-      const px = g.X(sec.mid);
+      const px = g.X(sec.mid) + xOffset;
       /* sit the mark just off the curve, on the side away from the axis */
       const py = g.Y(y) + (y >= 0 ? -17 : 17);
       const slot = svgEl("rect", { class: "iv-signslot", x: N(px - 11), y: N(py - 11), width: 22, height: 22, rx: 3 });

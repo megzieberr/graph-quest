@@ -230,6 +230,20 @@ are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTI
   Also fixed in review: the tak-ban regex never matched the singular "tak"
   (\btakke?\b parses as "takk"+optional-e) — now \btak(ke)?\b.
 
+- 2026-08-13 (session 4): **QUEST 5 REBUILT onto her board method** — cut lines
+  (sockets, decoys unchanged) → the learner paints + and − directly ON each curve
+  per numbered section (signPaint, extended with section numbers ①②③ and a 26px
+  spread so two close curves' boxes never overlap) → the answer is read off the
+  painting; "tekens verskil" is compared by eye, never computed into a third row.
+  The tekentabel and its harness checks are gone (her sanctioned replacement);
+  group 23's 15 checks recompute all sign truth independently via
+  signAt/sections/criticalXs. Foreman review fixes: a null-window guard before
+  the new mostlyInFrame call in singleSign (crash-class), noted that q5 keeps its
+  pre-existing retry-by-recursion style (cleanup candidate, not a regression).
+  Session 4 also flagged: randParabola() in _graphs.js can produce a 33%-in-frame
+  draw (just under §4b's 34% line) — q5 and the other quests all reject-and-redraw
+  locally, but the generator itself is worth a look in a future session.
+
 ## Pending on Megan
 
 1. 💻 5 min: [whenever] **name the three new quests.** They shipped with working
