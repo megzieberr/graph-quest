@@ -218,6 +218,13 @@ function reflectionRound() {
     const base = family === "parabola" ? baseParabolaOffCenter()
       : family === "hyperbola" ? baseHyperbola() : baseLineOffAxis();
     const axis = pick(["x", "y"]);
+    /* a parabola reflected over the y-axis (y = f(−x)) is pixel-identical
+       to a horizontal shift when the parabola isn't drawn with any
+       asymmetric marker — a learner who correctly SEES a slide gets marked
+       wrong. Megan's ruling 2026-08-13: drop the case entirely, same skip
+       pattern as the hyperbola guard just below. Lines and hyperbolas keep
+       both axes. */
+    if (family === "parabola" && axis === "y") continue;
     const image = axis === "x" ? reflectX(base, family) : reflectY(base, family);
     if (family === "hyperbola" && (asymOnAxis(base) || asymOnAxis(image))) continue;
     const win = windowFor([base, image]);

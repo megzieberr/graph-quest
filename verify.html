@@ -22,6 +22,7 @@
 <script type="module">
 import { QUESTS, buildRound, setSemicircles, getQuest } from "./js/quests/index.js";
 import { secondChanceAllowed } from "./js/play.js";
+import { questUnlocked, mapScreen } from "./js/screens.js";
 import { verifyFunction, renderFunction, computeFunction } from "./js/engine/function-graph.js";
 import { axisGate, sweep } from "./js/engine/interactive.js";
 import { L, UI, setLang } from "./js/i18n.js";
@@ -29,7 +30,7 @@ import { fmtComma } from "./js/check.js";
 import {
   makeFn, criticalXs, sections, signAt, intersections, paraTP, paraRoots,
   makeFn as mf, intervalStr, mergeSections, joinIntervals,
-  lengthBetween, avgGradient, gradientStr, eqStr, eqTPStr, EQ,
+  lengthBetween, avgGradient, gradientStr, eqStr, eqTPStr, EQ, hypXInt,
 } from "./js/funclib.js";
 import {
   specFor, randParabola, randHyperbola, randExp, randLine, randSemicircle,
@@ -1280,9 +1281,18 @@ for (const lang of ["af", "en"]) {
         if (as.x === 0) onAxis.push(`${it.skillId}: vertical asymptote on the y-axis`);
         if (as.y === 0) onAxis.push(`${it.skillId}: horizontal asymptote on the x-axis`);
       });
+      /* extended 2026-08-13: nicePair() built meets = [r1+p, r2+p] with no
+         guard against 0, so a PRE-DRAWN CUT LINE (compareSweep) or a
+         notation band edge could sit exactly on the y-axis and vanish —
+         same invisibility bug, different field. compareSweep now exposes
+         its built spec as it.graph (data only, see q6-compare.js) so this
+         loop can see its vlines too; notation() already carried .graph. */
+      (it.graph?.vlines || []).forEach((vl) => {
+        if (vl.x === 0) onAxis.push(`${it.skillId}: a pre-drawn cut line / band edge sits on the y-axis`);
+      });
     });
   }
-  check(g, "no Round D asymptote is drawn on an axis, where its dashed line would be invisible",
+  check(g, "no Round D asymptote OR pre-drawn cut line / band edge is drawn on an axis, where its dashed line would be invisible",
     onAxis.length === 0, [...new Set(onAxis)].join(" · "));
 
   /* 10d. the same rule for every round built after batch 1. The batch-2
@@ -1736,6 +1746,225 @@ for (const lang of ["af", "en"]) {
   }
   check(g, `gradNumber ships both m = 1 and m = −1 within ${draws} draws (cap 300)`, sawPlus1 && sawMinus1,
     `m=1 seen: ${sawPlus1}, m=−1 seen: ${sawMinus1}`);
+}
+
+/* ---------- 18. Quest q6 (Round D) fix-day bug — nicePair() (2026-08-13) ----------
+   Two bugs in the same function, both about a whole-number feature landing
+   invisibly on an axis or off the gridlines:
+     - meets = [r1+p, r2+p] had no guard against 0 — measured 26.5% of
+       hyperbola pairs drew a dashed cut line exactly on the y-axis.
+     - the hyperbola's OWN x-intercept had no integer guard (unlike the
+       shared randHyperbola()) — an odd a with |k| = 2 drew the curve
+       crossing the x-axis between gridlines (~9% of rounds).
+   Checked independently: the meeting x's are recomputed via funclib's own
+   intersections(), never trusted from the generator's own `meets` array,
+   and the x-intercept is recomputed via funclib's hypXInt(), never a copy
+   of nicePair()'s own arithmetic. Check 10c (above) is the other half of
+   this fix's proof — it now also scans the shipped cut lines/band edges. */
+{
+  setLang("af");
+  const g = group("18. Quest q6 — nicePair() bug fix: no meeting point on an axis, hyperbola x-intercept is whole (2026-08-13)");
+
+  const REPS = 400;
+  const hyperItems = [];
+  for (let rep = 0; rep < REPS && hyperItems.length < 150; rep++) {
+    buildRound("q6").filter((it) => it.skillId === "compareSweep" && it.debugCurves && it.debugCurves.f.kind === "hyperbola")
+      .forEach((it) => hyperItems.push(it));
+  }
+  check(g, `sampled at least 150 hyperbola-pair compareSweep rounds (saw ${hyperItems.length}, over ${REPS} buildRound calls)`,
+    hyperItems.length >= 150);
+
+  let badMeet = 0, whyMeet = "", meetsChecked = 0;
+  let badXi = 0, whyXi = "";
+  hyperItems.forEach((it) => {
+    const { f, g: gg, win } = it.debugCurves;
+    /* independent ground truth: recompute the real meeting x's, never
+       trust the generator's own (unstored on debugCurves for this reason) */
+    const xs = intersections(f, gg, win.xmin - 5, win.xmax + 5);
+    xs.forEach((x) => {
+      meetsChecked++;
+      if (Math.abs(x) < 1e-9) { badMeet++; whyMeet = `${it.skillId}: a real intersection sits at x = 0`; }
+    });
+    const xi = hypXInt(f);
+    if (xi != null && !Number.isInteger(xi)) { badXi++; whyXi = `${it.skillId}: hyperbola x-intercept ${xi} is not whole (a=${f.a}, p=${f.p}, q=${f.q})`; }
+  });
+  check(g, `no real intersection (recomputed via intersections(), ${meetsChecked} checked) lands on x = 0`, badMeet === 0, whyMeet);
+  check(g, "every sampled hyperbola's own x-intercept (recomputed via hypXInt()) is a whole number", badXi === 0, whyXi);
+
+  /* negative test: prove the two checks above actually catch a bad draw,
+     by running their exact logic against a hand-built pair that repeats
+     the two historical bugs, then confirming the real sampled rounds are
+     clean again once the synthetic pair is removed */
+  /* f = 4/(x−2) + 1 and g = x − 1 meet at x = 0 and x = 4 (solved by hand:
+     4/(x−2) = x−2 ⇒ (x−2)² = 4 ⇒ x = 0 or 4) — a genuine bad draw, not a
+     stand-in, so the check below has something real to catch */
+  const badPair = { f: { kind: "hyperbola", a: 4, p: 2, q: 1 }, g: { kind: "line", a: 1, q: -1 } };
+  const badWin = { xmin: -8, xmax: 8, ymin: -8, ymax: 8 };
+  const badXs = intersections(badPair.f, badPair.g, badWin.xmin, badWin.xmax);
+  const causedMeetFail = badXs.some((x) => Math.abs(x) < 1e-9);
+  const oddA = { kind: "hyperbola", a: 3, p: 0, q: 2 };       // a/k = 1.5, not whole
+  const causedXiFail = !Number.isInteger(hypXInt(oddA));
+  check(g, "negative test: a hand-built pair meeting at x = 0 IS caught by the meets-at-zero check",
+    causedMeetFail === true, `synthetic meets: ${badXs.map((x) => x.toFixed(3)).join(", ")}`);
+  check(g, "negative test: a hand-built odd-a/|k|=2 hyperbola IS caught by the whole-x-intercept check",
+    causedXiFail === true, `synthetic hypXInt = ${hypXInt(oddA)}`);
+  check(g, "…and the real sampled rounds are still clean (the synthetic cases above were never generated)",
+    badMeet === 0 && badXi === 0);
+}
+
+/* ---------- 19. Quest qT — reflectionRound never pairs parabola + y-axis (2026-08-13 ruling) ----------
+   A parabola reflected over the y-axis (y = f(−x)) is pixel-identical to a
+   horizontal shift, so a learner who correctly SEES a slide was marked
+   wrong. Megan's ruling: drop the case outright — lines and hyperbolas
+   keep both axes, parabolas keep only axis "x". */
+{
+  setLang("af");
+  const g = group("19. Quest qT — reflectionRound never pairs family=\"parabola\" with axis=\"y\" (2026-08-13 ruling)");
+
+  const REPS = 400;
+  const items = [];
+  let rounds = 0;
+  while (rounds < REPS && items.length < 100) {
+    buildRound("qT").filter((it) => it.skillId === "reflection").forEach((it) => items.push(it));
+    rounds++;
+  }
+  check(g, `reflection sampled at least 100 rounds (saw ${items.length}, over ${rounds} buildRound calls)`, items.length >= 100);
+
+  const findsBadParabolaY = (list) => list.some((it) => {
+    const dc = it.debugTransform;
+    return dc && dc.kind === "reflection" && dc.family === "parabola" && dc.axis === "y";
+  });
+
+  check(g, `no sampled reflection round pairs family="parabola" with axis="y" (${items.length} rounds checked)`,
+    !findsBadParabolaY(items));
+  /* both axes still turn up for the families that keep them */
+  const axesByFamily = {};
+  items.forEach((it) => {
+    const dc = it.debugTransform;
+    if (!dc) return;
+    (axesByFamily[dc.family] ||= new Set()).add(dc.axis);
+  });
+  check(g, `lines and hyperbolas keep BOTH reflection axes (saw: ${Object.entries(axesByFamily).map(([f, s]) => `${f}=${[...s].join("/")}`).join(", ")})`,
+    ["line", "hyperbola"].every((f) => axesByFamily[f] && axesByFamily[f].has("x") && axesByFamily[f].has("y")));
+  check(g, `parabola reflection rounds keep ONLY axis "x"`,
+    !axesByFamily.parabola || (axesByFamily.parabola.has("x") && !axesByFamily.parabola.has("y")));
+
+  /* negative test, exactly as briefed: make the check fail on a synthetic
+     parabola/y case once, then restore it and confirm clean again */
+  const synthetic = [...items, { skillId: "reflection", debugTransform: { kind: "reflection", family: "parabola", axis: "y" } }];
+  check(g, "negative test: injecting one synthetic parabola+y case IS caught",
+    findsBadParabolaY(synthetic) === true);
+  check(g, "…and the real sampled rounds report clean again once the synthetic case is removed (restored)",
+    findsBadParabolaY(items) === false);
+}
+
+/* ---------- 20. randHyperbola() fix — no hyperbola drawn by it sits on an axis (2026-08-13 ruling) ----------
+   MEGAN'S RULING: stop allowing p = 0 (and q = 0) globally in randHyperbola()
+   itself, so EVERY quest, batch 1 included, draws hyperbolas with both
+   asymptotes off the axes — not just the batch-2 quests that already went
+   through randHyperbolaOffAxis(). Checked on real generated curves pulled
+   out of the shipped rounds of the batch-1 quests that actually CALL
+   randHyperbola() — q2 (Op die grafiek), q3 (Lees die gebied), q5 (positive/
+   negative) — never a source-file regex. q7 (Eksamenmodus) is deliberately
+   excluded: its exam sheets are fixed, hand-authored content (RUN-PLAN's
+   "three fixed batch-1 sheets", see js/quests/index.js), not draws from
+   randHyperbola(), and q7-exam.js is out of this fix's scope. */
+{
+  setLang("af");
+  const g = group("20. randHyperbola() fix: no hyperbola it draws has an asymptote on an axis (2026-08-13 ruling)");
+
+  /* the fix itself: call the ONE shared generator every batch-1 quest
+     draws from, directly, and assert on what it hands back — never a copy
+     of its logic, never a source regex */
+  let bad = 0, why = "", genChecked = 0;
+  for (let i = 0; i < 300; i++) {
+    const cv = randHyperbola();
+    genChecked++;
+    if (asymOnAxis(cv)) { bad++; why = `randHyperbola() returned a=${cv.a} p=${cv.p} q=${cv.q} — on an axis`; }
+  }
+  check(g, `randHyperbola() called directly (${genChecked} times) never returns p = 0 or q = 0`, bad === 0, why);
+
+  /* it reaches the batch-1 quests: q2 (Op die grafiek), q3 (Lees die
+     gebied), q5 (positive/negative) are the three that actually call
+     randHyperbola() (q7's exam sheets are fixed hand-authored content —
+     not draws from it, and q7-exam.js is out of this fix's scope). Every
+     hyperbola curve their SHIPPED rounds expose (it.graph for a plain mc
+     round, it.then.graph for an interactive round's follow-up) is checked
+     — the ones drawn only inside an interactive build() closure aren't
+     reachable without touching those files, so this is a real spot-check
+     of the integration, not a full census. */
+  const CALLERS = ["q2", "q3", "q5"];
+  const hyperbolasOf = (it) => {
+    const out = [];
+    [it.graph, it.then && it.then.graph].filter(Boolean).forEach((sp) => (sp.curves || []).forEach((cv) => out.push(cv)));
+    return out.filter((cv) => cv && cv.kind === "hyperbola");
+  };
+  let roundsSeen = 0, hyperCount = 0, bad2 = 0, why2 = "";
+  for (let rep = 0; rep < 60; rep++) {
+    for (const qid of CALLERS) {
+      let items = [];
+      try { items = buildRound(qid); } catch { continue; }
+      roundsSeen += items.length;
+      items.forEach((it) => {
+        hyperbolasOf(it).forEach((cv) => {
+          hyperCount++;
+          if (asymOnAxis(cv)) { bad2++; why2 = `${qid}/${it.skillId}: hyperbola a=${cv.a} p=${cv.p} q=${cv.q} sits on an axis`; }
+        });
+      });
+    }
+  }
+  check(g, `at least 200 rounds sampled across q2/q3/q5 (saw ${roundsSeen})`, roundsSeen >= 200);
+  check(g, `the fix reaches q2/q3/q5: ${hyperCount} exposed hyperbola curves seen among them, none on an axis`,
+    hyperCount > 0 && bad2 === 0, why2);
+}
+
+/* ---------- 21. js/screens.js fix — quest unlock is grandfathered (2026-08-13 ruling) ----------
+   Unlocking used to be pure array order — inserting batch 2's three new
+   quests re-locked Eksamenmodus for existing profiles, and the q2/q3 order
+   swap could show a done-but-ticked card with a padlock. Now: a quest is
+   open if the PREVIOUS quest is done, OR the quest itself was ever played
+   or finished (plays > 0 || done) — nobody's visible progress is ever
+   taken away. Checked through questUnlocked(), the one exported rule
+   (same pattern as secondChanceAllowed() in play.js), AND against the real
+   map screen's DOM so a future edit to mapScreen() can't quietly stop
+   calling it. */
+{
+  const g = group("21. js/screens.js fix — quest unlock is grandfathered, never re-locked by array order (2026-08-13 ruling)");
+  const ids = QUESTS.map((q) => q.id);
+
+  /* (a) every batch-1 id done (qL/qG/qT never played — exactly what an
+     existing profile looked like the moment batch 2 shipped) → Eksamenmodus
+     (q7) stays unlocked, even though the quest immediately before it in
+     the array (qT) was never touched. */
+  const batch1Ids = ids.filter((id) => !["qL", "qG", "qT"].includes(id));
+  const profileA = { quests: {} };
+  batch1Ids.forEach((id) => { profileA.quests[id] = { done: true, best: 5, total: 5, plays: 3 }; });
+  const iq7 = ids.indexOf("q7");
+  check(g, `(a) all ${batch1Ids.length} batch-1 quest ids done, qL/qG/qT never played → Eksamenmodus (q7) is unlocked`,
+    questUnlocked(profileA, iq7) === true, `batch1Ids: ${batch1Ids.join(", ")}`);
+
+  /* (b) q3 done, q2 not → q3's own card stays unlocked and not disabled,
+     checked both through questUnlocked() and on the real rendered map */
+  const profileB = { quests: { q3: { done: true, best: 4, total: 5, plays: 2 } } };
+  const iq3 = ids.indexOf("q3");
+  check(g, "(b) q3 done, q2 not done → q3 stays unlocked (grandfathered on its own progress)",
+    questUnlocked(profileB, iq3) === true);
+  const cardsB = [...mapScreen(profileB, () => {}, () => {}).querySelectorAll(".qcard")];
+  const cardB = cardsB[iq3];
+  check(g, "(b) on the real map screen, q3's card is enabled and shows no padlock",
+    !!cardB && cardB.disabled === false && !cardB.innerHTML.includes("🔒"));
+
+  /* (c) an empty profile → only the first quest is unlocked */
+  const profileC = { quests: {} };
+  let bad = 0, why = "";
+  ids.forEach((id, i) => {
+    const want = i === 0;
+    if (questUnlocked(profileC, i) !== want) { bad++; why = `${id} (index ${i}): expected unlocked=${want}, got ${questUnlocked(profileC, i)}`; }
+  });
+  check(g, "(c) an empty profile unlocks only the first quest, via questUnlocked()", bad === 0, why);
+  const cardsC = [...mapScreen(profileC, () => {}, () => {}).querySelectorAll(".qcard")];
+  check(g, "(c) on the real map screen, only the first card is enabled and every other one shows a padlock",
+    cardsC.length === ids.length && cardsC.every((c, i) => (i === 0) === (c.disabled === false) && (i === 0) === !c.innerHTML.includes("🔒")));
 }
 
 document.getElementById("sum").innerHTML = fail === 0

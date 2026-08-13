@@ -56,6 +56,17 @@ function nicePair() {
     const f = { kind: "hyperbola", a, p, q: k };
     const g = { kind: "line", a: 1, q: c - p };
     if (Math.abs(a) > 12) return nicePair();
+    /* neither meeting point may land on x = 0 — the dashed cut line through
+       it would sit exactly on top of the solid y-axis and vanish (measured
+       26.5% of draws, 2026-08-13); same principle bites notation()'s band
+       edge, which reads its `hi` straight out of this same meets array. */
+    if (r1 + p === 0 || r2 + p === 0) return nicePair();
+    /* the hyperbola's own x-intercept must land on a whole number too —
+       the shared generator randHyperbola() already guards this
+       (Number.isInteger(a/q)); nicePair() built its own hyperbola by hand
+       and had skipped it, so an odd a with |k| = 2 drew the curve crossing
+       the x-axis between gridlines (~9% of rounds). */
+    if (!Number.isInteger(a / k)) return nicePair();
     return { f, g, meets: [r1 + p, r2 + p].sort((u, v) => u - v), hasAsym: true };
   }
   /* parabola + straight line through two of its whole-number points */
@@ -228,6 +239,12 @@ const SKILLS = {
     /* verify-only: independent ground truth for the headless checks
        (never read by play.js — an extra field on an ordinary object) */
     built.debugCurves = { f, g, win, cuts, secs, wantF };
+    /* verify-only: play.js only ever reads item.graph on a NON-interactive
+       item (js/play.js ~line 206/209) — an interactive item is mounted
+       through build() instead, so exposing the built spec here is pure
+       data, never rendered twice or gameplay-visible. Lets check 10c scan
+       this round's pre-drawn cut lines for one sitting on the y-axis. */
+    built.graph = linedSpec;
     return built;
   },
 

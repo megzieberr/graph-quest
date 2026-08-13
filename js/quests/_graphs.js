@@ -58,7 +58,11 @@ export function randParabola(opts = {}) {
 export function randHyperbola() {
   const q = pick([1, -1, 2, -2, 3, -3]);
   const a = pick([2, -2, 4, -4, 6, -6]);                     // |a| ≤ 6, see windowFor()
-  const p = pick([0, 0, 1, -1, 2, -2]);
+  /* MEGAN'S RULING 2026-08-13: neither asymptote may sit on an axis, full
+     stop — no more p = 0 (q was already never 0 above). Every quest,
+     batch 1 included, now draws hyperbolas with both asymptotes off the
+     axes; see the updated comment on asymOnAxis() below. */
+  const p = pick([1, -1, 2, -2]);
   if (!Number.isInteger(a / q)) return randHyperbola();     // integer x-intercept
   const xi = hypXInt({ kind: "hyperbola", a, p, q });
   if (xi === null || Math.abs(xi) > 9 || Math.abs(xi - p) < 0.6) return randHyperbola();
@@ -71,10 +75,15 @@ export function randHyperbola() {
 /* A dashed asymptote drawn on top of an axis cannot be seen — the learner is
    told to look at a line that is not there. Megan's batch-1 rule; it bit
    Round D again on 2026-08-12 (every hyperbola pair had p = 0) and harness
-   check 10c now guards it. randHyperbola() still allows p = 0 for the older
-   quests that were built and reviewed with it; ANY NEW ROUND should draw its
-   hyperbolas with randHyperbolaOffAxis() instead. randExp() is already safe:
-   its q = −a·bᵏ can never be 0. */
+   check 10c now guards it. MEGAN'S RULING 2026-08-13: randHyperbola() no
+   longer allows p = 0 (or q = 0) at all — the guard used to be needed only
+   for the callers that went through randHyperbolaOffAxis(); now every
+   caller of randHyperbola() gets it for free, batch 1 included.
+   randHyperbolaOffAxis() and this function both stay — asymOnAxis() is
+   still the one place that KNOWS what "on an axis" means, and
+   randHyperbolaOffAxis()'s retry loop is now trivially satisfied on its
+   first try rather than deleted, so batch-2 callers keep working
+   unchanged. randExp() is already safe: its q = −a·bᵏ can never be 0. */
 export function asymOnAxis(cv) {
   if (!cv) return false;
   if (cv.kind === "hyperbola") return cv.p === 0 || cv.q === 0;

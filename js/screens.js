@@ -5,6 +5,23 @@ import { el, $, toast } from "./ui.js";
 import { L, UI, getLang, setLang } from "./i18n.js";
 import { QUESTS } from "./quests/index.js";
 
+/* is quest i open on the map?
+   MEGAN'S RULING 2026-08-13: unlocking used to be pure array order —
+   inserting batch 2's three new quests into QUESTS re-locked Eksamenmodus
+   for every existing profile, and the q2/q3 order swap could show a
+   done-but-ticked card with a padlock on it. Grandfathered instead, the
+   same pattern secondChanceAllowed() uses in play.js: a quest is open if
+   the PREVIOUS quest is done, OR the quest itself was ever played or
+   finished. Nobody's visible progress is ever taken away by a future
+   reorder. Exported so the harness checks this exact rule, not a copy. */
+export function questUnlocked(profile, i) {
+  if (i === 0) return true;
+  const st = profile.quests[QUESTS[i].id] || {};
+  if (st.plays > 0 || st.done) return true;
+  const prev = profile.quests[QUESTS[i - 1].id] || {};
+  return !!prev.done;
+}
+
 /* ---------------- top chrome ---------------- */
 export function paintChrome(profile, onLang) {
   const c = $("#chrome");
@@ -34,8 +51,7 @@ export function mapScreen(profile, onPlay, onReset) {
   grid.style.marginTop = "14px";
   QUESTS.forEach((q, i) => {
     const st = profile.quests[q.id] || {};
-    const prev = i === 0 ? { done: true } : (profile.quests[QUESTS[i - 1].id] || {});
-    const locked = i > 0 && !prev.done;
+    const locked = !questUnlocked(profile, i);
     const card = el("button", "qcard" + (st.done ? " done" : ""));
     card.type = "button";
     card.disabled = locked;
