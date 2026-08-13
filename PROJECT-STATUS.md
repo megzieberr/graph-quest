@@ -1,36 +1,33 @@
-# Project status — updated 2026-08-12 (her wording pass + two fixes she caught playing)
+# Project status — updated 2026-08-13 (the fix day: full code review, 4 build sessions, her Afrikaans pass)
 
 **Read this first.** The v2 spec is [RUN-PLAN.md](RUN-PLAN.md); Megan's own class notes
 are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTIONS-NOTES-DIGEST.md).
 
 ## Where we are
 
-- **Batch 1 of the v2 rebuild is COMPLETE and DEPLOYED** (overnight 2026-08-11→12,
-  Megan's explicit authorization: sessions run one at a time, each foreman-reviewed —
-  code, fresh harness runs, AND rendered-graph inspection — before the next started).
-- The app now has **8 quests**: Ontdek (parabola discovery sliders) · Ontdek 2
-  (line/hyperbola/exp discovery) · Vinnige Oë (equation-only recognition, Round B) ·
-  Lees die gebied (Round C: climb, above/below, domain/range axis-tap, sub-in reading) ·
-  Op die grafiek (v1 q2, kept) · Plus en minus (v1 q5, kept) · Bo of onder (Round D:
-  pre-drawn cuts, +/− stamping, scan line) · Eksamenmodus (v1 q7, kept).
-- v1's q1-axis / q3-curtain / q4-climb / q6-sweep are retired and deleted.
-- **verify.html: 81 checks, ALL PASS** — grown from 40, now covering the square-grid
-  window engine, slider mechanics read back off the SVG against funclib, no-spoilers
-  wording, her "drag/sin" rulings, frozen-asymptote visibility, full-hand options,
-  sub-in point containment, Round D cut-line exactness and scaffold gating.
-- Progress saves are still on-device only (Supabase schema written, NOT run; no login
+- **11 quests LIVE on sw `gq-v19`**, map order: Ontdek · Ontdek 2 · Vinnige Oë ·
+  Op die grafiek · Lees die gebied · Plus en minus · Bo of onder · Lengtes ·
+  Gemiddelde gradiënt · Transformasies · Eksamenmodus.
+- **2026-08-13 was a FIX DAY (Fable foreman, her /go).** A full code review of the
+  batch-2 range found 13 confirmed bugs; four Sonnet build sessions fixed them one
+  at a time, each foreman-reviewed and shipped separately so she could phone-test
+  between: (1) qL/qG generator fixes incl. the Lengtes open-crash; (2) Round D cut
+  lines, reflections, grandfathered unlocks, global off-axis hyperbolas; (3) harness
+  coverage hardening — which then CAUGHT a real frame bug on its third run; (4) the
+  QUEST 5 REBUILD onto her board method (tekentabel gone). Details per session in
+  Decisions below.
+- **Her Afrikaans pass, mid-day:** batch 2's machine-Afrikaans gave her a headache;
+  a foreman pass rewrote every learner string in qL/qG/qT as natural sentences, and
+  every brief since carries the rule "Afrikaans is written as its own sentence,
+  never translated." New vocabulary law (harness-enforced): refleksie/gereflekteer,
+  soliede lyn, rondte, English before/after labels — see [[afrikaans-app-wording]].
+- **verify.html: 162 checks, ALL PASS, count finally deterministic** (three
+  identical runs is the ship bar now). The harness sees every quest's real specs
+  via it.graph; frame rule has one owner (mostlyInFrame in _graphs.js).
+- She played the new quests and quest 5's rebuild on her phone and is happy
+  ("You put the boxes right next to the actual graphs! That reads so much easier").
+- Progress saves still on-device only (Supabase schema written, NOT run; no login
   screen). Nobody but Megan has the app yet.
-- **2026-08-12 session: all of her Afrikaans wording is in the code**, plus three
-  things she caught play-testing on her phone — the hyperbola "vlerkie" question,
-  the glued "1of2" join word, and the one-way scan line. All LIVE on gq-v9,
-  verified against the deployed files, not just locally. She played through and
-  said it looks great.
-- **2026-08-12 evening: her three batch-1 rulings are in, and BATCH 2 IS BUILT
-  AND SHIPPED.** The map now has **11 quests** — Lengtes, Gemiddelde gradiënt
-  and Transformasies joined between Bo of onder and Eksamenmodus. verify.html
-  is at **113 checks, all passing**. sw CACHE `gq-v12`. Foreman was Opus this
-  run (her call), two Sonnet build sessions dispatched from the foreman session
-  itself rather than pasted by hand — also her call.
 
 ## Decisions
 
@@ -248,48 +245,29 @@ are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTI
 
 1. 💻 5 min: [whenever] **name the three new quests.** They shipped with working
    names — "Lengtes", "Gemiddelde gradiënt", "Transformasies". Say the word and
-   they change.
-2. 📱 10 min: [whenever] **play the three new quests** and say whether they are
-   at the right place on the map (they sit between Bo of onder and Eksamenmodus).
-3. 💻 2 min: [whenever] **two rulings waiting**: should quest 5 be reworked off
-   the tekentabel onto your board method (about one build session), and should
-   the old `randHyperbola()` stop allowing p = 0 for the batch-1 quests (it
-   touches every quest already built and reviewed with it)?
+   they change. (Everything else from the old list was settled on the fix day:
+   she played the new quests, and both open rulings landed and shipped.)
 
 ## Next up
 
-- The wording correction session is DONE (2026-08-12): 46 of her edits + 34 sweep
-  swaps mapped into 8 source files, 81/81 harness checks pass, map read at 375 px
-  with no overflow. The workflow held — do it this way again, and regenerate
-  AFRIKAANS-TEKS.md after any session that adds strings.
-- **Batch 2 is DONE and LIVE.** Her three rulings, both new-quest sessions and
-  both foreman review fixes shipped on 2026-08-12.
-- **First thing next session: her three Pending items above** — the quest names,
-  a playtest of the new three, and the two rulings. Batch 3 should not be specced
-  before the quest-5 ruling in particular, because that rework competes with new
-  topics for the same session.
-- **DECISION WAITING: quest 5 vs her board method.** Quest 5 still builds the
-  tekentabel she dropped on 2026-08-09 — a rework of the intro lesson, the
-  singleSign/productSign rounds and the harness checks that assert the table.
-  Roughly one build session. Do NOT touch its blurb alone: "lyne, tabel, lees af"
-  describes the quest accurately today, and rewording it would hide the problem.
-- **DECISION WAITING: `randHyperbola()` and p = 0.** The batch-2 quests draw
-  through `randHyperbolaOffAxis()`, but the batch-1 quests still use the raw
-  generator, which puts a vertical asymptote on the y-axis a third of the time.
-  Changing it touches every quest already built and reviewed — her call.
-- **Known harness wobble** (pre-existing, not from batch 2): the total count
-  varies 112/113 between runs because a §4 check skips a quest when a random
-  6-round draw happens to contain no interactive item. fail is always 0. Worth
-  tightening so the count is stable and nothing can hide in the skip.
-- Still parked for a later batch: finding equations · nature of roots (both drift
-  toward algebra — they need a design pass first) · the full inequalities batch
-  (learner-placed cut lines return, engine work) · error-spotting ·
-  **eksamenmodus rebuild LAST**, once every new skill exists for it to sample.
-- Then per RUN-PLAN "parked for later batches": transformations, finding equations,
-  lengths, full inequalities batch (learner-placed cut lines return), nature of roots,
-  average gradient, error-spotting, eksamenmodus rebuild.
-- After all batches: login screen + Supabase, then the blipwork mount
-  (`setSemicircles(false)`).
+- **FIRST thing next session: regenerate AFRIKAANS-TEKS.md** — the fix day changed
+  many learner strings (qL/qG/qT Afrikaans pass, quest 5's full rebuild, her two
+  playtest corrections). Rebuild from the RUNNING app in play order like last time
+  (an extractor must handle string concatenation, not just template literals);
+  her existing edits in the old file are already in the code, nothing to preserve.
+- **Batch 3 is UNBLOCKED** (the quest-5 ruling landed and shipped). Still parked,
+  needing a design pass first: finding equations · nature of roots (both drift
+  toward algebra) · the full inequalities batch (learner-placed cut lines return,
+  engine work) · error-spotting · **eksamenmodus rebuild LAST**, once every new
+  skill exists for it to sample — and fold in the exam-sheet fix: sheetHypLine
+  hard-codes p = 0, an invisible on-axis asymptote learners can see today.
+- Small tidy-ups, any session: randParabola() can emit a 33%-in-frame draw (all
+  quests reject-and-redraw locally; fixing the generator is cleaner — there is
+  also a suggested-task chip for it, safe to dismiss, it lives here now) · q5's
+  retry-by-recursion style could become bounded loops like qL/qG · the faint
+  flag doesn't dim a faint curve's asymptotes/labels (cosmetic, needs her call).
+- After all batches: login screen + Supabase (schema written, NOT run), then the
+  blipwork mount (`setSemicircles(false)`).
 
 ## How to run it
 
@@ -299,7 +277,8 @@ python -m http.server 5207 --directory "C:\Users\megzi\Desktop\Claude Code Proje
 
 Then <http://localhost:5207/> (`?local=1` forces local save mode). Preview entry
 `graph-quest` (port 5207) in the nested `C:\Users\megzi\.claude\.claude\launch.json`.
-verify.html is the harness — all 81 must pass before any commit.
+verify.html is the harness — all 162 must pass, same total three runs in a row,
+before any commit.
 
 ⚠ Cache discipline (it lied to THREE reviews this build): before trusting verify.html
 in a browser, unregister the SW, delete `gq-*` caches, AND force-refetch changed modules
@@ -328,11 +307,13 @@ js/
   quests/_shared.js (mc dedupes options) · _graphs.js (windowFor: square-grid, returns
                     null → regenerate; generators self-constrain) · _intervals.js
   quests/q1-discover.js · q1b-discover2.js · qB-recognize.js · q2-point.js ·
-         q3-region.js · q5-signs.js · q6-compare.js · qL-lengths.js ·
-         qG-gradient.js · qT-transform.js · q7-exam.js      ← map order
+         q3-region.js · q5-signs.js (board method: cutSockets → signPaint) ·
+         q6-compare.js · qL-lengths.js · qG-gradient.js · qT-transform.js ·
+         q7-exam.js      ← map order; screens.js exports questUnlocked()
 supabase/schema.sql   written, not run
-verify.html           the harness: 113 checks — §4b + frozen-asymptote +
-                      containment + Round D exactness + §10's rulings/asymptote
-                      guards are never-relax rules
-sw.js                 network-first for code; SHELL precache; CACHE = gq-v12
+verify.html           the harness: 162 checks, deterministic count — §4b (shared
+                      mostlyInFrame) + §22 real-spec off-axis + banned words incl.
+                      titles/blurbs/intro caps + groups 14–23's fix-day guards
+                      are never-relax rules
+sw.js                 network-first for code; SHELL precache; CACHE = gq-v19
 ```
