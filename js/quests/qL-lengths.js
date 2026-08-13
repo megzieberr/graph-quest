@@ -25,7 +25,7 @@ import { mc, iq, quest } from "./_shared.js";
 import { B } from "../i18n.js";
 import { lengthReveal } from "../engine/interactive.js";
 import {
-  specFor, randLine, randParabola, randHyperbolaOffAxis, randExp, windowFor,
+  specFor, randLine, randParabola, randHyperbolaOffAxis, randExp, windowFor, mostlyInFrame,
 } from "./_graphs.js";
 import {
   makeFn, eqStr, C, pick, randInt, isInt, shuffled, paraTP, lengthBetween,
@@ -157,6 +157,9 @@ const SKILLS = {
       const { f, g, x, yF, yG, win } = niceVerticalPair();
       const spec = specFor([f, g], { win, accent: ACC, ticks: "labels", labels: ["f", "g"], asymLabels: true });
       if (!spec) continue;
+      /* §4b's frame-honesty rule, enforced at draw time like qT does —
+         the fix-day coverage run caught a qL parabola only 30% in frame */
+      if (!mostlyInFrame(f, spec.win) || !mostlyInFrame(g, spec.win)) continue;
       const correct = lengthBetween(yF, yG);
       /* the "wrong way round" decoy is the SIGNED subtraction yF − yG — but
          that is exactly `correct` whenever P sits above Q (yF > yG), so the
@@ -190,6 +193,10 @@ const SKILLS = {
             answerLabel: C(correct) }),
       });
       built.debugLen = { win: spec.win, points: [{ x, y: yF }, { x, y: yG }], correct, diff: "y" };
+      /* verify-only: pure data exposure, never read by play.js on an
+         interactive item (see q6-compare.js's compareSweep for the
+         established pattern) — lets §4b's frame-honesty check see it */
+      built.graph = spec;
       return built;
     }
     throw new Error("qL lenVertical: no honest round survived the distinct-options check");
@@ -200,6 +207,7 @@ const SKILLS = {
       const { cv, xA, xB, y, win } = niceHorizontalPair();
       const spec = specFor([cv], { win, accent: ACC, ticks: "labels", labels: ["f"] });
       if (!spec) continue;
+      if (!mostlyInFrame(cv, spec.win)) continue;
       const correct = lengthBetween(xA, xB);
       const raw = new Set([correct, correct / 2, xB, Math.abs(y)]);
       if (raw.size < 4) continue;
@@ -227,6 +235,8 @@ const SKILLS = {
             answerLabel: C(correct) }),
       });
       built.debugLen = { win: spec.win, points: [{ x: xA, y }, { x: xB, y }], correct, diff: "x" };
+      /* verify-only: pure data exposure, see lenVertical's comment above */
+      built.graph = spec;
       return built;
     }
     throw new Error("qL lenHorizontal: no honest round survived the distinct-options check");
@@ -237,6 +247,7 @@ const SKILLS = {
       const { cv, x, y } = nicePointOnCurve(false);
       const spec = specFor([cv], { accent: ACC, ticks: "labels", labels: ["f"], include: [{ x, y }] });
       if (!spec) continue;
+      if (!mostlyInFrame(cv, spec.win)) continue;
       const correct = Math.abs(y);
       /* the "drop the sign" decoy used the SIGNED y itself — but a positive
          y is already equal to `correct`, so every positive-coordinate draw
@@ -266,6 +277,8 @@ const SKILLS = {
             answerLabel: C(correct) }),
       });
       built.debugLen = { win: spec.win, points: [{ x, y }], correct, diff: "y0", kind: cv.kind };
+      /* verify-only: pure data exposure, see lenVertical's comment above */
+      built.graph = spec;
       return built;
     }
     throw new Error("qL lenToX: no honest round survived the distinct-options check");
@@ -276,6 +289,7 @@ const SKILLS = {
       const { cv, x, y } = nicePointOnCurve(true);
       const spec = specFor([cv], { accent: ACC, ticks: "labels", labels: ["f"], include: [{ x, y }] });
       if (!spec) continue;
+      if (!mostlyInFrame(cv, spec.win)) continue;
       const correct = Math.abs(x);
       /* same bug as lenToX: the signed x collapses onto `correct` whenever
          x is positive. −correct is the distinct stand-in — see lenToX. */
@@ -301,6 +315,8 @@ const SKILLS = {
             answerLabel: C(correct) }),
       });
       built.debugLen = { win: spec.win, points: [{ x, y }], correct, diff: "x0", kind: cv.kind };
+      /* verify-only: pure data exposure, see lenVertical's comment above */
+      built.graph = spec;
       return built;
     }
     throw new Error("qL lenToY: no honest round survived the distinct-options check");

@@ -75,7 +75,7 @@ export function mapScreen(profile, onPlay, onReset) {
   return view;
 }
 
-const B_INTRO = {
+export const B_INTRO = {
   en: "Eleven quests. Each one teaches your eyes one job — by making your hand do it first.",
   af: "Elf soektogte. Elkeen leer jou oë een taak — deur eers jou hand dit te laat doen.",
 };

@@ -215,6 +215,21 @@ are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTI
   and their harness checks are replaced. This clears the blocker batch 3 was waiting
   on.
 
+- 2026-08-13 (session 3): **the harness's new real-spec scan found that
+  Eksamenmodus's fixed hyperbola sheet (sheetHypLine in q7-exam.js) hard-codes
+  p = 0** — exam mode shows learners a dashed asymptote lying invisibly on the
+  y-axis today. Left untouched (hand-authored content; the eksamenmodus rebuild
+  is already parked as its own batch) and the scan explicitly skips-and-reports
+  it rather than failing. Fold the fix into the exam rebuild.
+- 2026-08-13 (session 3, foreman review): the new §4b coverage caught a REAL
+  intermittent bug on its third run — a qL parabola drawn only 30% in frame.
+  Root cause: qL/qG's generators never enforced the frame rule themselves.
+  Foreman review fix: all seven qL/qG skills now reject draws failing the
+  shared mostlyInFrame() guard, like qT always did. 2 100 stress rounds in
+  node: zero throws, zero frame failures; harness 147/147 three runs straight.
+  Also fixed in review: the tak-ban regex never matched the singular "tak"
+  (\btakke?\b parses as "takk"+optional-e) — now \btak(ke)?\b.
+
 ## Pending on Megan
 
 1. 💻 5 min: [whenever] **name the three new quests.** They shipped with working

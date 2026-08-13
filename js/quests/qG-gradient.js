@@ -21,7 +21,7 @@
 import { mc, iq, quest } from "./_shared.js";
 import { B } from "../i18n.js";
 import { chordReveal } from "../engine/interactive.js";
-import { specFor, randParabola, randHyperbolaOffAxis, randExp, windowFor } from "./_graphs.js";
+import { specFor, randParabola, randHyperbolaOffAxis, randExp, windowFor, mostlyInFrame } from "./_graphs.js";
 import { makeFn, eqStr, C, pick, isInt, shuffled, gradientStr, avgGradient } from "../funclib.js";
 
 const ACC = "#f472b6";
@@ -125,6 +125,8 @@ const SKILLS = {
       const { cv, x1, x2, y1, y2, dy, dx, win } = niceGradientPair();
       const spec = specFor([cv], { win, accent: ACC, ticks: "labels", labels: ["f"] });
       if (!spec) continue;
+      /* §4b's frame-honesty rule, enforced at draw time like qT does */
+      if (!mostlyInFrame(cv, spec.win)) continue;
       const correct = gradientStr(dy, dx);
       const flipSign = gradientStr(-dy, dx);
       /* the reciprocal decoy (Δx over Δy) reduces to the SAME string as
@@ -171,6 +173,10 @@ const SKILLS = {
             answerLabel: B(`m = ${correct}`, `m = ${correct}`) }),
       });
       built.debugGrad = { win: spec.win, points: [{ x: x1, y: y1 }, { x: x2, y: y2 }], dy, dx };
+      /* verify-only: pure data exposure, never read by play.js on an
+         interactive item (see q6-compare.js's compareSweep for the
+         established pattern) — lets §4b's frame-honesty check see it */
+      built.graph = spec;
       return built;
     }
     throw new Error("qG gradNumber: no honest round survived the distinct-options check");
@@ -181,6 +187,7 @@ const SKILLS = {
       const { cv, x1, x2, y1, y2, dy, dx, win } = niceGradientPair();
       const spec = specFor([cv], { win, accent: ACC, ticks: "labels", labels: ["f"] });
       if (!spec) continue;
+      if (!mostlyInFrame(cv, spec.win)) continue;
       const rising = dy > 0;
       const correct = rising
         ? B("positive — the chord climbs from A to B", "positief — die koord styg van A na B")
@@ -207,6 +214,8 @@ const SKILLS = {
             answerLabel: correct }),
       });
       built.debugGrad = { win: spec.win, points: [{ x: x1, y: y1 }, { x: x2, y: y2 }], dy, dx };
+      /* verify-only: pure data exposure, see gradNumber's comment above */
+      built.graph = spec;
       return built;
     }
     throw new Error("qG gradSign: no honest round survived");
@@ -217,6 +226,7 @@ const SKILLS = {
       const { cv, P, Q, win } = steeperPair();
       const spec = specFor([cv], { win, accent: ACC, ticks: "labels", labels: ["f"] });
       if (!spec) continue;
+      if (!mostlyInFrame(cv, spec.win)) continue;
       const abSteeper = P.m > Q.m;
       const correct = abSteeper ? "AB" : "CD";
       const wrong1 = abSteeper ? "CD" : "AB";
@@ -250,6 +260,8 @@ const SKILLS = {
         points: [{ x: P.x1, y: P.y1 }, { x: P.x2, y: P.y2 }, { x: Q.x1, y: Q.y1 }, { x: Q.x2, y: Q.y2 }],
         mAB: P.m, mCD: Q.m,
       };
+      /* verify-only: pure data exposure, see gradNumber's comment above */
+      built.graph = spec;
       return built;
     }
     throw new Error("qG gradSteeper: no honest round survived");

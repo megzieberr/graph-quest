@@ -22,7 +22,7 @@
 <script type="module">
 import { QUESTS, buildRound, setSemicircles, getQuest } from "./js/quests/index.js";
 import { secondChanceAllowed } from "./js/play.js";
-import { questUnlocked, mapScreen } from "./js/screens.js";
+import { questUnlocked, mapScreen, B_INTRO } from "./js/screens.js";
 import { verifyFunction, renderFunction, computeFunction } from "./js/engine/function-graph.js";
 import { axisGate, sweep } from "./js/engine/interactive.js";
 import { L, UI, setLang } from "./js/i18n.js";
@@ -34,7 +34,7 @@ import {
 } from "./js/funclib.js";
 import {
   specFor, randParabola, randHyperbola, randExp, randLine, randSemicircle,
-  windowFor, features, asymOnAxis, randHyperbolaOffAxis,
+  windowFor, features, asymOnAxis, randHyperbolaOffAxis, mostlyInFrame,
 } from "./js/quests/_graphs.js";
 import { answerString } from "./js/quests/_intervals.js";
 
@@ -186,7 +186,18 @@ for (const lang of ["af", "en"]) {
   host.style.position = "absolute"; host.style.left = "-9999px";
 
   for (const q of QUESTS) {
-    const items = buildRound(q.id).filter((it) => it.type === "interactive");
+    /* fix day (2026-08-13): a single buildRound() draw can legitimately
+       miss a low-weight interactive skill (qT's slideMatch is weight 1 of
+       8, in a 6-round draw) — skipping this whole check on that unlucky
+       draw is exactly what flipped the harness's grand total between two
+       different numbers from one run to the next (fail always stayed 0).
+       Keep drawing rounds until an interactive item turns up, capped so a
+       quest that truly has none (qB, q7's fixed exam sheets) still
+       terminates and is skipped — the same way, every single run. */
+    let items = [];
+    for (let draw = 0; draw < 40 && !items.length; draw++) {
+      items = buildRound(q.id).filter((it) => it.type === "interactive");
+    }
     if (!items.length) continue;
     let bad = 0, why = "";
     for (const it of items) {
@@ -329,11 +340,17 @@ for (const lang of ["af", "en"]) {
   check(g, "no beat reveals its finding before the commit, and every one ends in a method card", bad === 0, why);
 
   /* her standing wording rulings, across every quest: the Afrikaans verb
-     is "drag", never "sleep"; a sentence is a "sin", never a "frase" */
+     is "drag", never "sleep"; a sentence is a "sin", never a "frase".
+     Widened, fix day (2026-08-13): the scan used to see only built-round
+     strings and the i18n UI object — a banned word sitting in a quest's
+     title/blurb, an intro cutscene caption, or a screens.js learner-facing
+     literal (mapScreen's B_INTRO) could ship unnoticed. Now walked too. */
   bad = 0; why = "";
   const strings = [];
   const collect = (v) => { if (v != null) strings.push(strip(L(v))); };
   for (const q of QUESTS) {
+    collect(q.title); collect(q.blurb);
+    if (q.intro) q.intro.beats.forEach((b) => collect(b.cap));
     for (let rep = 0; rep < 4; rep++) {
       buildRound(q.id).forEach((it) => {
         [it.prompt, it.stem, it.coach, it.unlockMsg].forEach(collect);
@@ -348,6 +365,7 @@ for (const lang of ["af", "en"]) {
     }
   }
   Object.values(UI).forEach(collect);
+  collect(B_INTRO);        // screens.js's mapScreen() intro sentence
   /* the rest of her wording pass (2026-08-12), added after batch 2 session 2
      wrote "sywaarts" into a transformations hint: "sywaarts" → "links of
      regs", "hoegenaamd" → "op of af", and a hyperbola's branches are
@@ -357,7 +375,10 @@ for (const lang of ["af", "en"]) {
     [/\bfrase\b/i, 'use "sin", not "frase"'],
     [/\bsywaarts\b/i, 'use "links of regs", not "sywaarts"'],
     [/\bhoegenaamd\b/i, 'use "op of af", not "hoegenaamd"'],
-    [/\btakke?\b/i, 'a hyperbola has "vlerkies" — "tak/takke" is banned'],
+    /* \btak(ke)?\b, not \btakke?\b — the old pattern parsed as "takk" +
+       optional "e" and never matched the SINGULAR "tak" (session 3's
+       negative test caught it, foreman fix 2026-08-13) */
+    [/\btak(ke)?\b/i, 'a hyperbola has "vlerkies" — "tak/takke" is banned'],
     /* her playtest corrections, 2026-08-13 (Transformasies): reflections are
        the reflekteer-family, never spieël-anything or "omgeflip"; a solid
        curve is a "soliede lyn/grafiek", never "vol"; a round of play is a
@@ -370,7 +391,29 @@ for (const lang of ["af", "en"]) {
   strings.forEach((s) => {
     BANNED.forEach(([re, msg]) => { if (re.test(s)) { bad++; why = `${msg} — "${s.slice(0, 60)}"`; } });
   });
-  check(g, `her banned words stay out of every learner string (${strings.length} checked)`, bad === 0, why);
+  check(g, `her banned words stay out of every learner string, including quest title/blurb, intro captions and B_INTRO (${strings.length} checked)`, bad === 0, why);
+
+  /* negative test, exactly as briefed: temporarily inject a banned word
+     into a REAL quest's blurb, confirm the widened scan (which now walks
+     q.title/q.blurb) actually catches it, then restore the quest and
+     confirm the real collected strings report clean again */
+  {
+    const victim = QUESTS[0];
+    const originalBlurb = victim.blurb;
+    const scanQuestFor = (q) => {
+      const probe = [];
+      const pc = (v) => { if (v != null) probe.push(strip(L(v))); };
+      pc(q.title); pc(q.blurb);
+      let found = false;
+      probe.forEach((s) => BANNED.forEach(([re]) => { if (re.test(s)) found = true; }));
+      return found;
+    };
+    victim.blurb = "jy moet die punt sleep na die regte plek";   // injects the banned "sleep"
+    const caught = scanQuestFor(victim);
+    victim.blurb = originalBlurb;                                 // restore immediately, before anything else reads it
+    check(g, "negative test: a banned word injected into a real quest's blurb IS caught by the widened scan", caught === true);
+    check(g, "…and the quest's real blurb reports clean again once the injected word is removed (restored)", scanQuestFor(victim) === false);
+  }
 
   host.remove();
 }
@@ -549,7 +592,19 @@ for (const lang of ["af", "en"]) {
   setLang("af");
   const g = group("4b. Honesty of the picture and the wording");
 
-  /* every curve of every generated graph must FIT the window it is drawn in */
+  /* every curve of every generated graph must FIT the window it is drawn in.
+     Fix day (2026-08-13): the ⅓-in-frame decision is now made by the ONE
+     shared mostlyInFrame() helper (js/quests/_graphs.js, next to
+     windowFor()) — the same function qT-transform.js's own generator
+     calls — never a second private copy of the same maths. The percentage
+     in the failure message is still computed locally, for a readable
+     diagnostic only; it never drives the pass/fail decision.
+     This loop already runs over every quest in QUESTS with no it.graph
+     guard beyond "skip if absent" — now that qL/qG/qT's slideMatch expose
+     their spec as it.graph (pure data, interactive items are never
+     re-rendered from it — see each file's own comment), this same
+     unmodified loop covers them too, closing the coverage hole that used
+     to skip every qL/qG round and qT's slideMatch entirely. */
   let bad = 0, why = "";
   for (const q of QUESTS) {
     for (let rep = 0; rep < 6; rep++) {
@@ -558,23 +613,24 @@ for (const lang of ["af", "en"]) {
         if (!spec) return;
         const { xmin, xmax, ymin, ymax } = spec.win;
         spec.curves.forEach((cv, ci) => {
-          let inside = 0, total = 0;
-          for (let i = 0; i <= 60; i++) {
-            const x = xmin + (i / 60) * (xmax - xmin), y = mf(cv)(x);
-            if (!Number.isFinite(y)) continue;
-            if (cv.kind === "hyperbola" && Math.abs(x - cv.p) < 0.4) continue;
-            total++;
-            if (y >= ymin && y <= ymax) inside++;
+          if (!mostlyInFrame(cv, spec.win)) {
+            let inside = 0, total = 0;
+            for (let i = 0; i <= 60; i++) {
+              const x = xmin + (i / 60) * (xmax - xmin), y = mf(cv)(x);
+              if (!Number.isFinite(y)) continue;
+              if (cv.kind === "hyperbola" && Math.abs(x - cv.p) < 0.4) continue;
+              total++;
+              if (y >= ymin && y <= ymax) inside++;
+            }
+            bad++; why = `${q.id} curve ${ci} (${cv.kind}) only ${total ? Math.round(inside / total * 100) : 0}% in frame`;
           }
-          /* at least a third of each curve must actually be on screen */
-          if (total && inside / total < 0.34) { bad++; why = `${q.id} curve ${ci} (${cv.kind}) only ${Math.round(inside / total * 100)}% in frame`; }
         });
         const w = xmax - xmin, h = ymax - ymin;
         if (w / h > 2.4) { bad++; why = `${q.id} window is ${w}×${h} — too wide and flat to read`; }
       });
     }
   }
-  check(g, "every drawn curve is mostly inside its frame, and no window is a squashed strip", bad === 0, why);
+  check(g, "every drawn curve is mostly inside its frame (via the shared mostlyInFrame()), and no window is a squashed strip", bad === 0, why);
 
   /* a "positive or negative?" question may never sample a point ON the axis */
   bad = 0; why = "";
@@ -1965,6 +2021,67 @@ for (const lang of ["af", "en"]) {
   const cardsC = [...mapScreen(profileC, () => {}, () => {}).querySelectorAll(".qcard")];
   check(g, "(c) on the real map screen, only the first card is enabled and every other one shows a padlock",
     cardsC.length === ids.length && cardsC.every((c, i) => (i === 0) === (c.disabled === false) && (i === 0) === !c.innerHTML.includes("🔒")));
+}
+
+/* ---------- 22. Off-axis asymptote rule — every quest, walked on the real built specs (fix day, 2026-08-13) ----------
+   Check 10d's regex is a belt: it only greps the SOURCE TEXT of three
+   hard-coded batch-2 files for "randHyperbola(" calls, so it says nothing
+   about a curve built by hand (a future quest, or q7's exam sheets) and
+   nothing about whether a caught call actually PRODUCES an on-axis curve.
+   This is the real check: walk the actual built specs every quest hands
+   back (it.graph on a plain or now-exposed interactive item, it.then.graph
+   on an interactive item's mc follow-up) and assert asymOnAxis() is false
+   for every hyperbola curve really drawn — never a copy of any
+   generator's own logic, never a source regex.
+   Exclusion: q7's three exam sheets are fixed, hand-authored content
+   (RUN-PLAN's own spec; js/quests/q7-exam.js is out of this fix's scope).
+   sheetHypLine hard-codes p: 0 by design, so its hyperbola sits on the
+   y-axis on purpose — skipped here and reported, never counted as a
+   failure. */
+{
+  setLang("af");
+  const g = group("22. Off-axis asymptote rule — every quest, on the real built specs (fix day)");
+  let bad = 0, why = "", checked = 0, q7Skipped = 0;
+  for (const q of QUESTS) {
+    for (let rep = 0; rep < 10; rep++) {
+      let items = [];
+      try { items = buildRound(q.id); } catch { continue; }
+      items.forEach((it) => {
+        const specs = [it.graph, it.then && it.then.graph].filter(Boolean);
+        specs.forEach((sp) => {
+          (sp.curves || []).forEach((cv) => {
+            if (!cv || cv.kind !== "hyperbola") return;
+            checked++;
+            if (!asymOnAxis(cv)) return;
+            if (q.id === "q7") { q7Skipped++; return; }
+            bad++; why = `${q.id}/${it.skillId || "?"}: hyperbola a=${cv.a} p=${cv.p} q=${cv.q} sits on an axis`;
+          });
+        });
+      });
+    }
+  }
+  check(g, `every hyperbola reachable via it.graph/it.then.graph, across every quest, has both asymptotes off-axis (${checked} hyperbola curves checked, q7 excluded)`,
+    bad === 0 && checked > 0, why);
+  if (q7Skipped) {
+    info(g, `q7 (Eksamenmodus) hand-authored sheetHypLine draws p = 0 by design — ${q7Skipped} on-axis hyperbola(s) skipped, not failed (RUN-PLAN's fixed sheets; q7-exam.js is out of this fix's scope)`);
+  }
+
+  /* negative test: prove this exact walk catches a bad curve, on a
+     hand-built item shaped like a real one but with an on-axis hyperbola
+     exposed as it.graph — then confirm the same walk clears an otherwise
+     identical off-axis curve, so the scan isn't just always failing */
+  const scanOne = (it) => {
+    const specs = [it.graph, it.then && it.then.graph].filter(Boolean);
+    let caught = false;
+    specs.forEach((sp) => (sp.curves || []).forEach((cv) => {
+      if (cv && cv.kind === "hyperbola" && asymOnAxis(cv)) caught = true;
+    }));
+    return caught;
+  };
+  const badItem = { skillId: "synthetic", graph: { curves: [{ kind: "hyperbola", a: 4, p: 0, q: 1 }] } };
+  const cleanItem = { skillId: "synthetic", graph: { curves: [{ kind: "hyperbola", a: 4, p: 1, q: 1 }] } };
+  check(g, "negative test: a hand-built item exposing an on-axis hyperbola via it.graph IS caught by this scan", scanOne(badItem) === true);
+  check(g, "…and an off-axis hyperbola in the same shape is NOT flagged (the scan isn't just always failing)", scanOne(cleanItem) === false);
 }
 
 document.getElementById("sum").innerHTML = fail === 0

@@ -218,6 +218,27 @@ export function windowFor(curves, opts = {}) {
   return { xmin: cx - w / 2, xmax: cx + w / 2, ymin: cy - h / 2, ymax: cy + h / 2 };
 }
 
+/* verify's own honesty rule (§4b, never relaxed): at least a THIRD of a
+   drawn curve's sampled x-range must actually land inside the window. A
+   window sized to hold two curves' IDENTITY features can still leave one
+   of them mostly cropped when the pair sit far apart. THE ONE OWNER of
+   this house rule (fix day, 2026-08-13): qT-transform.js's generator used
+   to carry a private copy of this exact function, and verify.html's §4b
+   re-implemented the same maths inline a third time — two copies that
+   could silently drift apart. Both now import this one. */
+export function mostlyInFrame(cv, win) {
+  const f = makeFn(cv);
+  let inside = 0, total = 0;
+  for (let i = 0; i <= 60; i++) {
+    const x = win.xmin + (i / 60) * (win.xmax - win.xmin), y = f(x);
+    if (!Number.isFinite(y)) continue;
+    if (cv.kind === "hyperbola" && Math.abs(x - cv.p) < 0.4) continue;
+    total++;
+    if (y >= win.ymin && y <= win.ymax) inside++;
+  }
+  return total === 0 || inside / total >= 0.34;
+}
+
 /* strip a spec's asymptote LABELS — for questions that ask what the
    asymptote is. Printing "y = −8" on the sketch answers the question. */
 export function hideAsymLabels(spec) {
