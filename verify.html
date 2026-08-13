@@ -357,6 +357,14 @@ for (const lang of ["af", "en"]) {
     [/\bsywaarts\b/i, 'use "links of regs", not "sywaarts"'],
     [/\bhoegenaamd\b/i, 'use "op of af", not "hoegenaamd"'],
     [/\btakke?\b/i, 'a hyperbola has "vlerkies" — "tak/takke" is banned'],
+    /* her playtest corrections, 2026-08-13 (Transformasies): reflections are
+       the reflekteer-family, never spieël-anything or "omgeflip"; a solid
+       curve is a "soliede lyn/grafiek", never "vol"; a round of play is a
+       "rondte", never "ronde". */
+    [/spie[eë]l/i, 'use "refleksie/gereflekteer(de)", never the spieël-family'],
+    [/\bomgeflip\b/i, 'use "gereflekteer", not "omgeflip"'],
+    [/\bvol (lyn|grafiek)\b/i, 'use "soliede lyn/grafiek", not "vol"'],
+    [/\bronde\b/i, 'a round of play is a "rondte", not a "ronde"'],
   ];
   strings.forEach((s) => {
     BANNED.forEach(([re, msg]) => { if (re.test(s)) { bad++; why = `${msg} — "${s.slice(0, 60)}"`; } });

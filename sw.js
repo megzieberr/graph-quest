@@ -4,7 +4,7 @@
    for fonts and images.
 
    ⚠ BUMP THIS VERSION ON EVERY SHIPPABLE CHANGE. */
-const CACHE = "gq-v13";
+const CACHE = "gq-v14";
 
 const SHELL = [
   "./", "./index.html", "./css/styles.css", "./manifest.json",

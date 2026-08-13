@@ -183,7 +183,10 @@ function nameMoveRound() {
       {
         graph: spec,
         stem: B("Dashed = f (before). Solid = the image (after).",
-                "Stippellyn = f (voor). Vol lyn = die beeld (na)."),
+                /* "voor"/"na" read as place words in Afrikaans (in front of /
+                   next to), so the before/after labels stay English — her
+                   correction, 2026-08-13. "Vol lyn" → "soliede lyn", same day. */
+                "Stippellyn = f (before). Soliede lyn = die beeld (after)."),
         /* "sywaarts" is one of the words Megan replaced in her wording pass
            (2026-08-12): it becomes "links of regs". */
         hints: [B("Compare where the marked feature sits now against before — left or right, or up/down?",
@@ -229,35 +232,35 @@ function reflectionRound() {
     ], { win, accent: ACC, ticks: "labels", tones: ["b", "a"] });
     if (!spec) continue;
 
-    const asX = B("y = −f(x) — flipped over the x-axis", "y = −f(x) — omgeflip oor die x-as");
-    const asY = B("y = f(−x) — flipped over the y-axis", "y = f(−x) — omgeflip oor die y-as");
+    const asX = B("y = −f(x) — flipped over the x-axis", "y = −f(x) — gereflekteer oor die x-as");
+    const asY = B("y = f(−x) — flipped over the y-axis", "y = f(−x) — gereflekteer oor die y-as");
     const correct = axis === "x" ? asX : asY;
     const other = axis === "x" ? asY : asX;
 
     const built = mc("transform",
-      B("f is dashed. Which reflection is the solid graph?", "f is stippellyn. Watter spieëling is die vol grafiek?"),
+      B("f is dashed. Which reflection is the solid graph?", "f is die stippellyn. Watter refleksie is die soliede lyn?"),
       correct,
       [
         { label: other,
-          misc: B("Check the two flips separately: −f(x) turns the shape upside-down; f(−x) turns it left-right. Which one actually happened here?",
-                  "Kyk na die twee flips apart: −f(x) draai die vorm onderstebo; f(−x) draai dit links-regs om. Watter een het hier eintlik gebeur?") },
-        { label: B("f was shifted, not reflected", "f is geskuif, nie gespieël nie"),
-          misc: B("A shift keeps the same shape facing the same way — this is a mirror image, not a slide.",
-                  "'n Skuif hou dieselfde vorm dieselfde kant toe — hierdie een is 'n spieëlbeeld, nie 'n skuif nie.") },
+          misc: B("Check the two reflections separately: −f(x) turns the shape upside-down; f(−x) turns it left-right. Which one actually happened here?",
+                  "Kyk na die twee refleksies apart: −f(x) draai die vorm onderstebo; f(−x) draai dit links-regs om. Watter een het hier eintlik gebeur?") },
+        { label: B("f was shifted, not reflected", "f is geskuif, nie gereflekteer nie"),
+          misc: B("A shift keeps the same shape facing the same way — this is a reflection, not a slide.",
+                  "'n Skuif hou dieselfde vorm dieselfde kant toe — hierdie een is 'n refleksie, nie 'n skuif nie.") },
         { label: B("this is the same graph as f, just redrawn", "dis dieselfde grafiek as f, net weer geteken"),
           misc: B("Look again — the solid graph does not sit on top of the dashed one.",
-                  "Kyk weer — die vol grafiek lê nie bo-op die stippellyn een nie.") },
+                  "Kyk weer — die soliede grafiek lê nie bo-op die stippellyn een nie.") },
       ],
       {
         graph: spec, wide: true,
-        stem: B("Dashed = f. Solid = the reflected image.", "Stippellyn = f. Vol lyn = die gespieëlde beeld."),
+        stem: B("Dashed = f. Solid = the reflected image.", "Stippellyn = f. Soliede lyn = die gereflekteerde beeld."),
         hints: [
           family === "hyperbola"
             ? B("Compare which pair of corners the branches sit in — did that swap, or did the branches slide to the mirror x?",
-                "Vergelyk in watter paar hoeke die vlerkies lê — het dit verruil, of het die vlerkies na die spieël-x geskuif?")
+                "Vergelyk in watter paar hoeke die vlerkies lê — het dit verruil, of het die vlerkies na die gereflekteerde x geskuif?")
             : family === "parabola"
             ? B("Compare which way the arms point — did they flip upside-down, or did only the turning point's x change?",
-                "Vergelyk watter kant toe die arms wys — het dit onderstebo omgeflip, of het net die draaipunt se x verander?")
+                "Vergelyk watter kant toe die arms wys — is dit onderstebo gereflekteer, of het net die draaipunt se x verander?")
             : B("Compare the line's direction, and where it crosses the y-axis.",
                 "Vergelyk die lyn se rigting, en waar dit die y-as sny."),
         ],
@@ -390,11 +393,11 @@ function slideToMatchBeat() {
     const built = iq({
       concept: "transform", kind: "slideMatch", accent: ACC,
       prompt: B("Slide the number until the solid graph lands exactly on the dashed target.",
-                "Skuif die getal totdat die vol grafiek presies op die stippellyn-teiken beland."),
+                "Skuif die getal totdat die soliede grafiek presies op die stippellyn-teiken beland."),
       stem: EQ(eqStrFor(family, base, "f(x)")),
       coach: B("Drag until the two graphs line up exactly.", "Trek totdat die twee grafieke presies opmekaar val."),
       hints: [B("Watch the marked feature of the solid graph — is it landing on the dashed one yet?",
-                "Kyk na die kenmerk van die vol grafiek — beland dit al op die stippellyn een?")],
+                "Kyk na die kenmerk van die soliede grafiek — beland dit al op die stippellyn een?")],
       build: (host, done) => varSlider(host, {
         name: axis, values, specOf, start: startIdx,
         onChange: ({ value }) => { if (value === targetVal) done(); },
@@ -438,9 +441,9 @@ export const questTransform = quest("qT",
   const onlyBase = specFor([{ ...base }], { win, accent: ACC, ticks: "labels", tones: ["b"] });
   questTransform.intro = { beats: [
     { spec: onlyBase, cap: B("This is f. Every round in this quest starts from a picture like this.",
-                              "Dis f. Elke ronde in hierdie soektog begin met so 'n prent.") },
+                              "Dis f. Elke rondte in hierdie soektog begin met so 'n prent.") },
     { spec: bothSpec, cap: B("Now its IMAGE appears solid, while f stays dashed and faint — the before and after, on one sketch.",
-                              "Nou verskyn sy BEELD vol, terwyl f stippellyn en vaal bly — die voor en na, op een skets.") },
+                              "Nou verskyn sy beeld as solied en f word 'n vaal stippellyn. Dit is die before en after op een skets.") },
     { spec: bothSpec, cap: B("The equation never gets expanded or simplified — it always stays in the same shape. Your job is to SEE the move.",
                               "Die vergelyking word nooit uitgebrei of vereenvoudig nie — dit bly altyd in dieselfde vorm. Jou werk is om die skuif te SIEN.") },
   ] };
