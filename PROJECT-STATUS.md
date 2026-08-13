@@ -188,6 +188,33 @@ are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTI
   by parsing source, which is why the concatenated-string blind spot from the
   first extractor does not apply. Her edits were untouched.
 
+- 2026-08-13: **full code review of the batch-2 range (11bec27..HEAD): 13 confirmed
+  findings**, top of the list: Lengtes crashed on open (null intro spec — the harness
+  never tests intros), Eksamenmodus re-locked for existing profiles by the quest
+  insertion, a Round D cut line invisible on the y-axis in 26,5% of hyperbola rounds,
+  and the parabola y-axis reflection in Transformasies being identical to a shift
+  (correct answer marked wrong). Today became a FIX DAY: four Sonnet build sessions,
+  foreman-reviewed and shipped ONE AT A TIME with Megan phone-testing between each.
+- 2026-08-13: **her ruling — Law 1 is AMENDED, not violated, by the new quests.** The
+  review flagged that qL/qG's "top minus bottom" subtraction is the verbatim example
+  RUN-PLAN's Law 1 bans. Megan: "top minus bottom is very basic algebra, we can keep
+  that in." The subtraction wording in Lengtes and Gemiddelde gradiënt STAYS — do not
+  "fix" it back out in a later session.
+- 2026-08-13: **her ruling — unlocks are GRANDFATHERED.** A quest is open if the
+  previous quest on the map is done OR the quest itself was ever played/finished.
+  Inserting new quests must never take away earned access (this bit her own profile:
+  Eksamenmodus re-locked after batch 2).
+- 2026-08-13: **her ruling — `randHyperbola()` goes off-axis GLOBALLY.** The p = 0
+  question from batch 2 is settled: no quest, batch 1 included, may draw a hyperbola
+  with an asymptote on an axis.
+- 2026-08-13: **her ruling — the parabola + y-axis reflection case is DROPPED from
+  Transformasies** (a parabola's y-reflection is pixel-identical to a shift, so the
+  round marked a true reading wrong). Lines and hyperbolas keep both reflection axes.
+- 2026-08-13: **her ruling — quest 5 is reworked TODAY** onto her board method (cut
+  lines → paint + and − per section → read off the painting); the tekentabel rounds
+  and their harness checks are replaced. This clears the blocker batch 3 was waiting
+  on.
+
 ## Pending on Megan
 
 1. 💻 5 min: [whenever] **name the three new quests.** They shipped with working

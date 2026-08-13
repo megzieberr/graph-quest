@@ -22,7 +22,7 @@ import { mc, iq, quest } from "./_shared.js";
 import { B } from "../i18n.js";
 import { chordReveal } from "../engine/interactive.js";
 import { specFor, randParabola, randHyperbolaOffAxis, randExp, windowFor } from "./_graphs.js";
-import { makeFn, eqStr, C, pick, isInt, shuffled, gradientStr } from "../funclib.js";
+import { makeFn, eqStr, C, pick, isInt, shuffled, gradientStr, avgGradient } from "../funclib.js";
 
 const ACC = "#f472b6";
 
@@ -84,7 +84,11 @@ function steeperPair() {
         if (Math.abs(y1) > 9 || Math.abs(y2) > 9) return;
         const dy = y2 - y1;
         if (dy === 0) return;
-        cands.push({ x1, x2, y1, y2, dy, dx, m: Math.abs(dy / dx) });
+        /* the gradient itself always goes through funclib's avgGradient() —
+           never a raw dy/dx division here — so the answer key and the
+           harness that checks it share the one source of truth (house
+           law: ALL maths lives in funclib.js). */
+        cands.push({ x1, x2, y1, y2, dy, dx, m: Math.abs(avgGradient(y1, y2, x1, x2)) });
       });
     });
     if (cands.length < 2) continue;
@@ -95,7 +99,10 @@ function steeperPair() {
         if (Math.abs(P.m - Q.m) < 0.4) continue;                 // want a clear winner
         const lo1 = Math.min(P.x1, P.x2), hi1 = Math.max(P.x1, P.x2);
         const lo2 = Math.min(Q.x1, Q.x2), hi2 = Math.max(Q.x1, Q.x2);
-        if (lo1 < hi2 && lo2 < hi1) continue;                    // no overlapping x-ranges — stay readable
+        /* <=, not < : two chords that only TOUCH at a shared endpoint x
+           still land two dots and two labels on the exact same point —
+           measured 65,5% of rounds did this before the fix (bug 4). */
+        if (lo1 <= hi2 && lo2 <= hi1) continue;                  // no overlapping (or touching) x-ranges — stay readable
         const pts = [{ x: P.x1, y: P.y1 }, { x: P.x2, y: P.y2 }, { x: Q.x1, y: Q.y1 }, { x: Q.x2, y: Q.y2 }];
         const win2 = windowFor([cv], { include: pts });
         if (!win2) continue;
@@ -114,119 +121,138 @@ function steeperPair() {
    ------------------------------------------------------------ */
 const SKILLS = {
   gradNumber: () => {
-    const { cv, x1, x2, y1, y2, dy, dx, win } = niceGradientPair();
-    const spec = specFor([cv], { win, accent: ACC, ticks: "labels", labels: ["f"] });
-    if (!spec) return SKILLS.gradNumber();
-    const correct = gradientStr(dy, dx);
-    const flipSign = gradientStr(-dy, dx);
-    const reciprocal = gradientStr(dx, dy);
-    /* the classic "used one point's raw coordinates as a slope"
-       mistake — pick whichever of A/B has a non-zero x, so the
-       decoy itself is never a divide-by-zero */
-    const rawFromB = x2 !== 0;
-    const rawX = rawFromB ? x2 : x1, rawY = rawFromB ? y2 : y1, rawWho = rawFromB ? "B" : "A";
-    const rawPoint = gradientStr(rawY, rawX);
-    const seen = new Set([correct, flipSign, reciprocal, rawPoint]);
-    if (seen.size < 4) return SKILLS.gradNumber();                // a decoy collapsed onto another value — redraw
-    const wrongs = [
-      { label: flipSign,
-        misc: B("The sign flipped — Δy is B's height MINUS A's, not the other way round.",
-                "Die teken het omgeswaai — Δy is B se hoogte MINUS A s'n, nie andersom nie.") },
-      { label: reciprocal,
-        misc: B("That is Δx over Δy — the gradient is the other way up: Δy OVER Δx.",
-                "Dit is Δx oor Δy — die gradiënt is andersom: Δy OOR Δx.") },
-      { label: rawPoint,
-        misc: B(`That uses ${rawWho}'s own coordinates on their own — the gradient needs the CHANGE from A to B.`,
-                `Dit gebruik net ${rawWho} se eie koördinate — die gradiënt het die VERANDERING van A na B nodig.`) },
-    ];
-    const built = iq({
-      concept: "gradient", kind: "chordReveal", accent: ACC,
-      prompt: B("A and B lie on f. Tap to draw the chord AB, then find its average gradient.",
-                "A en B lê op f. Klik om die koord AB te teken, kry dan sy gemiddelde gradiënt."),
-      stem: `<span class="eq">${eqStr(cv, "f(x)")}</span>`,
-      coach: B("Tap the sketch to draw the line through A and B.", "Klik op die skets om die lyn deur A en B te teken."),
-      build: (host, done) => chordReveal(host, { spec, curve: 0, pairs: [{ x1, x2, names: ["A", "B"] }], onTap: () => done() }),
-      then: mc("gradient",
-        B("What is the average gradient of AB?", "Wat is die gemiddelde gradiënt van AB?"), correct, wrongs,
-        { hint: B("Average gradient = Δy over Δx — B's height minus A's, over B's x minus A's.",
-                  "Gemiddelde gradiënt = Δy oor Δx — B se hoogte min A s'n, oor B se x min A s'n."),
-          answerLabel: B(`m = ${correct}`, `m = ${correct}`) }),
-    });
-    built.debugGrad = { win: spec.win, points: [{ x: x1, y: y1 }, { x: x2, y: y2 }], dy, dx };
-    return built;
+    for (let tries = 0; tries < 30; tries++) {
+      const { cv, x1, x2, y1, y2, dy, dx, win } = niceGradientPair();
+      const spec = specFor([cv], { win, accent: ACC, ticks: "labels", labels: ["f"] });
+      if (!spec) continue;
+      const correct = gradientStr(dy, dx);
+      const flipSign = gradientStr(-dy, dx);
+      /* the reciprocal decoy (Δx over Δy) reduces to the SAME string as
+         `correct` whenever |Δy| = |Δx| — both sides reduce to ±1 — so
+         m = +1 and m = −1 could never ship (exhaustively verified: 867/867
+         such draws collapsed the Set and got redrawn away, bug 5). When
+         that happens, swap in "double the gradient" instead — a real
+         transcription slip, and 2m is never equal to a unit slope. */
+      const dxDyEqual = Math.abs(dy) === Math.abs(dx);
+      const reciprocal = dxDyEqual ? gradientStr(2 * dy, dx) : gradientStr(dx, dy);
+      const reciprocalMisc = dxDyEqual
+        ? B("That is double the true gradient — check Δy and Δx again, one at a time.",
+            "Dit is dubbel die ware gradiënt — gaan Δy en Δx weer een-een na.")
+        : B("That is Δx over Δy — the gradient is the other way up: Δy OVER Δx.",
+            "Dit is Δx oor Δy — die gradiënt is andersom: Δy OOR Δx.");
+      /* the classic "used one point's raw coordinates as a slope"
+         mistake — pick whichever of A/B has a non-zero x, so the
+         decoy itself is never a divide-by-zero */
+      const rawFromB = x2 !== 0;
+      const rawX = rawFromB ? x2 : x1, rawY = rawFromB ? y2 : y1, rawWho = rawFromB ? "B" : "A";
+      const rawPoint = gradientStr(rawY, rawX);
+      const seen = new Set([correct, flipSign, reciprocal, rawPoint]);
+      if (seen.size < 4) continue;                // a decoy collapsed onto another value — redraw
+      const wrongs = [
+        { label: flipSign,
+          misc: B("The sign flipped — Δy is B's height MINUS A's, not the other way round.",
+                  "Die teken het omgeswaai — Δy is B se hoogte MINUS A s'n, nie andersom nie.") },
+        { label: reciprocal, misc: reciprocalMisc },
+        { label: rawPoint,
+          misc: B(`That uses ${rawWho}'s own coordinates on their own — the gradient needs the CHANGE from A to B.`,
+                  `Dit gebruik net ${rawWho} se eie koördinate — die gradiënt het die VERANDERING van A na B nodig.`) },
+      ];
+      const built = iq({
+        concept: "gradient", kind: "chordReveal", accent: ACC,
+        prompt: B("A and B lie on f. Tap to draw the chord AB, then find its average gradient.",
+                  "A en B lê op f. Klik om die koord AB te teken, kry dan sy gemiddelde gradiënt."),
+        stem: `<span class="eq">${eqStr(cv, "f(x)")}</span>`,
+        coach: B("Tap the sketch to draw the line through A and B.", "Klik op die skets om die lyn deur A en B te teken."),
+        build: (host, done) => chordReveal(host, { spec, curve: 0, pairs: [{ x1, x2, names: ["A", "B"] }], onTap: () => done() }),
+        then: mc("gradient",
+          B("What is the average gradient of AB?", "Wat is die gemiddelde gradiënt van AB?"), correct, wrongs,
+          { hint: B("Average gradient = Δy over Δx — B's height minus A's, over B's x minus A's.",
+                    "Gemiddelde gradiënt = Δy oor Δx — B se hoogte min A s'n, oor B se x min A s'n."),
+            answerLabel: B(`m = ${correct}`, `m = ${correct}`) }),
+      });
+      built.debugGrad = { win: spec.win, points: [{ x: x1, y: y1 }, { x: x2, y: y2 }], dy, dx };
+      return built;
+    }
+    throw new Error("qG gradNumber: no honest round survived the distinct-options check");
   },
 
   gradSign: () => {
-    const { cv, x1, x2, y1, y2, dy, dx, win } = niceGradientPair();
-    const spec = specFor([cv], { win, accent: ACC, ticks: "labels", labels: ["f"] });
-    if (!spec) return SKILLS.gradSign();
-    const rising = dy > 0;
-    const correct = rising
-      ? B("positive — the chord climbs from A to B", "positief — die koord styg van A na B")
-      : B("negative — the chord falls from A to B", "negatief — die koord daal van A na B");
-    const built = iq({
-      concept: "gradient", kind: "chordReveal", accent: ACC,
-      prompt: B("A and B lie on f. Tap to draw the chord AB. Before working out a number — is its average gradient positive or negative?",
-                "A en B lê op f. Klik om die koord AB te teken. Voor jy 'n getal uitwerk — is sy gemiddelde gradiënt positief of negatief?"),
-      stem: `<span class="eq">${eqStr(cv, "f(x)")}</span>`,
-      coach: B("Tap the sketch to draw the line through A and B.", "Klik op die skets om die lyn deur A en B te teken."),
-      build: (host, done) => chordReveal(host, { spec, curve: 0, pairs: [{ x1, x2, names: ["A", "B"] }], onTap: () => done() }),
-      then: mc("gradient",
-        B("Just from the picture — positive or negative?", "Net van die prentjie af — positief of negatief?"),
-        correct,
-        [rising
-          ? B("negative — the chord falls from A to B", "negatief — die koord daal van A na B")
-          : B("positive — the chord climbs from A to B", "positief — die koord styg van A na B"),
-         B("zero — it is flat", "nul — dit is plat"),
-         { label: B("you cannot tell without calculating", "jy kan nie sonder om uit te werk sê nie"),
-           misc: B("You can! A chord that climbs left to right has a positive gradient, one that falls has a negative one — no arithmetic needed.",
-                   "Jy kan! 'n Koord wat links na regs styg het 'n positiewe gradiënt, een wat daal het 'n negatiewe — geen uitwerk nodig nie.") }],
-        { hint: B("Follow the drawn chord with your eye, left to right — does it climb or fall?",
-                  "Volg die geteken koord met jou oog, links na regs — styg of daal dit?"),
-          answerLabel: correct }),
-    });
-    built.debugGrad = { win: spec.win, points: [{ x: x1, y: y1 }, { x: x2, y: y2 }], dy, dx };
-    return built;
+    for (let tries = 0; tries < 30; tries++) {
+      const { cv, x1, x2, y1, y2, dy, dx, win } = niceGradientPair();
+      const spec = specFor([cv], { win, accent: ACC, ticks: "labels", labels: ["f"] });
+      if (!spec) continue;
+      const rising = dy > 0;
+      const correct = rising
+        ? B("positive — the chord climbs from A to B", "positief — die koord styg van A na B")
+        : B("negative — the chord falls from A to B", "negatief — die koord daal van A na B");
+      const built = iq({
+        concept: "gradient", kind: "chordReveal", accent: ACC,
+        prompt: B("A and B lie on f. Tap to draw the chord AB. Before working out a number — is its average gradient positive or negative?",
+                  "A en B lê op f. Klik om die koord AB te teken. Voor jy 'n getal uitwerk — is sy gemiddelde gradiënt positief of negatief?"),
+        stem: `<span class="eq">${eqStr(cv, "f(x)")}</span>`,
+        coach: B("Tap the sketch to draw the line through A and B.", "Klik op die skets om die lyn deur A en B te teken."),
+        build: (host, done) => chordReveal(host, { spec, curve: 0, pairs: [{ x1, x2, names: ["A", "B"] }], onTap: () => done() }),
+        then: mc("gradient",
+          B("Just from the picture — positive or negative?", "Net van die prentjie af — positief of negatief?"),
+          correct,
+          [rising
+            ? B("negative — the chord falls from A to B", "negatief — die koord daal van A na B")
+            : B("positive — the chord climbs from A to B", "positief — die koord styg van A na B"),
+           B("zero — it is flat", "nul — dit is plat"),
+           { label: B("you cannot tell without calculating", "jy kan nie sonder om uit te werk sê nie"),
+             misc: B("You can! A chord that climbs left to right has a positive gradient, one that falls has a negative one — no arithmetic needed.",
+                     "Jy kan! 'n Koord wat links na regs styg het 'n positiewe gradiënt, een wat daal het 'n negatiewe — geen uitwerk nodig nie.") }],
+          { hint: B("Follow the drawn chord with your eye, left to right — does it climb or fall?",
+                    "Volg die geteken koord met jou oog, links na regs — styg of daal dit?"),
+            answerLabel: correct }),
+      });
+      built.debugGrad = { win: spec.win, points: [{ x: x1, y: y1 }, { x: x2, y: y2 }], dy, dx };
+      return built;
+    }
+    throw new Error("qG gradSign: no honest round survived");
   },
 
   gradSteeper: () => {
-    const { cv, P, Q, win } = steeperPair();
-    const spec = specFor([cv], { win, accent: ACC, ticks: "labels", labels: ["f"] });
-    if (!spec) return SKILLS.gradSteeper();
-    const abSteeper = P.m > Q.m;
-    const correct = abSteeper ? "AB" : "CD";
-    const wrong1 = abSteeper ? "CD" : "AB";
-    const built = iq({
-      concept: "gradient", kind: "chordReveal", accent: ACC,
-      prompt: B("Two chords are marked on f. Tap to draw them, then say which one is STEEPER.",
-                "Twee koorde is op f gemerk. Klik om hulle te teken, sê dan watter een STEILER is."),
-      stem: `<span class="eq">${eqStr(cv, "f(x)")}</span>`,
-      coach: B("Tap the sketch to draw both chords.", "Klik op die skets om albei koorde te teken."),
-      build: (host, done) => chordReveal(host, {
-        spec, curve: 0,
-        pairs: [{ x1: P.x1, x2: P.x2, names: ["A", "B"] }, { x1: Q.x1, x2: Q.x2, names: ["C", "D"] }],
-        onTap: () => done(),
-      }),
-      then: mc("gradient",
-        B("Which chord has the steeper average gradient — AB or CD?", "Watter koord het die steiler gemiddelde gradiënt — AB of CD?"),
-        correct,
-        [wrong1,
-         { label: B("they are equally steep", "hulle is ewe steil"),
-           misc: B("Look again — one climbs (or falls) more sharply across its own width. They are not equal.",
-                   "Kyk weer — een styg (of daal) skerper oor sy eie wydte. Hulle is nie gelyk nie.") },
-         { label: B("you cannot tell without calculating", "jy kan nie sonder om uit te werk sê nie"),
-           misc: B("You can! The steeper chord climbs or falls more sharply — no arithmetic needed to see which one wins by eye.",
-                   "Jy kan! Die steiler koord styg of daal skerper — geen uitwerk nodig om met die oog te sien watter een wen nie.") }],
-        { hint: B("The steeper chord looks closer to vertical — compare how much each one rises across its own width.",
-                  "Die steiler koord lyk nader aan vertikaal — vergelyk hoeveel elkeen styg oor sy eie wydte."),
-          answerLabel: correct === "AB" ? B("AB is steeper", "AB is steiler") : B("CD is steeper", "CD is steiler") }),
-    });
-    built.debugGrad = {
-      win: spec.win,
-      points: [{ x: P.x1, y: P.y1 }, { x: P.x2, y: P.y2 }, { x: Q.x1, y: Q.y1 }, { x: Q.x2, y: Q.y2 }],
-      mAB: P.m, mCD: Q.m,
-    };
-    return built;
+    for (let tries = 0; tries < 30; tries++) {
+      const { cv, P, Q, win } = steeperPair();
+      const spec = specFor([cv], { win, accent: ACC, ticks: "labels", labels: ["f"] });
+      if (!spec) continue;
+      const abSteeper = P.m > Q.m;
+      const correct = abSteeper ? "AB" : "CD";
+      const wrong1 = abSteeper ? "CD" : "AB";
+      const built = iq({
+        concept: "gradient", kind: "chordReveal", accent: ACC,
+        prompt: B("Two chords are marked on f. Tap to draw them, then say which one is STEEPER.",
+                  "Twee koorde is op f gemerk. Klik om hulle te teken, sê dan watter een STEILER is."),
+        stem: `<span class="eq">${eqStr(cv, "f(x)")}</span>`,
+        coach: B("Tap the sketch to draw both chords.", "Klik op die skets om albei koorde te teken."),
+        build: (host, done) => chordReveal(host, {
+          spec, curve: 0,
+          pairs: [{ x1: P.x1, x2: P.x2, names: ["A", "B"] }, { x1: Q.x1, x2: Q.x2, names: ["C", "D"] }],
+          onTap: () => done(),
+        }),
+        then: mc("gradient",
+          B("Which chord has the steeper average gradient — AB or CD?", "Watter koord het die steiler gemiddelde gradiënt — AB of CD?"),
+          correct,
+          [wrong1,
+           { label: B("they are equally steep", "hulle is ewe steil"),
+             misc: B("Look again — one climbs (or falls) more sharply across its own width. They are not equal.",
+                     "Kyk weer — een styg (of daal) skerper oor sy eie wydte. Hulle is nie gelyk nie.") },
+           { label: B("you cannot tell without calculating", "jy kan nie sonder om uit te werk sê nie"),
+             misc: B("You can! The steeper chord climbs or falls more sharply — no arithmetic needed to see which one wins by eye.",
+                     "Jy kan! Die steiler koord styg of daal skerper — geen uitwerk nodig om met die oog te sien watter een wen nie.") }],
+          { hint: B("The steeper chord looks closer to vertical — compare how much each one rises across its own width.",
+                    "Die steiler koord lyk nader aan vertikaal — vergelyk hoeveel elkeen styg oor sy eie wydte."),
+            answerLabel: correct === "AB" ? B("AB is steeper", "AB is steiler") : B("CD is steeper", "CD is steiler") }),
+      });
+      built.debugGrad = {
+        win: spec.win,
+        points: [{ x: P.x1, y: P.y1 }, { x: P.x2, y: P.y2 }, { x: Q.x1, y: Q.y1 }, { x: Q.x2, y: Q.y2 }],
+        mAB: P.m, mCD: Q.m,
+      };
+      return built;
+    }
+    throw new Error("qG gradSteeper: no honest round survived");
   },
 };
 

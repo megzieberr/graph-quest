@@ -1609,6 +1609,127 @@ for (const lang of ["af", "en"]) {
   }
 }
 
+/* ---------- 14. Intro cutscenes — every beat renders honestly (fix-day, bug 1) ----------
+   renderIntro() (js/play.js) calls renderFunction(beat.spec) with no null
+   guard — a null spec (windowFor() giving up because a curve's own identity
+   features cannot fit an honest window) throws a TypeError the instant the
+   "Watch first" lesson opens. Found on qL's Lengtes (2026-08-13): the OLD
+   intro hyperbola's y-intercept alone forced the window past MAX_PXU's
+   clamp. Every quest that ships an intro must promise a non-null spec for
+   every beat, and a spec that actually renders clean markup.
+   Negative-tested by hand before trusting it green: temporarily feeding this
+   exact check a { spec: null } beat reports FAIL ("spec is null"), and a
+   spec whose curve throws inside makeFn() reports FAIL ("threw …") — only
+   real, rendering specs pass. */
+{
+  const g = group("14. Intro cutscenes — every beat's spec renders without throwing");
+  let bad = 0, why = "";
+  const withIntro = QUESTS.filter((q) => q.intro);
+  withIntro.forEach((q) => {
+    q.intro.beats.forEach((b, i) => {
+      if (!b.spec) { bad++; why = `${q.id} beat ${i}: spec is null`; return; }
+      let svg;
+      try { svg = renderFunction(b.spec); } catch (e) { bad++; why = `${q.id} beat ${i}: threw ${e.message}`; return; }
+      if (BAD.test(String(svg).replace(/class="[^"]*"/g, ""))) { bad++; why = `${q.id} beat ${i}: NaN/undefined in the rendered SVG`; }
+    });
+  });
+  check(g, `every intro beat's spec is non-null and renders cleanly (${withIntro.length} quests carry an intro)`,
+    bad === 0 && withIntro.length > 0, why);
+}
+
+/* ---------- 15. Quest qL — bug 2 regression guard: both signs ship ----------
+   lenVertical/lenToX/lenToY each had a decoy that equalled `correct`
+   whenever the target coordinate was already on the "positive" side (or,
+   for lenVertical, whenever P sat above Q) — the Set collapsed and the
+   generator quietly redrew that whole half of the outcome space away
+   (measured: 400/400 shipped rounds landed on the other side). Sampled
+   here independently of the fix: both signs of the relevant coordinate
+   must occur for each skill, and lenToY must ship both curve kinds
+   nicePointOnCurve(true) can draw (line, exp). */
+{
+  setLang("af");
+  const g = group("15. Quest qL — bug 2 regression guard: both signs ship");
+  const bySkill = { lenToX: [], lenToY: [], lenVertical: [] };
+  let rounds = 0;
+  while (rounds < 500 && !Object.values(bySkill).every((a) => a.length >= 60)) {
+    buildRound("qL").forEach((it) => { if (bySkill[it.skillId]) bySkill[it.skillId].push(it); });
+    rounds++;
+  }
+  Object.entries(bySkill).forEach(([id, items]) => {
+    check(g, `${id} sampled at least 60 rounds (saw ${items.length}, over ${rounds} buildRound calls)`, items.length >= 60);
+  });
+
+  const signOf = (it) => {
+    const dc = it.debugLen;
+    if (it.skillId === "lenToX") return Math.sign(dc.points[0].y);
+    if (it.skillId === "lenToY") return Math.sign(dc.points[0].x);
+    return Math.sign(dc.points[0].y - dc.points[1].y);          // lenVertical: yF − yG
+  };
+  let bad = 0, why = "";
+  Object.entries(bySkill).forEach(([id, items]) => {
+    const signs = new Set(items.map(signOf));
+    if (!signs.has(1) || !signs.has(-1)) { bad++; why = `${id}: only saw sign(s) ${[...signs].join(",")}`; }
+  });
+  check(g, "lenToX / lenToY / lenVertical each ship BOTH signs of the target coordinate", bad === 0, why);
+
+  const kinds = new Set(bySkill.lenToY.map((it) => it.debugLen.kind));
+  check(g, `lenToY ships both curve kinds it can draw (line, exp) — saw: ${[...kinds].join(", ")}`,
+    kinds.has("line") && kinds.has("exp"));
+}
+
+/* ---------- 16. Quest qG — bug 4 regression guard: chord endpoints never coincide ----------
+   steeperPair()'s overlap filter used a strict "<", so two chords could
+   share an endpoint x and land two dots and two labels on the exact same
+   point (measured: 65,5% of rounds did this). Fixed to "<=" (also rejects
+   touching ranges); checked here independently by literally comparing the
+   four exposed endpoint coordinates. */
+{
+  setLang("af");
+  const g = group("16. Quest qG — bug 4 regression guard: gradSteeper chords never share an endpoint");
+  const items = [];
+  let rounds = 0;
+  while (rounds < 300 && items.length < 60) {
+    buildRound("qG").filter((it) => it.skillId === "gradSteeper").forEach((it) => items.push(it));
+    rounds++;
+  }
+  check(g, `gradSteeper sampled at least 60 rounds (saw ${items.length})`, items.length >= 60);
+  let bad = 0, why = "";
+  items.forEach((it) => {
+    const pts = it.debugGrad.points;                 // [A, B, C, D]
+    const seen = new Set();
+    pts.forEach((p) => {
+      const k = `${p.x}|${p.y}`;
+      if (seen.has(k)) { bad++; why = `${it.skillId}: two chord endpoints coincide at (${p.x};${p.y})`; }
+      seen.add(k);
+    });
+  });
+  check(g, "no two chord endpoints coincide across the sampled rounds", bad === 0, why);
+}
+
+/* ---------- 17. Quest qG — bug 5 regression guard: m = ±1 can ship ----------
+   gradNumber's reciprocal decoy gradientStr(dx,dy) equals the correct
+   gradientStr(dy,dx) exactly when |dy| = |dx| (both reduce to ±1), so
+   m = +1 and m = −1 could never ship (exhaustively verified: 867/867 such
+   draws collapsed and were redrawn away). Sampled here independently: the
+   true gradient recomputed via avgGradient() from the exposed raw points,
+   never trusting the generator's own dy/dx labels. */
+{
+  setLang("af");
+  const g = group("17. Quest qG — bug 5 regression guard: gradNumber ships m = +1 and m = −1");
+  let sawPlus1 = false, sawMinus1 = false, draws = 0;
+  while (draws < 300 && !(sawPlus1 && sawMinus1)) {
+    buildRound("qG").filter((it) => it.skillId === "gradNumber").forEach((it) => {
+      draws++;
+      const [A, Bp] = it.debugGrad.points;
+      const m = avgGradient(A.y, Bp.y, A.x, Bp.x);
+      if (m === 1) sawPlus1 = true;
+      if (m === -1) sawMinus1 = true;
+    });
+  }
+  check(g, `gradNumber ships both m = 1 and m = −1 within ${draws} draws (cap 300)`, sawPlus1 && sawMinus1,
+    `m=1 seen: ${sawPlus1}, m=−1 seen: ${sawMinus1}`);
+}
+
 document.getElementById("sum").innerHTML = fail === 0
   ? `<span class="ok">ALL ${pass} CHECKS PASS</span>`
   : `<span class="no">${fail} FAILED</span> · ${pass} passed`;
