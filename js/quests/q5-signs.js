@@ -273,8 +273,8 @@ const SKILLS = {
       ],
       build: buildSignsFlow({ spec, cands, secs, curveIdx: [0, 1], names: ["f", "g"], tableSpec }),
       then: mc("product",
-        wantNeg ? B("Where do the marks DIFFER? Read those sections off.", "Waar VERSKIL die merke? Lees daardie afdelings af.")
-                : B("Where do the marks MATCH? Read those sections off.", "Waar STEM die merke ooreen? Lees daardie afdelings af."),
+        wantNeg ? B("Where do the signs DIFFER? Read those sections off.", "Waar VERSKIL die tekens? Lees daardie afdelings af.")
+                : B("Where do the signs MATCH? Read those sections off.", "Waar STEM die tekens ooreen? Lees daardie afdelings af."),
         correct, wrongs,
         { answerLabel: correct, solution: METHOD(true),
           hint: B("Compare f's marks with g's marks, section by section — same gives +, different gives −.",
