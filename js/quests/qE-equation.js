@@ -306,6 +306,12 @@ function tapExp() {
     const cv = randExp();
     const win = windowFor([cv]);
     if (!win) continue;
+    /* the stem must show the SAME given coefficient the fill panel shows —
+       a hardcoded "y = bˣ + q" stem contradicted the panel whenever a ≠ 1
+       (foreman review catch, 2026-08-14: stem said y = 2ˣ + q over a
+       y = −2ˣ + q round). Same rendering rules as renderExp(). */
+    const stemBase = isInt(cv.b) ? C(cv.b) : `(${C(cv.b)})`;
+    const stemCo = cv.a === 1 ? "" : cv.a === -1 ? "−" : C(cv.a) + "·";
     const spec = specFor([cv], { win, accent: ACC, ticks: "labels", labels: ["f"] });
     if (!spec) continue;
     const tapX = win.xmax - Math.max(0.6, (win.xmax - win.xmin) * 0.12);
@@ -321,7 +327,7 @@ function tapExp() {
     const built = iq({
       concept: "equation", kind: "formFill", accent: ACC,
       prompt: B("Tap the dashed asymptote to fill in q.", "Klik op die stippellyn-asimptoot om q in te vul."),
-      stem: EQ(`y = ${isInt(cv.b) ? C(cv.b) : `(${C(cv.b)})`}ˣ + q`),
+      stem: EQ(`y = ${stemCo}${stemBase}ˣ + q`),
       coach: B("Find the dashed horizontal line and tap it.", "Kry die stippel-horisontale lyn en klik daarop."),
       hints: [B("The asymptote's own y-value IS q — read it straight off, nothing to work out.",
                 "Die asimptoot se eie y-waarde IS q — lees dit reguit af, niks om uit te werk nie.")],
