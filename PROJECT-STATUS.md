@@ -1,13 +1,16 @@
-# Project status — updated 2026-08-13 (the fix day: full code review, 4 build sessions, her Afrikaans pass)
+# Project status — updated 2026-08-14 (batch 3 session 1 SHIPPED: Vind die vergelyking live, + a q5 crash fix)
 
 **Read this first.** The v2 spec is [RUN-PLAN.md](RUN-PLAN.md); Megan's own class notes
 are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTIONS-NOTES-DIGEST.md).
 
 ## Where we are
 
-- **11 quests LIVE on sw `gq-v19`**, map order: Ontdek · Ontdek 2 · Vinnige Oë ·
-  Op die grafiek · Lees die gebied · Plus en minus · Bo of onder · Lengtes ·
-  Gemiddelde gradiënt · Transformasies · Eksamenmodus.
+- **12 quests LIVE on sw `gq-v20`** (shipped 2026-08-14 night), map order: Ontdek ·
+  Ontdek 2 · Vinnige Oë · Op die grafiek · Lees die gebied · Plus en minus ·
+  Bo of onder · Lengtes · Gemiddelde gradiënt · Transformasies ·
+  **Vind die vergelyking (NEW, batch 3 session 1)** · Eksamenmodus.
+  Harness is 171 checks, deterministic, all passing. Megan has NOT yet
+  played the new quest — that gates session 2.
 - **2026-08-13 was a FIX DAY (Fable foreman, her /go).** A full code review of the
   batch-2 range found 13 confirmed bugs; four Sonnet build sessions fixed them one
   at a time, each foreman-reviewed and shipped separately so she could phone-test
@@ -281,21 +284,44 @@ are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTI
   question (happy/sad · corners · above/below), not a re-quiz of the numbers just
   filled. Both are the session's readings of the spec, hers to overturn.
 
+- 2026-08-14 (night, foreman ship on her "ship it"): **SHIPPED to live** —
+  qE + its review fix + the q5 crash fix, SW SHELL + CACHE gq-v19 → gq-v20,
+  push `4b15f23`. Live files verified byte-fresh (sw.js v20, qE serving with
+  formFill + stem fix, q5 with paintable()); full 12-card UI verified at 375 px
+  on local, which is byte-identical to what the server now serves.
+- 2026-08-14 (night, foreman review find during the ship pre-flight): **quest 5
+  could CRASH the moment the learner placed the last cut line** — a steep line
+  could put every section midpoint outside the y-window (measured 2,2% of
+  singleSign draws), so signPaint mounted zero paint boxes, its construction-time
+  onChange reported allMarked vacuously, and the callback hit `painter` in its
+  TDZ inside a setTimeout: Uncaught, invisible to the harness, frozen round.
+  Fix in three layers: q5 generators reject-and-redraw unpaintable rounds
+  (paintable(), signPaint's own predicate) — post-fix 0/500 degenerate;
+  buildSignsFlow pre-declares `painter`; new never-relax check in verify §23
+  (harness now 171). The stray console errors that exposed this dated back to
+  harness runs mounting exactly such rounds.
+
 ## Pending on Megan
 
-(nothing — the quest names were approved 2026-08-14, see Decisions)
+- 📱 5 min **[blocking]**: close the PWA fully and reopen it twice, then play
+  **Vind die vergelyking** (quest 11) once through — session 2 waits for this.
+- 💬 2 min **[blocking]**: two qE design calls to answer (details in Decisions,
+  2026-08-14 "flagged for her"): keep the form-choice round parabola-only? ·
+  keep the tap-round's follow-up as a sign-reading question?
 
 ## Next up
 
-- **Batch 3 build day IN PROGRESS (2026-08-14, foreman = Fable, her ruling this
-  day: the foreman dispatches the agents itself, reviews, and reports back to
-  her before each next session).** Session 1 (Vind die vergelyking) is BUILT,
-  reviewed and committed locally — awaiting her phone-test + go before session 2
-  (Aard van wortels, y = k only). Remaining order per RUN-PLAN-BATCH3.md:
-  Aard van wortels → Ongelykhede 2 → Soek die fout → Eksamenmodus rebuild
-  (which removes the sheetHypLine p = 0 exemption from the §22 scan). Nothing
-  pushed yet — the foreman ship (SW SHELL + CACHE bump gq-v19 → next, push,
-  live check) comes at the end, or earlier if she wants qE live sooner.
+- **NEXT CATCHUP MUST OPEN WITH (her explicit ask, 2026-08-14):** remind her to
+  play Vind die vergelyking on her phone first, and re-flag the two qE design
+  questions — BEFORE session 2 dispatches.
+- **Batch 3 continues (foreman = Fable; her ruling this batch: the foreman
+  dispatches the build agents itself, reviews, reports back between sessions).**
+  Session 1 SHIPPED. Remaining order per RUN-PLAN-BATCH3.md: session 2
+  Aard van wortels (y = k only, kickoff b confirmed) → Ongelykhede 2 →
+  Soek die fout → Eksamenmodus rebuild (which removes the sheetHypLine p = 0
+  exemption from the §22 scan). One session at a time, her phone-test between.
+- After session 5: regenerate AFRIKAANS-TEKS.md (`python tools/extract_af.py`)
+  → her wording pass → correction session.
 - Small tidy-ups, any session: q5's retry-by-recursion style could become
   bounded loops like qL/qG · the faint flag doesn't dim a faint curve's
   asymptotes/labels (cosmetic, needs her call). (randParabola moved into
@@ -311,7 +337,7 @@ python -m http.server 5207 --directory "C:\Users\megzi\Desktop\Claude Code Proje
 
 Then <http://localhost:5207/> (`?local=1` forces local save mode). Preview entry
 `graph-quest` (port 5207) in the nested `C:\Users\megzi\.claude\.claude\launch.json`.
-verify.html is the harness — all 162 must pass, same total three runs in a row,
+verify.html is the harness — all 171 must pass, same total three runs in a row,
 before any commit.
 
 ⚠ Cache discipline (it lied to THREE reviews this build): before trusting verify.html
@@ -341,13 +367,15 @@ js/
   quests/_shared.js (mc dedupes options) · _graphs.js (windowFor: square-grid, returns
                     null → regenerate; generators self-constrain) · _intervals.js
   quests/q1-discover.js · q1b-discover2.js · qB-recognize.js · q2-point.js ·
-         q3-region.js · q5-signs.js (board method: cutSockets → signPaint) ·
-         q6-compare.js · qL-lengths.js · qG-gradient.js · qT-transform.js ·
+         q3-region.js · q5-signs.js (board method: cutSockets → signPaint;
+         paintable() rejects unpaintable draws) · q6-compare.js ·
+         qL-lengths.js · qG-gradient.js · qT-transform.js ·
+         qE-equation.js (formFill: tap the marked feature, value pours in) ·
          q7-exam.js      ← map order; screens.js exports questUnlocked()
 supabase/schema.sql   written, not run
-verify.html           the harness: 162 checks, deterministic count — §4b (shared
+verify.html           the harness: 171 checks, deterministic count — §4b (shared
                       mostlyInFrame) + §22 real-spec off-axis + banned words incl.
-                      titles/blurbs/intro caps + groups 14–23's fix-day guards
-                      are never-relax rules
-sw.js                 network-first for code; SHELL precache; CACHE = gq-v19
+                      titles/blurbs/intro caps + groups 14–23's fix-day guards +
+                      §23's paint-box guard + §24 (qE) are never-relax rules
+sw.js                 network-first for code; SHELL precache; CACHE = gq-v20
 ```
