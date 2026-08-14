@@ -2126,6 +2126,30 @@ for (const lang of ["af", "en"]) {
     return out;
   }
 
+  /* 23-paint. NEVER RELAX — every painted curve must own at least one
+     paint box. A curve with zero in-frame section midpoints gets zero
+     slots; if every curve is empty, signPaint's construction-time
+     onChange reports allMarked vacuously and the paint phase used to
+     crash in the TDZ before rendering (2,2% of singleSign draws, always
+     a steep line — foreman review find, 2026-08-14; generators now
+     reject those draws via paintable()). */
+  {
+    let bad = 0, why = "", curvesChecked = 0;
+    for (const id of SKILL_IDS) {
+      for (const it of gathered[id]) {
+        const dc = it.debugCurves;
+        const curvesArr = curvesOf(id, dc);
+        idxOf(id).forEach((ci) => {
+          curvesChecked++;
+          if (!paintNodes([ci], dc.secs, curvesArr, dc.win).length) {
+            bad++; why = `${id}: curve ${ci} has ZERO paint boxes (every section midpoint off-frame)`;
+          }
+        });
+      }
+    }
+    check(g, `every painted curve owns at least one paint box — no round the paint phase cannot mount (${curvesChecked} curves checked)`, bad === 0, why);
+  }
+
   /* mount the round, place every REQUIRED cut-line socket (skip decoys),
      wait for the paint phase to mount */
   async function mountAndCut(it) {

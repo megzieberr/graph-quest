@@ -39,6 +39,25 @@ function usableSections(secs, curves) {
   return secs.map((s) => ({ ...s, usable: curves.every((cv) => Number.isFinite(makeFn(cv)(s.mid))) }));
 }
 
+/* signPaint only mounts a paint box where a curve's section-midpoint lies
+   INSIDE the window (same predicate as its own slot loop). A curve whose
+   every midpoint sits off-frame gets zero boxes; if EVERY curve ends up
+   empty, allMarked() is vacuously true at construction and the paint phase
+   crashes before it renders (painter is still in its TDZ — measured at
+   2,2% of singleSign draws, always a steep line whose two midpoints both
+   clear the y-window; foreman review find, 2026-08-14). The generator must
+   never deal a round the paint phase cannot mount, so both round builders
+   reject-and-redraw on this predicate. */
+function paintable(curves, secs, win) {
+  return curves.every((cv) => {
+    const f = makeFn(cv);
+    return secs.some((s) => {
+      const y = f(s.mid);
+      return Number.isFinite(y) && y >= win.ymin && y <= win.ymax;
+    });
+  });
+}
+
 /* socket candidates: the real boundaries plus up to two decoys that
    must NOT get a line (a turning point; the y-axis) */
 function cutCandidates(curvesArr, win) {
@@ -87,10 +106,16 @@ function buildSignsFlow({ spec, cands, secs, curveIdx, names, tableSpec }) {
               truth[ci] = {};
               secs.forEach((s, si) => { truth[ci][si] = signAt(tableSpec.curves[ci], s.mid); });
             });
-            const painter = signPaint(host, {
+            /* signPaint fires onChange once, synchronously, while this const
+               is still being assigned — a round with zero paint boxes reports
+               allMarked=true on that first call and lands in the TDZ. The
+               paintable() generator guard makes that round impossible; this
+               keeps a construction-time callback from ever crashing anyway. */
+            let painter;
+            painter = signPaint(host, {
               spec: tableSpec, sections: secs, curves: curveIdx, names,
               onChange: (state, allMarked) => {
-                if (allMarked) {
+                if (allMarked && painter) {
                   painter.reveal(truth);
                   nudge(B("Marked! Now read the sections off your own marks.",
                           "Gemerk! Lees nou die afdelings van jou eie merke af."));
@@ -157,6 +182,7 @@ const SKILLS = {
     const cands = cutCandidates([cv], win);
     const tableSpec = { ...spec, vlines: cuts.map((c) => ({ x: c.x })) };
     const secs = usableSections(sections(cuts, win.xmin, win.xmax), [cv]);
+    if (!paintable([cv], secs, win)) return SKILLS.singleSign();
     const wantPos = pick([true, false]);
     const lang = getLang();
 
@@ -230,6 +256,7 @@ const SKILLS = {
     const cands = cutCandidates([a, b], win);
     const tableSpec = { ...spec, vlines: cuts.map((c) => ({ x: c.x })) };
     const secs = usableSections(sections(cuts, win.xmin, win.xmax), [a, b]);
+    if (!paintable([a, b], secs, win)) return SKILLS.productSign();
     const wantNeg = pick([true, true, false]);
     const lang = getLang();
 
