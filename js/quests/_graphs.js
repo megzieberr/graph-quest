@@ -51,7 +51,16 @@ export function randParabola(opts = {}) {
      (in-frame fraction ≈ 1,4/√(|a|·spanY), so 12 keeps it ≥ 0,40) */
   const spanY = Math.max(tp.y, paraYInt(cv), 0) - Math.min(tp.y, paraYInt(cv), 0);
   if (Math.abs(tp.y) > 8 || Math.abs(a) * spanY > 12) return randParabola(opts);
-  if (!windowFor([cv])) return randParabola(opts);
+  const win = windowFor([cv]);
+  if (!win) return randParabola(opts);
+  /* batch-3 session 1 tidy-up: the spanY cap above catches the tall-AND-narrow
+     shape on average, but a draw can still land just under §4b's ⅓-in-frame
+     line (measured 33%, just short of the 34% floor) — the generator itself
+     must never hand out a draw its own window can't show honestly. Every
+     caller already carries a local reject-and-redraw as belt-and-braces
+     (q5, qT, …); this closes the gap at the source instead of leaving it to
+     each caller to catch. */
+  if (!mostlyInFrame(cv, win)) return randParabola(opts);
   return cv;
 }
 

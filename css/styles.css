@@ -204,6 +204,18 @@ h2{font-size:20px} h3{font-size:16px}
 }
 .iv-taphint{fill:var(--panel-solid);stroke:var(--iv-hand);stroke-width:1.6}
 .iv-taphint.on{fill:var(--good);stroke:var(--good)}
+.iv-taphint.iv-bounce{animation:iv-bounce .38s ease-out}
+
+/* formFill (batch 3, session 1 — qE): the equation-with-blanks panel under
+   the graph. .iv-slot wraps whatever is still unresolved (a placeholder
+   letter, or a whole bracket group that fills atomically on one tap). */
+.iv-formfill{margin-top:10px}
+.iv-form-eq{font-family:var(--font-num);font-size:16px;text-align:center;color:var(--ink);
+  border:1px solid var(--brd);border-radius:var(--r-md);padding:10px 12px;background:rgba(0,0,0,.25)}
+.iv-slot{display:inline-block;padding:0 .1em;border-radius:3px}
+.iv-slot.glow{color:var(--iv-hand);animation:iv-slotglow 1.1s ease-in-out infinite}
+.iv-slot.filled{color:var(--good)}
+@keyframes iv-slotglow{0%,100%{opacity:1}50%{opacity:.4}}
 
 /* the discovery slider (session 2) */
 .vs{display:flex;flex-direction:column;gap:8px}

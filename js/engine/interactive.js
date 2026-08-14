@@ -1048,6 +1048,93 @@ export function chordReveal(host, opts) {
 }
 
 /* ============================================================
+   12. FORM FILL — tap the marked feature, its value pours into
+       the glowing slot   ★ batch 3, session 1 (qE)
+   ------------------------------------------------------------
+   The sketch shows tappable dots at marked features (a turning
+   point, an x-intercept, an asymptote cross…), unlabelled until
+   tapped — reading, never computing. A slot form (an equation with
+   blanks) sits under the graph; one or more slots glow together —
+   a compound feature (the TP, the asymptote cross) fills BOTH its
+   slots from one tap; two independent features (each x-intercept)
+   fill one slot each, in order, and the next slot's target only
+   becomes "correct" once the one before it is filled.
+
+   Tapping any OTHER marked dot (a decoy, or a later feature out of
+   order) is a gentle bounce — no penalty, nothing is lost.
+
+   opts: {
+     spec,                  the sketch (no points pre-marked — the
+                             taps below draw the only markers)
+     taps: [{ id, x, y, values:{slotId:val,…} }],
+                             every tappable feature, INCLUDING decoys
+                             (decoys carry values:{} — never used)
+     slots: [{ id, tapId }],   the ORDER slots fill in; consecutive
+                             slots sharing one tapId glow and fill
+                             together, from a single tap
+     renderForm(filled, glowIds) → html
+                             filled: {slotId:value,…} so far;
+                             glowIds: the ids of the slot(s) currently
+                             live (empty once every slot is filled)
+     onDone(filled)
+   }
+   ============================================================ */
+export function formFill(host, opts) {
+  const { spec, taps, slots, renderForm, onDone } = opts;
+  const { svg, g } = mount(host, spec);
+  const filled = {};
+  let cursor = 0;
+
+  const panel = document.createElement("div");
+  panel.className = "iv-formfill";
+  host.appendChild(panel);
+
+  function activeGroup() {
+    if (cursor >= slots.length) return [];
+    const want = slots[cursor].tapId;
+    const grp = [];
+    for (let i = cursor; i < slots.length && slots[i].tapId === want; i++) grp.push(slots[i]);
+    return grp;
+  }
+  function paint() {
+    panel.innerHTML = renderForm({ ...filled }, activeGroup().map((s) => s.id));
+  }
+  paint();
+
+  function bounce(dot) {
+    dot.classList.remove("iv-bounce");
+    dot.getBoundingClientRect();          // force reflow — restarts the CSS animation, no rAF needed
+    dot.classList.add("iv-bounce");
+  }
+
+  taps.forEach((t) => {
+    const px = N(g.X(t.x)), py = N(g.Y(t.y));
+    const ring = svgEl("circle", { class: "iv-handle-ring", r: 13, cx: px, cy: py });
+    const dot = svgEl("circle", { class: "iv-taphint", r: 7, cx: px, cy: py });
+    const hit = svgEl("circle", { class: "iv-hit", r: 20, cx: px, cy: py });
+    hit.style.cursor = "pointer";
+    hit.addEventListener("pointerdown", (ev) => {
+      ev.preventDefault(); ev.stopPropagation();
+      const grp = activeGroup();
+      if (!grp.length) return;                          // already fully filled
+      if (grp[0].tapId !== t.id) { buzz(6); bounce(dot); return; }
+      grp.forEach((s) => { filled[s.id] = t.values[s.id]; });
+      dot.setAttribute("class", "iv-taphint on");
+      cursor += grp.length;
+      buzz(16);
+      paint();
+      if (cursor >= slots.length && onDone) onDone({ ...filled });
+    });
+    svg.append(ring, dot, hit);
+  });
+
+  return {
+    values: () => ({ ...filled }),
+    isDone: () => cursor >= slots.length,
+  };
+}
+
+/* ============================================================
    A plain (non-interactive) graph, for the MC rounds
    ============================================================ */
 export function staticGraph(host, spec) { return mount(host, spec); }

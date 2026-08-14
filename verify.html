@@ -1101,11 +1101,13 @@ for (const lang of ["af", "en"]) {
   const ids = QUESTS.map((q) => q.id);
   /* was 8 through batch 1; batch 2 session 1 (2026-08-12) added two — qL
      (Lengths) and qG (Average gradient) — between q6 and q7; batch 2 session 2
-     (2026-08-12) added a third, qT (Transformations), right after qG. This
-     literal is a roster-size regression guard, updated deliberately here, not
-     relaxed: it still fails the moment a quest silently vanishes or duplicates. */
-  check(g, "QUESTS holds exactly 11 quests and q4 no longer exists as a separate quest",
-    ids.length === 11 && !ids.includes("q4"), `ids: ${ids.join(", ")}`);
+     (2026-08-12) added a third, qT (Transformations), right after qG. Batch 3
+     session 1 (2026-08-14) added a fourth, qE (Vind die vergelyking), right
+     after qT. This literal is a roster-size regression guard, updated
+     deliberately here, not relaxed: it still fails the moment a quest
+     silently vanishes or duplicates. */
+  check(g, "QUESTS holds exactly 12 quests and q4 no longer exists as a separate quest",
+    ids.length === 12 && !ids.includes("q4"), `ids: ${ids.join(", ")}`);
 }
 
 /* ---------- 9. Round D (q6) — pre-drawn cuts, stamp, sweep, scaffold-on-error (session 5) ----------
@@ -1222,8 +1224,8 @@ for (const lang of ["af", "en"]) {
     });
   }
   const ids = QUESTS.map((q) => q.id);
-  check(g, "q6's retired v1 skills (topSweep/whichCuts) are gone and the new compareSweep round is in, QUESTS holds 11 (batch 2 added qL/qG/qT)",
-    !sawOld && sawNew && ids.length === 11 && ids.includes("q6"), `ids: ${ids.join(", ")}`);
+  check(g, "q6's retired v1 skills (topSweep/whichCuts) are gone and the new compareSweep round is in, QUESTS holds 12 (batch 2 added qL/qG/qT, batch 3 added qE)",
+    !sawOld && sawNew && ids.length === 12 && ids.includes("q6"), `ids: ${ids.join(", ")}`);
 
   /* 9f. a two-part answer must show real space around "of"/"or" INSIDE an
      option button. .opt is display:flex, and flex trims the edge spaces off
@@ -2322,6 +2324,100 @@ for (const lang of ["af", "en"]) {
     }
   }
   check(g, "every quest 5 round reports kind:\"signPaint\" (never the retired \"signTable\"), and no <table class=\"sign-table\"> renders from the new flow", bad === 0, why);
+
+  host.remove();
+}
+
+/* ---------- 24. Quest qE (Vind die vergelyking) — batch 3, session 1 ---------- */
+{
+  setLang("af");
+  const g = group("24. Quest qE (Vind die vergelyking) — batch 3, session 1");
+  const host = document.createElement("div");
+  host.style.position = "absolute"; host.style.left = "-9999px"; host.style.width = "360px";
+  document.body.appendChild(host);
+
+  const REPS = 30;
+  const rounds = [];
+  for (let i = 0; i < REPS; i++) rounds.push(...buildRound("qE"));
+  check(g, `qE builds rounds across ${REPS} reps`, rounds.length > 0, `saw ${rounds.length}`);
+
+  const r1 = rounds.filter((it) => it.skillId === "chooseForm");
+  const r2 = rounds.filter((it) => it.skillId === "tapValues");
+  const r3 = rounds.filter((it) => it.skillId === "whichEquation");
+  check(g, `all three round types appear across ${REPS} reps (R1 ${r1.length}, R2 ${r2.length}, R3 ${r3.length})`,
+    r1.length > 0 && r2.length > 0 && r3.length > 0);
+
+  /* R2: every filled slot value equals a FRESH funclib recompute for the
+     drawn curve — never the round's own stored value trusted blindly */
+  let bad = 0, why = "", slotsChecked = 0;
+  r2.forEach((it) => {
+    const dc = it.debugFormFill;
+    if (!dc) { bad++; why = "an R2 round exposes no debugFormFill"; return; }
+    let want = {};
+    if (dc.mode === "hakie") { const tp = paraTP(dc.cv); want = { p: tp.x, q: tp.y }; }
+    else if (dc.mode === "intercept") { const [x1, x2] = paraRoots(dc.cv); want = { x1, x2 }; }
+    else if (dc.mode === "hyperbola") want = { p: dc.cv.p, q: dc.cv.q };
+    else if (dc.mode === "exp") want = { q: dc.cv.q };
+    dc.slots.forEach((s) => {
+      slotsChecked++;
+      if (Math.abs(s.value - want[s.id]) > 1e-9) { bad++; why = `${dc.mode}: slot ${s.id} exposed ${s.value}, fresh recompute ${want[s.id]}`; }
+    });
+  });
+  check(g, `every R2 slot value equals a fresh funclib recompute for its drawn curve (${slotsChecked} slots checked)`, bad === 0 && slotsChecked > 0, why);
+
+  /* R3: the correct option re-renders to the drawn curve everywhere sampled;
+     no decoy does anywhere sampled — render-and-compare BY VALUE, the qT
+     pattern, never a text/label comparison */
+  bad = 0; why = ""; let r3Checked = 0, decoysChecked = 0;
+  r3.forEach((it) => {
+    const dc = it.debugEquation;
+    if (!dc) { bad++; why = "an R3 round exposes no debugEquation"; return; }
+    r3Checked++;
+    const { xmin, xmax } = dc.win;
+    const sameEverywhere = (cvA, cvB) => {
+      const fA = mf(cvA), fB = mf(cvB);
+      for (let i = 0; i <= 40; i++) {
+        const x = xmin + (i / 40) * (xmax - xmin);
+        if (cvA.kind === "hyperbola" && Math.abs(x - cvA.p) < 0.3) continue;
+        const ya = fA(x), yb = fB(x);
+        if (!Number.isFinite(ya) || !Number.isFinite(yb)) continue;
+        if (Math.abs(ya - yb) > 1e-6) return false;
+      }
+      return true;
+    };
+    if (!sameEverywhere(dc.drawnCv, dc.correctCv)) { bad++; why = `${dc.family}: the CORRECT option does not re-render to the drawn curve`; }
+    dc.decoyCvs.forEach((decoy, di) => {
+      decoysChecked++;
+      if (sameEverywhere(dc.drawnCv, decoy)) { bad++; why = `${dc.family}: decoy ${di} matches the drawn curve everywhere sampled — a real value collision`; }
+    });
+  });
+  check(g, `R3's correct equation re-renders to the drawn curve, and no decoy does (${r3Checked} rounds, ${decoysChecked} decoys, render-and-compare by value)`, bad === 0, why);
+
+  /* formFill mounts every tap target and stays locked until every slot is
+     filled: tapping only decoys never unlocks it; tapping every required
+     feature, in slot order, always does */
+  bad = 0; why = ""; let mountedChecked = 0;
+  for (const it of r2.slice(0, 12)) {
+    const dc = it.debugFormFill;
+    const box = document.createElement("div");
+    host.appendChild(box);
+    let doneCalled = false;
+    it.build(box, () => { doneCalled = true; }, () => {});
+    const hits = [...box.querySelectorAll("circle.iv-hit")];
+    if (hits.length !== dc.tapIds.length) { bad++; why = `${dc.mode}: ${hits.length} tap targets mounted, wanted ${dc.tapIds.length}`; continue; }
+    mountedChecked++;
+    const requiredTapIds = new Set(dc.slots.map((s) => s.tapId));
+    dc.tapIds.forEach((id, i) => { if (!requiredTapIds.has(id)) hits[i].dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, cancelable: true })); });
+    if (doneCalled) { bad++; why = `${dc.mode}: tapping only the decoy feature(s) unlocked the form`; continue; }
+    const orderedTapIds = [];
+    dc.slots.forEach((s) => { if (!orderedTapIds.includes(s.tapId)) orderedTapIds.push(s.tapId); });
+    orderedTapIds.forEach((tid) => {
+      const idx = dc.tapIds.indexOf(tid);
+      hits[idx].dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, cancelable: true }));
+    });
+    if (!doneCalled) { bad++; why = `${dc.mode}: tapping every required feature, in order, never unlocked the form`; }
+  }
+  check(g, `formFill mounts every tap target and stays locked until every slot is filled (${mountedChecked} rounds mounted)`, bad === 0 && mountedChecked > 0, why);
 
   host.remove();
 }

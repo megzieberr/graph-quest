@@ -43,6 +43,11 @@ import { questGradient } from "./qG-gradient.js";
    before it, so it stays last. Working name "Transformasies", hers to
    rename: see, then name, the move that turned f into its image. */
 import { questTransform } from "./qT-transform.js";
+/* batch 3, session 1: "Vind die vergelyking" slots in AFTER questTransform and
+   BEFORE quest7 (Eksamenmodus) — exam mode samples everything that exists
+   before it, so it stays last. Working name "Vind die vergelyking", hers to
+   rename: which form fits the sketch, then tap the marked feature to fill it. */
+import { questEquation } from "./qE-equation.js";
 import { quest7, TECHOK, resetExam } from "./q7-exam.js";
 import { CONTENT } from "./_graphs.js";
 import { pick, shuffled } from "../ui.js";
@@ -53,7 +58,7 @@ import { pick, shuffled } from "../ui.js";
    The map unlocks strictly in this array's order, so this array IS the order. */
 export const QUESTS = [
   questDiscover, questDiscover2, questRecognize, quest2,
-  quest3, quest5, quest6, questLengths, questGradient, questTransform, quest7,
+  quest3, quest5, quest6, questLengths, questGradient, questTransform, questEquation, quest7,
 ];
 
 /* flip semicircle content on/off everywhere */
