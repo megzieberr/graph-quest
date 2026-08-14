@@ -261,24 +261,41 @@ are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTI
   y = k only, fault-quest standalone); she may flip any before its session
   dispatches. Build day not yet scheduled.
 
+- 2026-08-14 (batch 3, session 1 — Sonnet, foreman-reviewed; her "run it", kickoff
+  calls a/b/c at defaults): **Vind die vergelyking** built and committed LOCALLY
+  (`8b2a73a` + review fix `be3b5cb`, NOT pushed — live is still 11 quests on gq-v19).
+  New formFill() mechanic in interactive.js; qE slots in after Transformasies;
+  harness now 170 checks (§24: 118 slot values recomputed vs funclib, 62-round
+  render-and-compare on R3, formFill lock). randParabola() now rejects its own
+  out-of-frame draws (the tidy-up). Session's own play-testing caught two real
+  bugs pre-commit (NaN in the hakie fill — eqTPStr needs {a,p,q}, randParabola
+  returns {a,b,c}; B_INTRO said "Eleven"). Foreman review played all three round
+  types at 375 px: decoy tap bounces without filling, follow-up mc's and
+  misconception nudges fire, map + intro clean. Review fix: the R2 exp stem
+  hardcoded "y = bˣ + q" and contradicted the fill panel whenever a ≠ 1 — stem
+  now built with renderExp()'s rules, proven for a = 1 / −1 / 2. 170/170 three
+  runs before AND after the fix, full cache discipline each time.
+- 2026-08-14 (session 1, flagged for her): R1 "Kies die vorm" is parabola-only —
+  a hyperbola/exp each have ONE canonical form, so there is no real form-choice
+  to quiz (the design's wording was ambiguous). R2's follow-up asks a sign-reading
+  question (happy/sad · corners · above/below), not a re-quiz of the numbers just
+  filled. Both are the session's readings of the spec, hers to overturn.
+
 ## Pending on Megan
 
 (nothing — the quest names were approved 2026-08-14, see Decisions)
 
 ## Next up
 
-- **Batch 3 build day, whenever Megan schedules it** — foreman pattern, she
-  dispatches each session with /go. Everything a session needs is in
-  RUN-PLAN-BATCH3.md; the spec is GQ-BATCH3-DESIGN.md. Session order: Vind die
-  vergelyking (includes the randParabola generator tidy-up) → Aard van wortels →
-  Ongelykhede 2 → Soek die fout → Eksamenmodus rebuild (which removes the
-  sheetHypLine p = 0 exemption from the §22 scan). Ship one at a time,
-  phone-test between.
-- **Uncommitted work from 2026-08-14 sitting in the working tree**: the
-  regenerated AFRIKAANS-TEKS.md, tools/extract_af.py, the two batch-3 docs, the
-  "links of regs" fix in q1-discover.js, and this file. Run verify (three-run
-  bar, mind the cache discipline) before committing; the string fix needs no SW
-  bump on its own but WILL need one if it ships alone.
+- **Batch 3 build day IN PROGRESS (2026-08-14, foreman = Fable, her ruling this
+  day: the foreman dispatches the agents itself, reviews, and reports back to
+  her before each next session).** Session 1 (Vind die vergelyking) is BUILT,
+  reviewed and committed locally — awaiting her phone-test + go before session 2
+  (Aard van wortels, y = k only). Remaining order per RUN-PLAN-BATCH3.md:
+  Aard van wortels → Ongelykhede 2 → Soek die fout → Eksamenmodus rebuild
+  (which removes the sheetHypLine p = 0 exemption from the §22 scan). Nothing
+  pushed yet — the foreman ship (SW SHELL + CACHE bump gq-v19 → next, push,
+  live check) comes at the end, or earlier if she wants qE live sooner.
 - Small tidy-ups, any session: q5's retry-by-recursion style could become
   bounded loops like qL/qG · the faint flag doesn't dim a faint curve's
   asymptotes/labels (cosmetic, needs her call). (randParabola moved into
