@@ -376,7 +376,7 @@ const BEATS = {
                   "Albei skuif die grafiek op en af — maar elkeen wys 'n ander punt.") },
         { label: B("q slides up and down; c slides left and right",
                    "q skuif op en af; c skuif links en regs"),
-          misc: B("Neither panel ever moved sideways.", "Nie een paneel het ooit links or regs beweeg nie.") },
+          misc: B("Neither panel ever moved sideways.", "Nie een paneel het ooit links of regs beweeg nie.") },
       ], {
         wide: true, answerLabel: correct,
         solution: [
