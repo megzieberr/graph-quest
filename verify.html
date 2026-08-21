@@ -3501,7 +3501,7 @@ for (const lang of ["af", "en"]) {
       ["endpoint-single (R3)", r3single, false],
       ["endpoint-quotient (R3)", r3quot, true],
     ];
-    let bad = 0, why = "", negTested = 0, pass1Tested = 0, pass2Tested = 0, marksSeen = 0;
+    let bad = 0, why = "", negTested = 0, pass1Tested = 0, pass2Tested = 0, marksSeen = 0, postCompleteTested = 0;
 
     function rowsFor(it) {
       const dc = dcOf(it);
@@ -3546,6 +3546,44 @@ for (const lang of ["af", "en"]) {
       return seenTones;
     };
 
+    /* her ruling on the compare block (reteach file, "after the redesign
+       shipped"): once onComplete has fired, the line stays draggable BOTH
+       ways and the chip keeps showing every row's sign, live, at the
+       dragged x — the learner compares while the answer options are on
+       screen. Drives one further synthetic drag to each of the first two
+       sections' own midpoints (guaranteed adjacent — they share the
+       round's very first cut, so this samples one x on each side of a
+       real boundary), reads the LANDED x back off the scan line's own
+       rendered position (never an assumed fraction), and checks the
+       chip's compare block against an independent sign() recompute for
+       EVERY row. Then drives one more full sweep (a strong redrive) and
+       confirms onComplete still has not fired a second time — the
+       double-fire negative test. */
+    const postCompleteChecks = (box, dc, rows, svg, r, label) => {
+      if (dc.secs.length < 2) return;   // need two adjacent sections to sample both sides of a cut
+      const g2 = computeFunction(box._graphSpec);
+      postCompleteTested++;
+      [dc.secs[0].mid, dc.secs[1].mid].forEach((targetX) => {
+        const fracX = (targetX - dc.win.xmin) / (dc.win.xmax - dc.win.xmin);
+        fire(svg, r, "pointerdown", fracX);
+        fire(svg, r, "pointerup", fracX);
+        const scanEl = box.querySelector(".iv-scan");
+        const landedX = g2.xAt(Number(scanEl.getAttribute("x1")));
+        const chipEl = box.querySelector(".iv-trailchip");
+        if (!chipEl) { bad++; why = `${label}: no .iv-trailchip present after completion`; return; }
+        const vals = [...chipEl.querySelectorAll(".tc-v")].map((el) => el.textContent);
+        if (vals.length !== rows.length) {
+          bad++; why = `${label}: post-completion chip shows ${vals.length} row(s), wanted all ${rows.length} (the compare block)`;
+          return;
+        }
+        rows.forEach((rw, ri) => {
+          const s = rw.sign(landedX);
+          const want = s > 0 ? "+" : s < 0 ? "−" : "·";
+          if (vals[ri] !== want) { bad++; why = `${label}: post-completion chip row ${ri} at x=${landedX.toFixed(2)} shows "${vals[ri]}", independent recompute says "${want}"`; }
+        });
+      });
+    };
+
     for (const [label, pool, twoPass] of byType) {
       for (const it of pool.slice(0, SAMPLE)) {
         const dc = dcOf(it);
@@ -3553,13 +3591,13 @@ for (const lang of ["af", "en"]) {
         const box = document.createElement("div");
         box._graphSpec = it.graph;
         host.appendChild(box);
-        let completed = false, passesStarted = [];
+        let completed = false, completeCount = 0, passesStarted = [];
         let ctl, mountFailed = false;
         try {
           ctl = trailSweep(box, {
             spec: it.graph, sections: dc.secs, rows,
             onPassStart: (i) => passesStarted.push(i),
-            onComplete: () => { completed = true; },
+            onComplete: () => { completed = true; completeCount++; },
           });
         } catch (e) { bad++; why = `${label}: trailSweep threw on mount: ${e.message}`; mountFailed = true; }
         if (mountFailed) continue;
@@ -3576,6 +3614,9 @@ for (const lang of ["af", "en"]) {
           pass1Tested++;
           const seen = checkMarks(box, dc, rows, label);
           if (!seen.has(0)) { bad++; why = `${label}: the single pass deposited zero row-0 marks`; }
+          postCompleteChecks(box, dc, rows, svg, r, label);
+          sweepOnce(svg, r);   // one more full redrive — must never re-fire onComplete
+          if (completeCount !== 1) { bad++; why = `${label}: onComplete fired ${completeCount} times across the driven session, wanted exactly 1`; }
         } else {
           if (completed) { bad++; why = `${label}: the round reported complete after PASS 1 alone — two rows must take two sweeps`; continue; }
           pass1Tested++;
@@ -3591,6 +3632,9 @@ for (const lang of ["af", "en"]) {
           if (passesStarted.length !== 2 || passesStarted[0] !== 0 || passesStarted[1] !== 1) {
             bad++; why = `${label}: onPassStart fired ${JSON.stringify(passesStarted)}, wanted [0,1] exactly once each`;
           }
+          postCompleteChecks(box, dc, rows, svg, r, label);
+          sweepOnce(svg, r);   // one more full redrive — must never re-fire onComplete
+          if (completeCount !== 1) { bad++; why = `${label}: onComplete fired ${completeCount} times across the driven session, wanted exactly 1`; }
         }
       }
     }
@@ -3599,6 +3643,10 @@ for (const lang of ["af", "en"]) {
       bad === 0 && pass1Tested > 0 && pass2Tested > 0, why);
     check(g, `every deposited mark (both sides of every cut, either pass) matches an independent recompute at its own rendered x (${marksSeen} marks checked)`,
       bad === 0 && marksSeen > 0, why);
+    check(g, `her restored compare-block ruling: after completion the line still drags and the chip shows EVERY row's correct sign, sampled on each side of a cut (${postCompleteTested} rounds driven) — NEVER RELAX`,
+      bad === 0 && postCompleteTested > 0, why);
+    check(g, `onComplete fires exactly once across the whole driven session, even after a further full redrive post-completion — negative-tested for the double-fire (${postCompleteTested} rounds) — NEVER RELAX`,
+      bad === 0 && postCompleteTested > 0, why);
   }
 
   /* 28m. §25a's option-layout discipline holds for qI's own option

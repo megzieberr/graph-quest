@@ -121,3 +121,21 @@ Extension for the full redesign (foreman's mapping, flag for her eye):
 R2/R3 quotient rounds do the same two-pass dance — first sweep f's row,
 second sweep g's row; R3's single-curve rounds are one sweep (only one
 row exists). The full qI redesign is authorized on this pattern.
+
+## Her ruling on the compare block (same night, after the redesign shipped)
+
+The redesign's row-pure chip dropped something she LIKED from the
+prototype: the little block showing BOTH signs at the line, and the
+freedom to keep dragging and compare. Her ask: "the user could still
+drag the line and see in the little block how the signs differ. Can we
+bring that back?" So:
+
+- Sweep 1's chip shows only its own row (the second row doesn't exist yet).
+- From sweep 2 onward the chip shows BOTH rows' signs side by side,
+  colour-coded — the compare block.
+- **After the final sweep completes and the options unlock, the line STAYS
+  draggable (both ways) and the compare block stays live** — the learner
+  compares signs at any x while choosing their answer. Deposits are done;
+  the drag is pure looking.
+- Single-row rounds: the block shows the one row; the line still stays
+  draggable after completion.

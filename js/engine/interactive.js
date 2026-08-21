@@ -680,10 +680,22 @@ export function sweep(host, opts) {
    every stop is seen, the pass closes with a clear beat and the line
    resets to the start; pass 2 then sweeps again depositing rows[1]
    beneath/alongside rows[0]'s trail, which stays visible throughout.
-   The live chip shows only the ACTIVE pass's row. `rows` may hold a
-   single entry — a one-pass variant for a round with only one row
-   (R3's single-curve half) — in which case the "gate" is that one
-   pass and onComplete fires the moment it closes.
+   `rows` may hold a single entry — a one-pass variant for a round with
+   only one row (R3's single-curve half) — in which case the "gate" is
+   that one pass and onComplete fires the moment it closes.
+
+   THE COMPARE BLOCK (her ruling, same file, "after the redesign
+   shipped"): pass 1's chip shows only rows[0] — there is nothing yet
+   to compare. From pass 2 onward the chip shows every row deposited
+   so far PLUS the active row, side by side, colour-coded — rows[0..
+   activePass], joined with a separator. Once the FINAL pass closes and
+   onComplete fires, the line stays draggable BOTH ways and the chip
+   stays live showing every row's sign at the dragged x — deposits are
+   already complete (idempotent no-ops if re-touched) and onComplete
+   must never fire a second time, however far the line gets dragged
+   afterwards. A single-row round shows that one row throughout,
+   including after completion — the same "stay draggable, keep
+   comparing" promise, just with one row instead of two.
 
    Each row: { tone, name, sign(x)->±1/0/null,
                anchorCurve?:idx    — ride this curve's own y (a
@@ -778,19 +790,23 @@ export function trailSweep(host, opts) {
     trailG.append(t);
   }
 
-  /* the live sign AT the line, for the ACTIVE pass's row only —
-     recomputed fresh every move from the actual dragged x, never read
-     off a deposited mark (the "wrong section" trap: verify against
-     computed x, not a stored index) */
+  /* the live sign(s) AT the line — recomputed fresh every move from
+     the actual dragged x, never read off a deposited mark (the "wrong
+     section" trap: verify against computed x, not a stored index).
+     Pass 1 has only rows[0] to show; from pass 2 onward (and for the
+     rest of the round, once complete — passIdx never moves past the
+     last row) this is the COMPARE BLOCK: every row up to and including
+     the active pass, side by side, colour-coded, her restored ruling. */
   const chip = document.createElement("div");
   chip.className = "iv-trailchip";
   host.appendChild(chip);
-  function paintChip(ri, atX) {
-    const r = rows[ri];
-    const s = r.sign(atX);
-    chip.innerHTML =
-      `<span class="tc-k" style="color:${r.tone}">${r.name}</span>` +
-      `<span class="tc-v" style="color:${r.tone}">${s == null || s === 0 ? "·" : glyph(s)}</span>`;
+  function paintChip(atX) {
+    chip.innerHTML = rows.slice(0, passIdx + 1).map((r) => {
+      const s = r.sign(atX);
+      const v = s == null || s === 0 ? "·" : glyph(s);
+      return `<span class="tc-k" style="color:${r.tone}">${r.name}</span>` +
+        `<span class="tc-v" style="color:${r.tone}">${v}</span>`;
+    }).join(`<span class="tc-sep">·</span>`);
   }
 
   const scan = svgEl("line", { class: "iv-scan", x1: N(g.X(xmin)), y1: N(g.Y(ymin)), x2: N(g.X(xmin)), y2: N(g.Y(ymax)) });
@@ -822,7 +838,7 @@ export function trailSweep(host, opts) {
         seen = new Set();
         x = xmin;
         paintScan();
-        paintChip(passIdx, x);
+        paintChip(x);
         transitioning = false;
         if (onPassStart) onPassStart(passIdx, rows[passIdx]);
       }, 450);
@@ -832,23 +848,34 @@ export function trailSweep(host, opts) {
     }
   }
 
+  /* Her ruling on the compare block: once the final pass closes, the
+     line stays draggable BOTH ways and the chip stays live — the
+     learner compares signs freely while the answer options are on
+     screen. So `complete` no longer blocks moveTo itself; it only
+     turns off the seen/deposit bookkeeping (every stop is already
+     seen, every mark already down — nothing left to earn, and
+     finishPass() must never run a second time, which would re-fire
+     onComplete). Only `transitioning` — the 450ms beat between pass 1
+     and pass 2 — still blocks a move, so a drag can't land mid-reset. */
   function moveTo(nx) {
-    if (complete || transitioning) return;
+    if (transitioning) return;
     const prev = x;
     x = clamp(nx, xmin, xmax);
     paintScan();
-    /* every sample the drag actually crossed, not just the two
-       endpoints — a fast swipe between two pointermove events must
-       still deposit (and count as seen) every stop it passed over */
-    const lo = Math.min(prev, x), hi = Math.max(prev, x);
-    let fresh = false;
-    samples.forEach((sx, i) => {
-      if (sx < lo - 1e-9 || sx > hi + 1e-9) return;
-      if (!seen.has(i)) { seen.add(i); fresh = true; }
-      depositAt(passIdx, i);
-    });
-    if (fresh) buzz(6);
-    paintChip(passIdx, x);
+    if (!complete) {
+      /* every sample the drag actually crossed, not just the two
+         endpoints — a fast swipe between two pointermove events must
+         still deposit (and count as seen) every stop it passed over */
+      const lo = Math.min(prev, x), hi = Math.max(prev, x);
+      let fresh = false;
+      samples.forEach((sx, i) => {
+        if (sx < lo - 1e-9 || sx > hi + 1e-9) return;
+        if (!seen.has(i)) { seen.add(i); fresh = true; }
+        depositAt(passIdx, i);
+      });
+      if (fresh) buzz(6);
+    }
+    paintChip(x);
     if (!complete && !transitioning && seen.size >= samples.length) finishPass();
   }
 
