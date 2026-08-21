@@ -1,36 +1,33 @@
-# Project status — updated 2026-08-21 night (build day 2: qI REDESIGNED onto the two-pass live trail after her playtest + reteach, sw gq-v26 LIVE — her phone-test is the gate; session 4 pre-authorized on a pass)
+# Project status — updated 2026-08-21 end of night (batch 3 session 3 CLOSED by her phone-test — "Ah, it's perfect"; 14 quests LIVE on sw gq-v27; NEXT: session 4, Soek die fout, tomorrow on her go)
 
 **Read this first.** The v2 spec is [RUN-PLAN.md](RUN-PLAN.md); Megan's own class notes
 are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTIONS-NOTES-DIGEST.md).
+**For qI (Ongelykhede 2) ONLY: [reference/RETEACH-XFX-2026-08-21.md](reference/RETEACH-XFX-2026-08-21.md)
+OUTRANKS the design docs** — her own board pages plus every ruling from the redesign night.
 
 ## Where we are
 
-- **Batch 3 session 2 is BUILT, foreman-reviewed and committed LOCALLY**
-  (`29e300b` build + `1c89f53` review fixes + `6bc8757` keypad amendment +
-  `2e6e7e2` its review fixes, NOT pushed — live is still 12 quests on
-  gq-v21). Three jobs, all her 2026-08-21 rulings: the **qE dealing change**
-  (one round of every kind per play until the learner has met all five, then
-  fully random — "met" is stored on-device, so a fresh phone starts the
-  one-of-each deals again), the new quest **Aard van wortels** (qK, y = k
-  only), and the **keypad** (ported from blipwork, her same-day ruling) —
-  qK's kiss round now TYPES its answer; her other same-day ruling: qK's
-  dealing stays randomized. Harness now 203 checks, three identical runs,
-  console clean (buzz() no longer calls a vibrate the browser would block);
-  foreman played every kiss-round path at 375 px. Ship DONE on her
-  "ship it": SHELL gained `js/quests/qK-roots.js` + `js/engine/keypad.js`,
-  CACHE gq-v21 → gq-v22, push `94eb17e`, live-verified byte-fresh (sw v22,
-  qK with the latest review fix, keypad, ui.js buzz guard, index 200).
-- **12 quests LIVE on sw `gq-v21`** (her playtest fixes shipped 2026-08-21,
-  push `5c5bf57`, live-verified byte-fresh). qE now has FIVE round types:
-  Kies die vorm · Tap die waardes in · Watter vergelyking · **Watter teken
-  het a? (NEW)** · **Watter grondtal? (NEW)**. Harness 180 checks, three
-  identical runs. Map order unchanged: Ontdek ·
-  Ontdek 2 · Vinnige Oë · Op die grafiek · Lees die gebied · Plus en minus ·
-  Bo of onder · Lengtes · Gemiddelde gradiënt · Transformasies ·
-  **Vind die vergelyking (NEW, batch 3 session 1)** · Eksamenmodus.
-  Harness is 180 checks, deterministic, all passing. Megan has played qE
-  once (2026-08-21) and her five findings are fixed and live; she has NOT
-  yet played the two NEW rounds — that gates session 2.
+- **14 quests LIVE on sw `gq-v27`, harness 235 checks, all approved by her.**
+  Map order: Ontdek · Ontdek 2 · Vinnige Oë · Op die grafiek · Lees die
+  gebied · Plus en minus · Bo of onder · Lengtes · Gemiddelde gradiënt ·
+  Transformasies · Vind die vergelyking · Aard van wortels ·
+  **Ongelykhede 2 (batch 3 session 3)** · Eksamenmodus.
+- **Ongelykhede 2 runs her TWO-PASS LIVE TRAIL** (the night's whole arc:
+  shipped-with-boxes → her playtest found it wrong → she retaught with her
+  own board pages → one-round prototype → her verdict + amendment → full
+  redesign → compare-block restore → "Ah, it's perfect"). The learner
+  places every cut line (y-axis included in x·f(x) rounds — THE teaching
+  moment), then sweeps the line once per sign-row (f first, then x or g),
+  each sweep depositing its colour-coded trail; from sweep 2 the chip
+  compares both signs live, and after completion the line STAYS draggable
+  for comparing while answering. Stacked fraction for f/g, givens on
+  separate lines, answer highlighted along the x-axis with circled section
+  numbers. No boxes, no y = x line — ever (never-relax harness rules).
+- **Her process ruling that made the night work: prototype-first.** One
+  round built the new way behind a flag, her phone-test, THEN the full
+  redesign. Keep this rhythm for any future design pivot.
+- **Batch 3 sessions 1–3 are done and live.** Session 4 (Soek die fout) is
+  pre-authorized to dispatch when she gives the go in tomorrow's session.
 - **2026-08-13 was a FIX DAY (Fable foreman, her /go).** A full code review of the
   batch-2 range found 13 confirmed bugs; four Sonnet build sessions fixed them one
   at a time, each foreman-reviewed and shipped separately so she could phone-test
@@ -583,32 +580,46 @@ are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTI
   differing only at g's root, verbatim "Deel deur nul mag nie" + open-circle
   scaffold on the wrong pick), fraction + two-line givens confirmed in DOM.
 
+- 2026-08-21 (last round of the night — her regression report + the fix,
+  SHIPPED sw gq-v27, fix commit `ee17f46`, ship `3c998bd`, live byte-verified):
+  the redesign's row-pure chip had dropped the prototype's COMPARE BLOCK she
+  liked ("the little block with the x signs and f(x) signs and then the user
+  could still drag the line"). Her ruling, now in the reteach file: sweep 1's
+  chip shows only its own row; from sweep 2 it shows BOTH rows side by side;
+  and after the final sweep the line STAYS draggable with the block live —
+  comparing while answering. Harness 233 → 235 (post-completion drag driven
+  synthetically; onComplete proven to fire exactly once). Foreman verified by
+  hand: dragged post-completion with the options on screen, block flipped
+  across g's root. **Her verdict on the whole rebuilt quest: "Ah, it's
+  perfect." SESSION 3 CLOSED.** Soek die fout deferred to tomorrow's fresh
+  session at her call.
+
 ## Pending on Megan
 
-- 📱 [blocking] 5 min: fully close + reopen Fun Functions, play the REBUILT
-  **Ongelykhede 2** — the whole quest now runs your two-sweep trail. One thing
-  is specifically yours to rule on: in the f/g rounds the passes go f first,
-  THEN g (my extension of your R1 ruling). Pass = session 4 dispatches
-  (pre-authorized: "If it passes the play test, I want to move forward").
+- 💻 [whenever] 1 min: open tomorrow's Fun Functions session and say
+  **"session 4 can go"** — the foreman dispatches Soek die fout.
+- 💻 [whenever] 1 min: say whether your board-pages PDF
+  (funksies-grafieklees…, repo root) may be committed — the repo is PUBLIC,
+  so it stays untracked until you say yes.
 
 ## Next up
 
 - **NEXT = batch 3 session 4: Soek die fout** (qF — sketch + equation, "Pas
   hulle?", one injected fault; brief in RUN-PLAN-BATCH3.md; design its
   mechanic to be SHARED with blipwork's error-checking dice rounds — see
-  DICE-PLAN.md there). Dispatches the moment her qI phone-test passes
-  (pre-authorized). Then session 5: Eksamenmodus rebuild (which removes the
-  sheetHypLine p = 0 exemption from the §22 scan).
+  DICE-PLAN.md there). Dispatches on her go in tomorrow's session
+  (pre-authorized tonight). Then session 5: Eksamenmodus rebuild (which
+  removes the sheetHypLine p = 0 exemption from the §22 scan).
 - Carry into session 4's brief: the wrapper blind spot (play in a real tab,
-  read the console), whole-unit boundary habit, banned-word + native-eye
-  Afrikaans pass, and the fault-visibility review focus (a p-flip that lands
-  both curves on the same pixels must redraw).
-- Her two qE design questions are ANSWERED (2026-08-21) and shipped — do not
-  re-flag them. qI's y = x design call awaits her phone-test.
+  read the console), whole-unit boundary habit, include-section-midpoints
+  window rule where sections matter, banned-word + native-eye Afrikaans
+  pass, and the fault-visibility review focus (a p-flip that lands both
+  curves on the same pixels must redraw). Prototype-first is available if a
+  design question feels open — her ruling made it the house rhythm.
 - **Batch 3 (foreman = Fable; the foreman dispatches the build agents itself,
-  reviews, reports back between sessions).** Sessions 1–3 shipped.
-- AFRIKAANS-TEKS.md is CURRENT through qI (794 bullets, regenerated at the
-  session-3 ship). Regenerate again after sessions 4/5, then her wording pass
+  reviews, reports back between sessions).** Sessions 1–3 shipped and closed.
+- AFRIKAANS-TEKS.md is CURRENT through the qI redesign (regenerated in
+  `615a1cd`). Regenerate again after sessions 4/5, then her wording pass
   → correction session.
 - Small tidy-ups, any session: q5's retry-by-recursion style could become
   bounded loops like qL/qG · the faint flag doesn't dim a faint curve's
@@ -626,7 +637,7 @@ python -m http.server 5207 --directory "C:\Users\megzi\Desktop\Claude Code Proje
 Then <http://localhost:5207/> (`?local=1` forces local save mode). Preview entry
 `graph-quest` (port 5207) in the nested `C:\Users\megzi\.claude\.claude\launch.json`.
 verify.html is the harness — ALL must pass at the same total three runs in a row
-(currently 225) before any commit.
+(currently 235) before any commit.
 
 ⚠ Cache discipline (it lied to THREE reviews this build): before trusting verify.html
 in a browser, unregister the SW, delete `gq-*` caches, AND force-refetch changed modules
@@ -667,12 +678,12 @@ js/
          NO boxes, NO y = x line; spec = reference/RETEACH-XFX-2026-08-21.md) ·
          q7-exam.js      ← map order; screens.js exports questUnlocked()
 supabase/schema.sql   written, not run
-verify.html           the harness: 225 checks, deterministic count — §4b (shared
+verify.html           the harness: 235 checks, deterministic count — §4b (shared
                       mostlyInFrame) + §22 real-spec off-axis + banned words incl.
                       titles/blurbs/intro caps + groups 14–23's fix-day guards +
                       §25's playtest guards (maths options one per line, no loose
                       formula in a beat, every decoy speaks, no two options that
                       are the same graph) +
                       §23's paint-box guard + §24 (qE) + §28 (qI) are never-relax rules
-sw.js                 network-first for code; SHELL precache; CACHE = gq-v24
+sw.js                 network-first for code; SHELL precache; CACHE = gq-v27
 ```
