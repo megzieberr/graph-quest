@@ -1,10 +1,20 @@
-# Project status — updated 2026-08-21 evening (playtest fixes LIVE; her qE dealing ruling logged; blipwork DICE-PLAN written)
+# Project status — updated 2026-08-21 night (batch 3 SESSION 2 BUILT + foreman-reviewed, NOT shipped — awaiting her "ship it")
 
 **Read this first.** The v2 spec is [RUN-PLAN.md](RUN-PLAN.md); Megan's own class notes
 are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTIONS-NOTES-DIGEST.md).
 
 ## Where we are
 
+- **Batch 3 session 2 is BUILT, foreman-reviewed and committed LOCALLY**
+  (`29e300b` build + `1c89f53` review fixes, NOT pushed — live is still 12
+  quests on gq-v21). Two jobs, both her 2026-08-21 rulings: the **qE dealing
+  change** (one round of every kind per play until the learner has met all
+  five, then fully random — "met" is stored on-device, so a fresh phone
+  starts the one-of-each deals again) and the new quest **Aard van wortels**
+  (qK, y = k only). Harness now 202 checks, three identical runs, console
+  clean; foreman played qK end-to-end and the qE deal at 375 px. Ship needs:
+  add `js/quests/qK-roots.js` to sw.js SHELL, bump CACHE gq-v21 → gq-v22,
+  push — on her word only.
 - **12 quests LIVE on sw `gq-v21`** (her playtest fixes shipped 2026-08-21,
   push `5c5bf57`, live-verified byte-fresh). qE now has FIVE round types:
   Kies die vorm · Tap die waardes in · Watter vergelyking · **Watter teken
@@ -362,30 +372,69 @@ are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTI
     blipwork's error-checking dice rounds** — build once, both apps use it. Land
     it here first.
 
+- 2026-08-21 (night — batch 3 SESSION 2, Sonnet build under her /go, foreman-reviewed):
+  - **qE dealing built per her ruling.** Opt-in quest flag `dealEachKindFirst`
+    (only qE sets it); `buildRound()` deals one round of every usable kind in a
+    shuffled order, remaining slots from the weighted bag, spread rule kept.
+    "Met" = the round was actually PRESENTED in play (hooked in play.js's
+    render(), deduped across language-toggle re-paints), persisted via
+    `backend.markMet()` at top-level `profile.met` — deliberately NOT inside
+    `profile.quests[id]`, which saveResult() replaces wholesale. Plain-words
+    consequence, known and accepted: a fresh device starts one-of-each again.
+    Harness §26 (10 checks): fresh/omitted/partial met-state always deal all
+    five; full met-state provably reverts to the plain draw; other quests
+    (weighted AND buildAll) ignore the argument entirely.
+  - **Aard van wortels (qK) built** — R1 discover (varSlider, options gated on
+    dragging the FULL range), R2 kiss, R3 count chips, R4 hyperbola/exp.
+    Inserted after qE; grandfathered unlocks verified live (a profile with
+    Eksamenmodus merely PLAYED keeps it open despite qK being new and undone).
+    Session's own finds, fixed in-build: funclib `intersections()` reported a
+    spurious extra crossing where a sampling step straddled a hyperbola's own
+    asymptote (every k ≠ q round read 2 cuts instead of 1 — fixed by skipping
+    straddling steps; criticalXs' 1e-3 dedupe means older quests never saw the
+    spurious cross, so cut-line behaviour is unchanged); a raw "<" in option
+    HTML parsed as a tag (now `&lt;`, the intervalStr() dodge); B_INTRO said
+    "Twelve/Twaalf" — now Thirteen/Dertien.
+  - **Foreman review fixes (`1c89f53`):** R4's cut point now goes into
+    `include:` and a draw whose window contradicts the family truth
+    rejects-and-redraws (a cropped cut could otherwise key "0" while the
+    solution claimed the asymptote reason); §27 tightened to the closed-form
+    truths (k ≠ q hyperbola = exactly 1, exp = side-of-asymptote), independent
+    of the intersections() recompute; English canon "branches" restored
+    (vlerkies stays Afrikaans-only, the q1b pattern); wording: "die opsies
+    gaan eers oop", "een snypunt" (never "1 snit" — q6's snypunt canon).
+  - **Session judgment call, hers to overturn:** the design doc said R2 kiss
+    is a "keypad" round, but no keypad mechanic exists in the app and the same
+    doc rules "no new mechanic" — built as mc() with numeric decoys (the TP's
+    x always among them, the p-vs-q classic). Flagged, not silently resolved.
+  - **Open question for her:** qK itself does NOT use the one-of-each dealing
+    (her ruling named qE). Four kinds into six random rounds skips a kind in
+    roughly half of plays — the same thing she once read as missing rounds.
+    One flag turns it on if she wants it.
+
 ## Pending on Megan
 
-- 📱 5 min **[blocking]**: play **Vind die vergelyking** until you've met both NEW
-  rounds (Watter teken het a? · Watter grondtal?) — say "new rounds look right" and
-  session 2 dispatches. (Glance too: fraction bases show as ½/⅓, nothing cut off.)
+- 💻 1 min **[blocking]**: say **"ship it"** and the foreman ships session 2
+  (SHELL + cache bump + push) — then 📱 5 min: play **Aard van wortels** on
+  your phone, and one fresh **Vind die vergelyking** play to feel the
+  one-of-each dealing. Session 3 (Ongelykhede 2) dispatches after your test.
 
 ## Next up
 
-- **NEXT SESSION = Fun Functions batch 3 continues.** Open by checking the one
-  Pending item above, then:
-  1. **First change in session 2's dispatch:** the qE dealing ruling (one of each
-     kind per play, fully random once a learner has met every kind). Small; do it
-     before or with Aard van wortels.
-  2. Session 2 proper: **Aard van wortels** (y = k only, kickoff b confirmed).
+- **NEXT = the session-2 ship** (foreman, on her "ship it"): SHELL entry for
+  `js/quests/qK-roots.js`, CACHE gq-v21 → gq-v22, push, live check, her phone
+  reopen. Then her phone-test (the Pending item above), then session 3.
+  (Session 2's two build jobs — the qE dealing ruling and Aard van wortels —
+  are DONE and locally committed; see Decisions.)
 - Her two qE design questions are ANSWERED (2026-08-21) and shipped — do not
   re-flag them.
 - **Batch 3 continues (foreman = Fable; her ruling this batch: the foreman
   dispatches the build agents itself, reviews, reports back between sessions).**
-  Session 1 SHIPPED. Remaining order per RUN-PLAN-BATCH3.md: session 2
-  Aard van wortels (y = k only, kickoff b confirmed) → Ongelykhede 2 →
-  Soek die fout (design its mechanic to be SHARED with blipwork's error-checking
-  dice rounds — see DICE-PLAN.md there) → Eksamenmodus rebuild (which removes the
-  sheetHypLine p = 0 exemption from the §22 scan). One session at a time, her
-  phone-test between.
+  Sessions 1–2 done (1 shipped, 2 awaiting ship). Remaining order per
+  RUN-PLAN-BATCH3.md: Ongelykhede 2 → Soek die fout (design its mechanic to be
+  SHARED with blipwork's error-checking dice rounds — see DICE-PLAN.md there) →
+  Eksamenmodus rebuild (which removes the sheetHypLine p = 0 exemption from the
+  §22 scan). One session at a time, her phone-test between.
 - After session 5: regenerate AFRIKAANS-TEKS.md (`python tools/extract_af.py`)
   → her wording pass → correction session. ⚠ The file is already stale as of
   2026-08-21 — the two new rounds, the decoy WHY strings and three rebuilt hint
@@ -438,10 +487,11 @@ js/
          q3-region.js · q5-signs.js (board method: cutSockets → signPaint;
          paintable() rejects unpaintable draws) · q6-compare.js ·
          qL-lengths.js · qG-gradient.js · qT-transform.js ·
-         qE-equation.js (formFill: tap the marked feature, value pours in) ·
+         qE-equation.js (formFill: tap the marked feature, value pours in;
+         dealEachKindFirst) · qK-roots.js (Aard van wortels: y = k, varSlider) ·
          q7-exam.js      ← map order; screens.js exports questUnlocked()
 supabase/schema.sql   written, not run
-verify.html           the harness: 180 checks, deterministic count — §4b (shared
+verify.html           the harness: 202 checks, deterministic count — §4b (shared
                       mostlyInFrame) + §22 real-spec off-axis + banned words incl.
                       titles/blurbs/intro caps + groups 14–23's fix-day guards +
                       §25's playtest guards (maths options one per line, no loose
