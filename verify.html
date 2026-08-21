@@ -162,8 +162,11 @@ for (const lang of ["af", "en"]) {
         /* a keypad round (qK's R2 kiss, batch 3 session 2 keypad amendment)
            has no discrete options — it is checked on its own numeric
            answer, prompt and graph honesty instead of the option-list rules
-           below, which assume a tappable set of buttons. */
-        if (it.type === "kp") {
+           below, which assume a tappable set of buttons. Checked on mcq
+           (the shape actually being asked), not it — an interactive round
+           whose `then` is a keypad (R2, since her 2026-08-21 evening
+           ruling) has it.type "interactive" and mcq.type "kp". */
+        if (mcq.type === "kp") {
           const ptext = strip(L(mcq.prompt || it.prompt || ""));
           if (BAD.test(ptext) || !ptext.trim()) { bad++; why = "bad prompt: " + ptext; break; }
           if (!strip(L(mcq.answerLabel || "")).trim()) { bad++; why = "empty answerLabel"; break; }
@@ -226,10 +229,19 @@ for (const lang of ["af", "en"]) {
       const svg = box.querySelector("svg");
       if (!svg) { bad++; why = `${it.skillId} drew no svg`; continue; }
       if (!svg.querySelector("path.fg-curve")) { bad++; why = `${it.skillId} drew no curve`; continue; }
-      if (unlocked) { bad++; why = `${it.skillId} unlocked before the learner did anything`; continue; }
+      /* freeDrag rounds (qK's R2/R3/R4, her ruling 2026-08-21 evening) are
+         a deliberate exception to "stays locked": the drag is a reading/
+         exploring aid, not a gate, so unlocking immediately on mount is
+         the CORRECT behaviour there, not a bug. Everything else must
+         still gate exactly like R1 always has. */
+      if (it.freeDrag) {
+        if (!unlocked) { bad++; why = `${it.skillId} is freeDrag but did not reveal its answer surface on mount`; continue; }
+      } else if (unlocked) {
+        bad++; why = `${it.skillId} unlocked before the learner did anything`; continue;
+      }
       if (!it.then) { bad++; why = `${it.skillId} has no follow-up question`; continue; }
     }
-    check(g, `${q.id}: every interactive round mounts and stays locked`, bad === 0, why);
+    check(g, `${q.id}: every interactive round mounts, and gates unless it is a declared freeDrag round`, bad === 0, why);
   }
   host.remove();
 }
@@ -2834,22 +2846,29 @@ for (const lang of ["af", "en"]) {
 
   /* R2 die kiss: the marked point IS the turning point, and the correct
      answer equals its y, recomputed fresh from paraTP(), never trusted
-     from the round's own stored value */
+     from the round's own stored value.
+     Shape change, 2026-08-21 evening (her follow-up ruling): R2 is now
+     an interactive round (a draggable line) whose `then` is the keypad
+     — it.type is "interactive", it.then.type is "kp", and the fields
+     this check reads (correct/answerLabel) live on it.then, not on it
+     itself the way a standalone kp round would carry them. */
   bad = 0; why = ""; let kissChecked = 0;
   r2.forEach((it) => {
     const dc = it.debugKiss;
     if (!dc) { bad++; why = "an R2 round exposes no debugKiss"; return; }
     kissChecked++;
-    if (it.type !== "kp") { bad++; why = `R2 round has type "${it.type}", wanted the keypad shape "kp"`; return; }
+    if (it.type !== "interactive" || !it.then || it.then.type !== "kp") {
+      bad++; why = `R2 round has shape type="${it.type}"/then.type="${it.then && it.then.type}", wanted an interactive round whose then is the keypad shape "kp"`; return;
+    }
     const freshTp = paraTP(dc.cv);
     if (Math.abs(freshTp.y - dc.tp.y) > 1e-9) { bad++; why = "exposed tp.y does not match a fresh paraTP() recompute"; return; }
-    if (Math.abs(it.correct - freshTp.y) > 1e-9) { bad++; why = `kp round's own correct (${it.correct}) does not equal a fresh paraTP().y (${freshTp.y})`; return; }
+    if (Math.abs(it.then.correct - freshTp.y) > 1e-9) { bad++; why = `kp round's own correct (${it.then.correct}) does not equal a fresh paraTP().y (${freshTp.y})`; return; }
     const pts = (it.graph && it.graph.points) || [];
     if (pts.length !== 1) { bad++; why = `R2 sketch marks ${pts.length} points, wanted exactly the turning point`; return; }
     if (Math.abs(pts[0].y - freshTp.y) > 1e-9 || Math.abs(pts[0].x - freshTp.x) > 1e-9) { bad++; why = "the marked point is not the turning point"; return; }
-    if (strip(L(it.answerLabel)) !== fmtComma(freshTp.y)) { bad++; why = `answer "${strip(L(it.answerLabel))}" does not equal the turning point's y (${fmtComma(freshTp.y)})`; }
+    if (strip(L(it.then.answerLabel)) !== fmtComma(freshTp.y)) { bad++; why = `answer "${strip(L(it.then.answerLabel))}" does not equal the turning point's y (${fmtComma(freshTp.y)})`; }
   });
-  check(g, `R2: the marked point is the turning point, and both it.correct and the answer equal its y, recomputed fresh (${kissChecked} rounds)`, bad === 0 && kissChecked > 0, why);
+  check(g, `R2: the marked point is the turning point, and both it.then.correct and the answer equal its y, recomputed fresh (${kissChecked} rounds)`, bad === 0 && kissChecked > 0, why);
 
   /* R2 keypad: mount the ported control itself (the §27/R1 mounting style
      — hidden host, build/mount, drive, assert) and drive it by clicking
@@ -2871,45 +2890,75 @@ for (const lang of ["af", "en"]) {
   };
   r2.slice(0, 20).forEach((it) => {
     if (!it.debugKiss) return;               // already flagged above
+    const kq = it.then;                      // the keypad shape now lives on .then
     const box = document.createElement("div");
     host.appendChild(box);
     let submitted = null;
     let kpad;
-    try { kpad = mountKeypad(box, { allowNeg: it.allowNeg, onSubmit: (v) => { submitted = v; } }); }
+    try { kpad = mountKeypad(box, { allowNeg: kq.allowNeg, onSubmit: (v) => { submitted = v; } }); }
     catch (e) { bad++; why = `keypad threw on mount: ${e.message}`; return; }
     if (!box.querySelector(".keypad")) { bad++; why = "R2 keypad did not mount"; return; }
     kpMountChecked++;
     const submitBtn = box.querySelector(".key.submit");
     if (!submitBtn) { bad++; why = "R2 keypad mounted with no submit key"; return; }
 
-    typeIntoKeypad(box, it.correct);
+    typeIntoKeypad(box, kq.correct);
     submitBtn.click();
-    if (!(submitted != null && near(submitted, it.correct))) {
-      bad++; why = `typing the correct value (${it.correct}) did not read back as complete (submitted=${submitted})`; return;
+    if (!(submitted != null && near(submitted, kq.correct))) {
+      bad++; why = `typing the correct value (${kq.correct}) did not read back as complete (submitted=${submitted})`; return;
     }
 
     kpad.clear();
     submitted = null;
-    const wrongVal = it.correct + 3;         // guaranteed to differ (near()'s tolerance is 1e-6)
+    const wrongVal = kq.correct + 3;         // guaranteed to differ (near()'s tolerance is 1e-6)
     typeIntoKeypad(box, wrongVal);
     submitBtn.click();
-    if (submitted != null && near(submitted, it.correct)) {
+    if (submitted != null && near(submitted, kq.correct)) {
       bad++; why = `a wrong value (${wrongVal}) read back as complete`;
     }
   });
   check(g, `R2: the ported keypad mounts and drives via real clicks; the correct value completes, a wrong one does not (${kpMountChecked} rounds)`,
     bad === 0 && kpMountChecked > 0, why);
 
+  /* R3: at EVERY slider stop, the marked snypunte count matches
+     funclib's own intersections() — R1's own check pattern above, now
+     proven for R3 too since her follow-up ruling gave it the identical
+     draggable-line mechanic (2026-08-21 evening). */
+  bad = 0; why = ""; let countStopsChecked = 0;
+  r3.slice(0, 30).forEach((it) => {
+    const dc = it.debugCount;
+    if (!dc) return;                          // already flagged below
+    const box = document.createElement("div");
+    host.appendChild(box);
+    let ctl;
+    try { ctl = it.build(box, () => {}, () => {}); } catch (e) { bad++; why = `R3 threw on mount: ${e.message}`; return; }
+    const s = ctl.sliders[0];
+    s.values().forEach((k, idx) => {
+      s.setIndex(idx);
+      countStopsChecked++;
+      const wantN = intersections(dc.cv, { kind: "line", a: 0, q: k }, dc.win.xmin, dc.win.xmax).length;
+      const gotN = (s.spec().points || []).length;
+      if (gotN !== wantN) { bad++; why = `R3 k=${k}: drawn ${gotN} snypunte, funclib's intersections() says ${wantN}`; }
+    });
+  });
+  check(g, `R3: the marked snypunte count matches funclib's intersections() at every slider stop (${countStopsChecked} stops)`,
+    bad === 0 && countStopsChecked > 0, why);
+
   /* R3 hoeveel snypunte: the inequality direction matches a fresh
-     sign-of-a recompute, and always compares k with q (never p) */
+     sign-of-a recompute, and always compares k with q (never p).
+     Shape change, 2026-08-21 evening: R3 is now interactive too — its
+     mc shape (and the answerLabel this check reads) lives on it.then. */
   bad = 0; why = ""; let countChecked = 0;
   r3.forEach((it) => {
     const dc = it.debugCount;
     if (!dc) { bad++; why = "an R3 round exposes no debugCount"; return; }
+    if (it.type !== "interactive" || !it.then || it.then.type !== "mc") {
+      bad++; why = `R3 round has shape type="${it.type}"/then.type="${it.then && it.then.type}", wanted an interactive round whose then is "mc"`; return;
+    }
     countChecked++;
     const wantUp = paraStd(dc.cv).a > 0;
     if (wantUp !== dc.up) { bad++; why = "the round's own up-flag disagrees with a fresh sign-of-a recompute"; return; }
-    const ans = strip(L(it.answerLabel));
+    const ans = strip(L(it.then.answerLabel));
     const wantSign = wantUp ? ">" : "<";
     if (!ans.includes(wantSign)) { bad++; why = `answer "${ans}" does not carry the "${wantSign}" a fresh recompute of a's sign demands`; }
     if (!ans.includes(fmtComma(dc.tp.y))) { bad++; why = `answer "${ans}" does not compare k with the turning point's own y (${fmtComma(dc.tp.y)})`; }
@@ -2926,14 +2975,24 @@ for (const lang of ["af", "en"]) {
      Hyperbola and exp keep SEPARATE bad/why counters — sharing one would
      let a hyperbola failure's message silently leak into the exp check's
      verdict (or vice versa) even though that check itself never saw a
-     single bad round. */
+     single bad round.
+     Shape change, 2026-08-21 evening (her follow-up ruling — the fixed
+     line becomes draggable here too): R4 is now interactive, its mc
+     shape (and answerLabel) lives on it.then. Everything below is still
+     about the STEM's k (dc.k) — the drag only ever adds exploration
+     around it, never changes what is being checked. */
   let hypBad = 0, hypWhy = "", expBad = 0, expWhy = "";
   let hypChecked = 0, hypZeroSeen = 0, expChecked = 0;
   r4.forEach((it) => {
     const dc = it.debugOther;
     if (!dc) { hypBad++; hypWhy = "an R4 round exposes no debugOther"; return; }
+    if (it.type !== "interactive" || !it.then || it.then.type !== "mc") {
+      const msg = `R4 ${dc.family} round has shape type="${it.type}"/then.type="${it.then && it.then.type}", wanted an interactive round whose then is "mc"`;
+      if (dc.family === "hyperbola") { hypBad++; hypWhy = msg; } else { expBad++; expWhy = msg; }
+      return;
+    }
     const wantN = intersections(dc.cv, { kind: "line", a: 0, q: dc.k }, dc.win.xmin, dc.win.xmax).length;
-    const gotN = Number(strip(L(it.answerLabel)));
+    const gotN = Number(strip(L(it.then.answerLabel)));
     if (dc.family === "hyperbola") {
       hypChecked++;
       if (gotN !== wantN) { hypBad++; hypWhy = `hyperbola: answer says ${gotN} cuts, funclib's intersections() says ${wantN}`; return; }
@@ -2954,6 +3013,71 @@ for (const lang of ["af", "en"]) {
     hypBad === 0 && hypChecked > 0 && hypZeroSeen > 0, hypWhy);
   check(g, `R4 exp: the cut count matches a fresh intersections() recompute AND the closed-form side-of-asymptote truth (${expChecked} rounds)`,
     expBad === 0 && expChecked > 0, expWhy);
+
+  /* R4 NEW (her follow-up ruling, 2026-08-21 evening): the draggable
+     line's marked snypunte match funclib's own intersections() at EVERY
+     slider stop, including the zero-dot stop right at the asymptote —
+     the identical per-stop recompute pattern as R1/R3 above. Every R4
+     round's slider range is built to straddle q (see hyperbolaCutRound/
+     expCutRound in qK-roots.js), so the asymptote stop is never merely
+     possible but GUARANTEED present every round — r4ZeroStopSeen must
+     equal r4RoundsWithStops, not just be > 0. */
+  bad = 0; why = ""; let r4StopsChecked = 0, r4ZeroStopSeen = 0, r4RoundsWithStops = 0;
+  r4.slice(0, 30).forEach((it) => {
+    const dc = it.debugOther;
+    if (!dc) return;                          // already flagged above
+    const box = document.createElement("div");
+    host.appendChild(box);
+    let ctl;
+    try { ctl = it.build(box, () => {}, () => {}); } catch (e) { bad++; why = `R4 ${dc.family} threw on mount: ${e.message}`; return; }
+    r4RoundsWithStops++;
+    const s = ctl.sliders[0];
+    let sawZero = false;
+    s.values().forEach((v, idx) => {
+      s.setIndex(idx);
+      r4StopsChecked++;
+      const wantN = intersections(dc.cv, { kind: "line", a: 0, q: v }, dc.win.xmin, dc.win.xmax).length;
+      const gotN = (s.spec().points || []).length;
+      if (gotN !== wantN) { bad++; why = `R4 ${dc.family} v=${v}: drawn ${gotN} snypunte, funclib's intersections() says ${wantN}`; return; }
+      if (Math.abs(v - dc.cv.q) < 1e-9) {
+        sawZero = true;
+        if (gotN !== 0) { bad++; why = `R4 ${dc.family}: the asymptote stop (v=${v}=q) shows ${gotN} snypunte, wanted 0`; }
+      }
+    });
+    if (sawZero) r4ZeroStopSeen++;
+    else { bad++; why = `R4 ${dc.family}: this round's slider range never includes q itself — nothing to watch the cut vanish at`; }
+  });
+  check(g, `R4: the draggable line's marked snypunte match funclib's intersections() at every slider stop, and every round's range includes the asymptote stop (${r4StopsChecked} stops, ${r4ZeroStopSeen}/${r4RoundsWithStops} rounds)`,
+    bad === 0 && r4StopsChecked > 0 && r4RoundsWithStops > 0 && r4ZeroStopSeen === r4RoundsWithStops, why);
+
+  /* the no-gate ruling itself (her follow-up, 2026-08-21 evening): R2/R3/
+     R4 must all reveal their chips/keypad the moment they mount, and
+     show no meaningless seen-count — dragging is exploration, never a
+     lock. Only R1 keeps a real gate (checked separately above). */
+  bad = 0; why = ""; let gateChecked = 0;
+  [...r2.slice(0, 15), ...r3.slice(0, 15), ...r4.slice(0, 15)].forEach((it) => {
+    const box = document.createElement("div");
+    host.appendChild(box);
+    let fired = 0;
+    let ctl;
+    try { ctl = it.build(box, () => { fired++; }, () => {}); } catch (e) { bad++; why = `${it.skillId} threw on mount: ${e.message}`; return; }
+    gateChecked++;
+    if (fired !== 1) { bad++; why = `${it.skillId}: done fired ${fired}× on mount, wanted exactly 1 (no gate — the surface must be there from the first paint)`; return; }
+    const countEl = box.querySelector(".vs-count");
+    if (countEl && !countEl.hidden) { bad++; why = `${it.skillId}: a seen-count readout is visible with no gate behind it`; }
+  });
+  check(g, `R2/R3/R4: the mechanic reveals its answer surface immediately on mount (no seen-every-stop gate), and shows no meaningless seen-count (${gateChecked} rounds)`,
+    bad === 0 && gateChecked > 0, why);
+
+  /* and its wording half: none of R2/R3/R4's coach lines may promise the
+     seen-every-stop gate that DRAGALL uses for R1 — that gate does not
+     exist for these three, so promising it would be a lie. */
+  bad = 0; why = "";
+  [...r2, ...r3, ...r4].forEach((it) => {
+    const c = strip(L(it.coach || ""));
+    if (/elke stop gesien|every stop/i.test(c)) { bad++; why = `${it.skillId}: coach line still promises the seen-every-stop gate — "${c}"`; }
+  });
+  check(g, "R2/R3/R4 coach lines never promise the seen-every-stop gate that DRAGALL uses for R1 (no gate exists for these rounds)", bad === 0, why);
 
   /* every real spec is visible to the harness — §4b/§22/§25a's generic
      scans over QUESTS/buildRound already cover qK for free once it sits

@@ -31,6 +31,15 @@
      start       index to open on (default: the middle stop)
      onChange({value, index, seen, total})
      onComplete()   fires once, when every stop has been visited
+     freeDrag    qK's no-gate rounds (R2/R3/R4, her ruling 2026-08-21):
+                 the drag is a reading/exploring AID, never a lock — the
+                 whole point is that a static picture never taught
+                 anyone's eyes anything, but a meaningless "3/7" counter
+                 with nothing gated behind it would be its own kind of
+                 lie. onComplete() fires once, immediately, with the
+                 slider already at opts.start; the seen-count readout
+                 (vs-count) stays hidden all along, never shown then
+                 hidden. Only R1's discovery round keeps the real gate.
    }
    ============================================================ */
 import { renderFunction } from "./function-graph.js";
@@ -46,7 +55,7 @@ const div = (cls, html) => {
 };
 
 export function varSlider(host, opts) {
-  const { name, values, specOf, eqOf, onChange, onComplete } = opts;
+  const { name, values, specOf, eqOf, onChange, onComplete, freeDrag } = opts;
   const n = values.length;
   /* every stop is rendered up front: the window can then be proved
      identical across the range, and a drag never pays for a rebuild */
@@ -54,7 +63,10 @@ export function varSlider(host, opts) {
 
   let i = Number.isInteger(opts.start) ? clamp(opts.start, 0, n - 1) : Math.floor((n - 1) / 2);
   const seen = new Set([i]);
-  let complete = false;
+  /* freeDrag: there is no lock, so "complete" is true from the first
+     paint — the seen-count would otherwise show a live "1/7" climbing
+     toward a gate that never closes, which is worse than no counter. */
+  let complete = !!freeDrag;
 
   const wrap = div("vs");
   const eqLine = div("vs-eq");
@@ -62,6 +74,7 @@ export function varSlider(host, opts) {
   const bar = div("vs-bar");
   const read = div("vs-read");
   const count = div("vs-count");
+  if (freeDrag) count.hidden = true;   // no gate exists, so no "N/total" to meter it
   const track = div("vs-track");
   const fill = div("vs-seen");
   const knob = div("vs-knob");
@@ -95,7 +108,7 @@ export function varSlider(host, opts) {
     const lo = Math.min(...seen), hi = Math.max(...seen);
     fill.style.left = pct(lo);
     fill.style.width = (n === 1 ? 0 : ((hi - lo) / (n - 1)) * 100) + "%";
-    count.textContent = `${seen.size}/${n}`;
+    if (!freeDrag) count.textContent = `${seen.size}/${n}`;
     wrap.classList.toggle("done", complete);
     track.setAttribute("aria-valuenow", String(values[i]));
   }
@@ -168,6 +181,10 @@ export function varSlider(host, opts) {
   /* every discovery build hands back a `.sliders` array, whether it
      mounted one panel or two — the harness walks that one shape */
   ctl.sliders = [ctl];
+  /* freeDrag fires its "done" once, right here, before the mechanic ever
+     returns control — the chip/keypad surface it unlocks must be there
+     from the very first paint, not after some hidden requirement */
+  if (freeDrag && onComplete) onComplete();
   return ctl;
 }
 

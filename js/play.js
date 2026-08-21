@@ -226,8 +226,12 @@ function render() {
   const askslot = el("div", "stack");
   const asked = (item.type === "interactive" && item.then) ? item.then : item;
   /* a keypad round is not an option grid — its own host class skips the
-     .opts grid layout entirely (the ported .keypad block lays itself out) */
-  const optbox = el("div", (item.type === "kp" ? "kp-host" : "opts")
+     .opts grid layout entirely (the ported .keypad block lays itself out).
+     Checked on `asked`, not `item`, so an interactive round whose `then`
+     is a keypad (qK's R2 kiss round: drag the line, then type the k —
+     batch 3 session 2 evening amendment) gets the keypad layout too, not
+     the option grid its outer `item.type` ("interactive") would imply. */
+  const optbox = el("div", (asked.type === "kp" ? "kp-host" : "opts")
     + (item.wide || asked.wide || optionsNeedOneColumn(asked) ? " one" : ""));
   const fbslot = el("div", "stack");
 
@@ -278,8 +282,18 @@ function mountInteractive(item, gbox, coach, meter, askslot, optbox, fbslot, lad
     if (unlocked || S.answered) return;
     unlocked = true;
     askslot.textContent = "";
-    coach.textContent = L(item.unlockMsg || UI.unlocked);
-    coach.style.color = "var(--good)";
+    /* freeDrag rounds (qK's R2/R3/R4, her ruling 2026-08-21 evening) fire
+       done() synchronously, before the mount's first paint — there is no
+       gate closing for the learner to see, so overwriting the coach with
+       the generic "unlocked" congratulation would silently replace a
+       hand-written invitation ("drag the line if you want to see") with
+       text the learner never asked for, and they would never see the
+       original line at all (it would be swapped out before the browser
+       ever paints it). Leave it exactly as authored. */
+    if (!item.freeDrag) {
+      coach.textContent = L(item.unlockMsg || UI.unlocked);
+      coach.style.color = "var(--good)";
+    }
     if (!item.then) { S.score++; S.xp += XP_FULL; showFeedback(item, "full", fbslot, ladder, null); return; }
     optbox.style.display = "";
     const q = item.then;
@@ -287,7 +301,12 @@ function mountInteractive(item, gbox, coach, meter, askslot, optbox, fbslot, lad
       const p = el("div", "prompt", L(q.prompt));
       optbox.parentNode.insertBefore(p, optbox);
     }
-    paintOptions(q, optbox, fbslot, ladder);
+    /* qK's R2 kiss round drags a line AND types an answer — the reveal
+       is a keypad, not an option grid. One code path either way:
+       paintKeypad/paintOptions are the SAME functions a plain kp/mc
+       round uses at the top of render(), never duplicated here. */
+    if (q.type === "kp") paintKeypad(q, optbox, fbslot, ladder);
+    else paintOptions(q, optbox, fbslot, ladder);
   };
 
   const nudge = (msg) => { coach.textContent = L(msg); coach.style.color = ""; };

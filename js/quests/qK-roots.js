@@ -7,19 +7,31 @@
    (finding the k that makes a moving line tangent to a moving curve)
    needs the discriminant — that is algebra, Law 1 — and stays out.
 
-   Four round types (varSlider for R1; the keypad — ported from
-   blipwork per her 2026-08-21 ruling — for R2; mc() for the rest):
+   Four round types. EVERY round drags a real y = k line — her follow-up
+   ruling, 2026-08-21 evening, after her own phone-test hit a round with
+   no line at all: "the line always needs to be there and draggable
+   otherwise it never teaches their eyes anything... they could've just
+   been looking at a static diagram on a piece of paper." Only R1 gates
+   on it (Law 7); R2/R3/R4 are freeDrag — the chip/keypad surface is
+   there from the first paint, the drag is a reading/exploring AID:
      R1 discover     iq(). Drag k, y = k rides, live snypunte marked.
                      No-spoilers (Law 7): options unlock only once the
                      WHOLE range has been dragged; the conclusion is
                      never stated before the learner commits.
-     R2 kiss         kp(). The turning point is marked; the answer is
-                     its y, TYPED on the keypad — read, never computed.
-     R3 count        mc(). "For which k does y = k cut TWICE?" —
-                     k > q / k < q, matching happy/sad.
-     R4 other        mc(). Hyperbola: exactly one cut for every k ≠ q,
-                     none AT q (the asymptote round). Exponential: one
-                     cut only on the curve's own side of the asymptote.
+     R2 kiss         iq() + kp() then. The turning point is marked; drag
+                     the line onto it and read its y straight off,
+                     TYPED on the keypad (ported from blipwork per her
+                     2026-08-21 ruling) — available immediately, no gate.
+     R3 count        iq() + mc() then. "For which k does y = k cut
+                     TWICE?" — drag through the range and watch snypunte
+                     appear/vanish at the turning point; chips available
+                     immediately, same no-gate rule as R2.
+     R4 other        iq() + mc() then. Hyperbola: exactly one cut for
+                     every k ≠ q, none AT q (the asymptote round) — drag
+                     toward q and watch the cut vanish. Exponential: one
+                     cut only on the curve's own side of the asymptote —
+                     drag past q and watch it stop cutting. Chips
+                     available immediately, same no-gate rule.
 
    Language ruling (house law, post-2026-08-21): tangent = "raak
    net-net", cut = "sny" — never mixed, never translated word-for-word.
@@ -41,6 +53,17 @@ const ACC = "#60a5fa";
 const DRAGALL = B("Drag it through the whole range — the options only open once you have seen every stop.",
                   "Trek dit deur die hele reeks — die opsies gaan eers oop as jy elke stop gesien het.");
 const SAWWHAT = B("What did you see?", "Wat het jy gesien?");
+
+/* R2/R3/R4's coach lines — freeDrag rounds, so none of these may promise
+   a gate the way DRAGALL does; each is its own natural sentence, never a
+   translation of another one (her ruling on the wording of these three,
+   2026-08-21 evening). */
+const DRAGTOREAD = B("Drag the line onto the marked point and read off the k you land on.",
+                     "Trek die lyn na die gemerkte punt en lees die k af waarop jy land.");
+const DRAGIFCUT = B("Drag the line if you want to see how it cuts.",
+                    "Trek die lyn as jy wil kyk hoe dit sny.");
+const DRAGTOASYM = B("Drag the line toward the asymptote and watch the cut disappear.",
+                     "Trek die lyn na die asimptoot toe en kyk hoe die snypunt verdwyn.");
 
 /* ============================================================
    R1 — DISCOVER: drag k, watch y = k ride, count the snypunte
@@ -122,46 +145,72 @@ function discoverBeat() {
 /* ============================================================
    R2 — DIE KISS: the turning point is marked, its y IS k
    ------------------------------------------------------------
-   Design amendment (foreman + Megan's ruling, 2026-08-21): the design
-   doc always meant this as a KEYPAD round — session 2 shipped mc() only
-   because no keypad mechanic existed yet. Typed entry now matches the
-   design: the answer is read straight off the marked point, not picked
-   out of four options. qK's dealing stays randomized (untouched by this
-   amendment — that ruling was separate).
+   Design amendment (foreman + Megan's ruling, 2026-08-21 afternoon): the
+   design doc always meant this as a KEYPAD round — session 2 shipped
+   mc() only because no keypad mechanic existed yet. Typed entry matches
+   the design: the answer is read straight off the marked point, not
+   picked out of four options.
+   Second amendment (her own phone-test, 2026-08-21 evening): the first
+   ship of this round drew NO line at all — just the marked point and a
+   keypad. Her words: "where is the horizontal line the kids need to
+   drag". Now the line IS there, draggable (varSlider, freeDrag — the
+   keypad is usable from the first paint, never gated on a drag). The
+   drag is a READING aid: land the line on the marked point, read off
+   the k. qK's dealing stays randomized (untouched by either amendment —
+   that ruling was separate).
    ============================================================ */
 function kissRound() {
   for (let tries = 0; tries < 60; tries++) {
     const cv = randParabola();
     const tp = paraTP(cv);
-    const win = windowFor([cv]);
-    if (!win || !mostlyInFrame(cv, win)) continue;
-    const spec = specFor([cv], {
-      win, accent: ACC, ticks: "labels", labels: ["f"],
-      points: [{ x: tp.x, y: tp.y, on: 0, label: ptStr(tp.x, tp.y), place: tp.y < 0 ? "below" : "above" }],
+    const SPAN = 3;
+    const values = [];
+    for (let d = -SPAN; d <= SPAN; d++) values.push(tp.y + d);
+    const win = windowFor([cv], { include: values.map((v) => ({ y: v })) });
+    if (!win) continue;
+    if (!mostlyInFrame(cv, win)) continue;
+    if (!values.every((v) => mostlyInFrame({ kind: "line", a: 0, q: v }, win))) continue;
+
+    /* the marked point never moves — only the dragged line does */
+    const tpPoint = { x: tp.x, y: tp.y, on: 0, label: ptStr(tp.x, tp.y), place: tp.y < 0 ? "below" : "above" };
+    const specOf = (k) => specFor([cv, { kind: "line", a: 0, q: k }], {
+      win, accent: ACC, ticks: "labels", labels: ["f"], tones: ["a", "b"], points: [tpPoint],
     });
-    if (!spec) continue;
+
     /* the p-vs-q classic: typing the turning point's x instead of its y.
        Any other wrong entry gets the generic read-it-off-the-point nudge. */
     const missPX = B("That is the turning point's x — the touch depends on its y, not its x.",
                       "Dit is die draaipunt se x — die net-net-raak hang van sy y af, nie sy x nie.");
     const missGeneric = B("Read the marked point's y straight off the sketch — the touch happens exactly there.",
                           "Lees die gemerkte punt se y reguit van die skets af — die net-net-raak gebeur presies daar.");
-    const built = kp("roots",
-      B("For which k does y = k just touch the graph?", "Vir watter k raak y = k die grafiek net-net?"),
-      tp.y,
-      {
-        graph: spec,
-        stem: B("The turning point is marked.", "Die draaipunt is gemerk."),
+
+    const built = iq({
+      concept: "roots", kind: "slider", accent: ACC,
+      prompt: B("For which k does y = k just touch the graph?", "Vir watter k raak y = k die grafiek net-net?"),
+      stem: B("The turning point is marked.", "Die draaipunt is gemerk."),
+      coach: DRAGTOREAD,
+      hints: [B("The touch happens exactly at the turning point — its y IS the k you want, read it straight off.",
+                "Die net-net-raak gebeur presies by die draaipunt — sy y IS die k wat jy soek, lees dit reguit af.")],
+      /* start away from the answer (the bottom of the range) — the line
+         has to actually travel for a drag-to-read to mean anything */
+      build: (host, done) => varSlider(host, { name: "k", values, specOf, start: 0, freeDrag: true, onComplete: done }),
+      then: kp("roots", "", tp.y, {
         allowNeg: true,
-        hints: [B("The touch happens exactly at the turning point — its y IS the k you want, read it straight off.",
-                  "Die net-net-raak gebeur presies by die draaipunt — sy y IS die k wat jy soek, lees dit reguit af.")],
         solution: [B(`The turning point is ${ptStr(tp.x, tp.y)}, so y = k just touches it at k = ${C(tp.y)}.`,
                      `Die draaipunt is ${ptStr(tp.x, tp.y)}, dus raak y = k dit net-net by k = ${C(tp.y)}.`)],
         answerLabel: C(tp.y),
         wrongMisc: (v) => (near(v, tp.x) ? missPX : missGeneric),
         miscTexts: [missPX, missGeneric],
-      });
+      }),
+    });
     built.debugKiss = { cv, tp, win };
+    /* verify-only: pure data, never rendered twice — see discoverBeat()'s
+       own comment on built.graph above. freeDrag is ALSO verify-only —
+       §4's generic "every interactive round stays locked" sweep needs a
+       way to tell a no-gate round like this one from R1's real gate,
+       since the mechanic itself has no other outward sign of it. */
+    built.graph = specOf(tp.y);
+    built.freeDrag = true;
     return built;
   }
   throw new Error("qK kiss: no honest window fits any draw");
@@ -169,20 +218,44 @@ function kissRound() {
 
 /* ============================================================
    R3 — HOEVEEL SNYPUNTE: k > q / k < q, matching happy/sad
+   ------------------------------------------------------------
+   Her follow-up ruling (2026-08-21 evening): draggable here too, R1's
+   own window-sizing pattern copied straight across (values around the
+   TP, specOf(k) recomputing live snypunte via intersections() at every
+   stop). Unlike R1 there is no gate — freeDrag, chips available from
+   the first paint. The drag is an aid ("the hand does it first"), never
+   a lock; Law 7's no-spoilers gate stays R1-only.
    ============================================================ */
 function countRound() {
   for (let tries = 0; tries < 60; tries++) {
     const cv = randParabola();
     const tp = paraTP(cv);
     if (Math.round(tp.x) === Math.round(tp.y)) continue;   // keep the p-decoy visibly distinct
-    const win = windowFor([cv]);
-    if (!win || !mostlyInFrame(cv, win)) continue;
-    const spec = specFor([cv], {
-      win, accent: ACC, ticks: "labels", labels: ["f"],
-      points: [{ x: tp.x, y: tp.y, on: 0, label: ptStr(tp.x, tp.y), place: tp.y < 0 ? "below" : "above" }],
-    });
-    if (!spec) continue;
-    const up = cv.a > 0;
+    const a = paraStd(cv).a;
+    const SPAN = 3;
+    const values = [];
+    for (let d = -SPAN; d <= SPAN; d++) values.push(tp.y + d);
+    const extremeK = a > 0 ? tp.y + SPAN : tp.y - SPAN;
+    /* closed form, for SIZING the window only — the dots the learner
+       actually sees always come from funclib's own intersections()
+       below, never trusted from this arithmetic (R1's own pattern) */
+    const dx = Math.sqrt(SPAN / Math.abs(a));
+    const include = [
+      ...values.map((v) => ({ y: v })),
+      { x: tp.x - dx, y: extremeK }, { x: tp.x + dx, y: extremeK },
+    ];
+    const win = windowFor([cv], { include });
+    if (!win) continue;
+    if (!mostlyInFrame(cv, win)) continue;
+    if (!values.every((v) => mostlyInFrame({ kind: "line", a: 0, q: v }, win))) continue;
+
+    const specOf = (k) => {
+      const line = { kind: "line", a: 0, q: k };
+      const pts = intersections(cv, line, win.xmin, win.xmax).map((x) => ({ x, y: k, on: 0 }));
+      return specFor([cv, line], { win, accent: ACC, ticks: "labels", labels: ["f"], tones: ["a", "b"], points: pts });
+    };
+
+    const up = a > 0;
     /* "&lt;" not a raw "<" — a bare less-than sign inside HTML content
        gets misread as the start of a tag (by both the browser's own
        parser and verify.html's tag-stripping regex), exactly the trap
@@ -191,28 +264,32 @@ function countRound() {
     const correctIneq = up ? `k ${gt} ${C(tp.y)}` : `k ${lt} ${C(tp.y)}`;
     const flipIneq = up ? `k ${lt} ${C(tp.y)}` : `k ${gt} ${C(tp.y)}`;
     const pIneq = up ? `k ${gt} ${C(tp.x)}` : `k ${lt} ${C(tp.x)}`;
-    const built = mc("roots",
-      B("For which values of k does y = k cut the graph TWICE?", "Vir watter waardes van k sny y = k die grafiek TWEE keer?"),
-      EQ(correctIneq),
-      [
-        { label: EQ(flipIneq), misc: B("Wrong side — check which side of the turning point the arms actually open on.",
-                                         "Verkeerde kant — kyk aan watter kant van die draaipunt die arms werklik oopmaak.") },
-        { label: EQ(pIneq), misc: B("That compares k with p, the turning point's x — two cuts depend on q, its y.",
-                                      "Dit vergelyk k met p, die draaipunt se x — twee snye hang van q af, sy y.") },
-      ],
-      {
-        graph: spec,
-        stem: B("The turning point is marked.", "Die draaipunt is gemerk."),
-        hints: [up
-          ? B("The arms point up, so two cuts happen only above the turning point's own y.",
-              "Die arms wys op, dus gebeur twee snye net bo die draaipunt se eie y.")
-          : B("The arms point down, so two cuts happen only below the turning point's own y.",
-              "Die arms wys af, dus gebeur twee snye net onder die draaipunt se eie y.")],
-        solution: [B(`The turning point's y is ${C(tp.y)}, so two cuts happen when ${correctIneq}.`,
-                     `Die draaipunt se y is ${C(tp.y)}, dus gebeur twee snye wanneer ${correctIneq}.`)],
-        answerLabel: EQ(correctIneq),
-      });
+    const built = iq({
+      concept: "roots", kind: "slider", accent: ACC,
+      prompt: B("For which values of k does y = k cut the graph TWICE?", "Vir watter waardes van k sny y = k die grafiek TWEE keer?"),
+      coach: DRAGIFCUT,
+      hints: [up
+        ? B("The arms point up, so two cuts happen only above the turning point's own y.",
+            "Die arms wys op, dus gebeur twee snye net bo die draaipunt se eie y.")
+        : B("The arms point down, so two cuts happen only below the turning point's own y.",
+            "Die arms wys af, dus gebeur twee snye net onder die draaipunt se eie y.")],
+      build: (host, done) => varSlider(host, { name: "k", values, specOf, freeDrag: true, onComplete: done }),
+      then: mc("roots", "", EQ(correctIneq),
+        [
+          { label: EQ(flipIneq), misc: B("Wrong side — check which side of the turning point the arms actually open on.",
+                                           "Verkeerde kant — kyk aan watter kant van die draaipunt die arms werklik oopmaak.") },
+          { label: EQ(pIneq), misc: B("That compares k with p, the turning point's x — two cuts depend on q, its y.",
+                                        "Dit vergelyk k met p, die draaipunt se x — twee snye hang van q af, sy y.") },
+        ],
+        {
+          solution: [B(`The turning point's y is ${C(tp.y)}, so two cuts happen when ${correctIneq}.`,
+                       `Die draaipunt se y is ${C(tp.y)}, dus gebeur twee snye wanneer ${correctIneq}.`)],
+          answerLabel: EQ(correctIneq),
+        }),
+    });
     built.debugCount = { cv, tp, win, up };
+    built.graph = specOf(values[Math.floor((values.length - 1) / 2)]);
+    built.freeDrag = true;          // verify-only — see kissRound()'s own comment
     return built;
   }
   throw new Error("qK count: no honest window fits any draw");
@@ -225,6 +302,17 @@ function countRound() {
    The CORRECT option is always the count funclib's own intersections()
    actually finds for this k — never a guess from which side k was
    drawn on, so even a mis-classified draw can never ship a wrong key.
+
+   Her follow-up ruling (2026-08-21 evening): draggable here too — the
+   line was fixed ("pure seeing") in the original design, but a fixed
+   line is exactly the static-diagram complaint her R2 phone-test raised.
+   The STEM stays pinned to the asked k throughout — the question, key,
+   options, nudges and the redraw-honesty guard below are all still
+   about THAT k; the slider only ever adds exploration around it. Its
+   range is small and always straddles the asymptote (q itself AND the
+   asked k both always sit inside it), so dragging shows the exact
+   moment the cut appears or disappears — not just the one frozen frame
+   the question is about.
    ============================================================ */
 function hyperbolaCutRound() {
   for (let tries = 0; tries < 60; tries++) {
@@ -235,13 +323,28 @@ function hyperbolaCutRound() {
        is ABOUT the cut point, so it goes into include: — windows crop
        everything else. The truth still comes from intersections() below. */
     const cutX = wantZero ? null : cv.p + cv.a / (k - cv.q);
-    const win = windowFor([cv], { include: cutX == null ? [{ y: k }] : [{ y: k }, { x: cutX, y: k }] });
+
+    /* a small range around q that always holds BOTH q and the asked k
+       (never just k alone, even when k === q) — the whole point is
+       watching the cut appear/disappear, so there must always be at
+       least one stop on each side of the asymptote to drag through. */
+    const lo = Math.min(cv.q - 1, k), hi = Math.max(cv.q + 1, k);
+    const values = [];
+    for (let v = lo; v <= hi; v++) values.push(v);
+
+    const include = [...values.map((v) => ({ y: v })), ...(cutX == null ? [] : [{ x: cutX, y: k }])];
+    const win = windowFor([cv], { include });
     if (!win) continue;
-    const line = { kind: "line", a: 0, q: k };
-    if (!mostlyInFrame(cv, win) || !mostlyInFrame(line, win)) continue;
-    const spec = specFor([cv, line], { win, accent: ACC, ticks: "labels", labels: ["f"], tones: ["a", "b"] });
-    if (!spec) continue;
-    const n = intersections(cv, line, win.xmin, win.xmax).length;
+    if (!mostlyInFrame(cv, win)) continue;
+    if (!values.every((v) => mostlyInFrame({ kind: "line", a: 0, q: v }, win))) continue;
+
+    const specOf = (v) => {
+      const line = { kind: "line", a: 0, q: v };
+      const pts = intersections(cv, line, win.xmin, win.xmax).map((x) => ({ x, y: v, on: 0 }));
+      return specFor([cv, line], { win, accent: ACC, ticks: "labels", labels: ["f"], tones: ["a", "b"], points: pts });
+    };
+
+    const n = intersections(cv, { kind: "line", a: 0, q: k }, win.xmin, win.xmax).length;
     /* a drawn window that contradicts the family truth (a cropped cut, a
        numeric edge) must REDRAW — never ship a round whose solution text
        explains a different picture than its own key */
@@ -256,25 +359,31 @@ function hyperbolaCutRound() {
         : B("Each branch lies on its own side of the asymptote cross — a horizontal line only ever reaches ONE of them.",
             "Elke vlerkie lê aan sy eie kant van die asimptoot-kruis — 'n horisontale lyn bereik altyd net EEN daarvan."),
     }));
-    const built = mc("roots",
-      B("How many times does y = k cut this graph?", "Hoeveel keer sny y = k hierdie grafiek?"),
-      correct, wrongs,
-      {
-        graph: spec,
-        stem: EQ(`y = ${C(k)}`),
-        hints: [zero
-          ? B("This k is the same number as the horizontal asymptote — what happens right on an asymptote?",
-              "Hierdie k is dieselfde getal as die horisontale asimptoot — wat gebeur presies op 'n asimptoot?")
-          : B("Look at where the line crosses — does it reach both branches, or only one?",
-              "Kyk waar die lyn kruis — bereik dit albei vlerkies, of net een?")],
+    const built = iq({
+      concept: "roots", kind: "slider", accent: ACC,
+      prompt: B("How many times does y = k cut this graph?", "Hoeveel keer sny y = k hierdie grafiek?"),
+      stem: EQ(`y = ${C(k)}`),
+      coach: DRAGTOASYM,
+      hints: [zero
+        ? B("This k is the same number as the horizontal asymptote — what happens right on an asymptote?",
+            "Hierdie k is dieselfde getal as die horisontale asimptoot — wat gebeur presies op 'n asimptoot?")
+        : B("Look at where the line crosses — does it reach both branches, or only one?",
+            "Kyk waar die lyn kruis — bereik dit albei vlerkies, of net een?")],
+      build: (host, done) => varSlider(host, {
+        name: "k", values, specOf, start: values.indexOf(k), freeDrag: true, onComplete: done,
+      }),
+      then: mc("roots", "", correct, wrongs, {
         solution: [zero
           ? B(`k = ${C(k)} is exactly the horizontal asymptote, so y = k never meets the graph: 0 cuts.`,
               `k = ${C(k)} is presies die horisontale asimptoot, dus ontmoet y = k die grafiek nooit nie: 0 snye.`)
           : B(`k is not ${C(cv.q)} (the asymptote), so y = k cuts exactly one branch — one cut.`,
               `k is nie ${C(cv.q)} nie (die asimptoot), dus sny y = k presies een vlerkie — een snypunt.`)],
         answerLabel: correct,
-      });
+      }),
+    });
     built.debugOther = { family: "hyperbola", cv, k, win, n };
+    built.graph = specOf(k);
+    built.freeDrag = true;          // verify-only — see kissRound()'s own comment
     return built;
   }
   throw new Error("qK hyperbolaCut: no honest window fits any draw");
@@ -292,13 +401,27 @@ function expCutRound() {
     /* closed form, for SIZING only (R1's pattern) — the cut the round is
        ABOUT must sit inside the window; truth still from intersections() */
     const cutX = wantCut ? cv.p + Math.log((k - cv.q) / cv.a) / Math.log(cv.b) : null;
-    const win = windowFor([cv], { include: cutX == null ? [{ y: k }] : [{ y: k }, { x: cutX, y: k }] });
+
+    /* same draggable-range ruling as the hyperbola round above: a small
+       span that always holds both q and the asked k, so dragging past
+       the asymptote shows the cut stop happening on the far side. */
+    const lo = Math.min(cv.q - 1, k), hi = Math.max(cv.q + 1, k);
+    const values = [];
+    for (let v = lo; v <= hi; v++) values.push(v);
+
+    const include = [...values.map((v) => ({ y: v })), ...(cutX == null ? [] : [{ x: cutX, y: k }])];
+    const win = windowFor([cv], { include });
     if (!win) continue;
-    const line = { kind: "line", a: 0, q: k };
-    if (!mostlyInFrame(cv, win) || !mostlyInFrame(line, win)) continue;
-    const spec = specFor([cv, line], { win, accent: ACC, ticks: "labels", labels: ["f"], tones: ["a", "b"] });
-    if (!spec) continue;
-    const n = intersections(cv, line, win.xmin, win.xmax).length;
+    if (!mostlyInFrame(cv, win)) continue;
+    if (!values.every((v) => mostlyInFrame({ kind: "line", a: 0, q: v }, win))) continue;
+
+    const specOf = (v) => {
+      const line = { kind: "line", a: 0, q: v };
+      const pts = intersections(cv, line, win.xmin, win.xmax).map((x) => ({ x, y: v, on: 0 }));
+      return specFor([cv, line], { win, accent: ACC, ticks: "labels", labels: ["f"], tones: ["a", "b"], points: pts });
+    };
+
+    const n = intersections(cv, { kind: "line", a: 0, q: k }, win.xmin, win.xmax).length;
     /* same insurance as the hyperbola round: the drawn window must agree
        with the family truth or the draw redraws */
     if (n !== (wantCut ? 1 : 0)) continue;
@@ -312,22 +435,28 @@ function expCutRound() {
         : B("This k sits on the OTHER side of the asymptote from the curve — the curve never reaches it.",
             "Hierdie k lê aan die ANDER kant van die asimptoot as die kurwe — die kurwe bereik dit nooit nie."),
     }));
-    const built = mc("roots",
-      B("How many times does y = k cut this graph?", "Hoeveel keer sny y = k hierdie grafiek?"),
-      correct, wrongs,
-      {
-        graph: spec,
-        stem: EQ(`y = ${C(k)}`),
-        hints: [above
-          ? B("The curve lies above its asymptote — so a cut can only happen above the asymptote.",
-              "Die kurwe lê bo sy asimptoot — dus kan 'n snypunt net bo die asimptoot lê.")
-          : B("The curve lies below its asymptote — so a cut can only happen below the asymptote.",
-              "Die kurwe lê onder sy asimptoot — dus kan 'n snypunt net onder die asimptoot lê.")],
+    const built = iq({
+      concept: "roots", kind: "slider", accent: ACC,
+      prompt: B("How many times does y = k cut this graph?", "Hoeveel keer sny y = k hierdie grafiek?"),
+      stem: EQ(`y = ${C(k)}`),
+      coach: DRAGTOASYM,
+      hints: [above
+        ? B("The curve lies above its asymptote — so a cut can only happen above the asymptote.",
+            "Die kurwe lê bo sy asimptoot — dus kan 'n snypunt net bo die asimptoot lê.")
+        : B("The curve lies below its asymptote — so a cut can only happen below the asymptote.",
+            "Die kurwe lê onder sy asimptoot — dus kan 'n snypunt net onder die asimptoot lê.")],
+      build: (host, done) => varSlider(host, {
+        name: "k", values, specOf, start: values.indexOf(k), freeDrag: true, onComplete: done,
+      }),
+      then: mc("roots", "", correct, wrongs, {
         solution: [B(`The curve lies ${above ? "above" : "below"} the asymptote, so y = k only ever cuts it ${above ? "above" : "below"} y = ${C(cv.q)}.`,
                      `Die kurwe lê ${above ? "bo" : "onder"} die asimptoot, dus sny y = k dit net ${above ? "bo" : "onder"} y = ${C(cv.q)}.`)],
         answerLabel: correct,
-      });
+      }),
+    });
     built.debugOther = { family: "exp", cv, k, win, n };
+    built.graph = specOf(k);
+    built.freeDrag = true;          // verify-only — see kissRound()'s own comment
     return built;
   }
   throw new Error("qK expCut: no honest window fits any draw");
