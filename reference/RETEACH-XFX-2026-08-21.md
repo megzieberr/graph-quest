@@ -103,3 +103,21 @@ won't have the same effect. The effect we make on paper is the trail of
 - **Process ruling: prototype FIRST.** One single round built this way →
   her phone-test → only then the full qI redesign. "Before redesigning
   everything, let's make one round, just one, with this new approach."
+
+## Prototype VERDICT (same evening): PASS, with ONE amendment
+
+Her phone-test of the ?proto=xfx round: "it looks great... The rest looks
+perfect." The one change — **TWO SWEEPS, ONE ROW PER SWEEP:**
+
+- First sweep of the line deposits **f's signs only** (the y-values' row).
+- Second sweep deposits **x's signs** underneath.
+- Each pass has one job; the pairs are never laid down simultaneously.
+- Approved as-is by the same verdict: the under-graph readout chip, the
+  app-convention colours (f cyan, x red), no painting step (the answer
+  pick is the commitment), the axis-shade answer with circled sections,
+  the deposit density, the full-range gate.
+
+Extension for the full redesign (foreman's mapping, flag for her eye):
+R2/R3 quotient rounds do the same two-pass dance — first sweep f's row,
+second sweep g's row; R3's single-curve rounds are one sweep (only one
+row exists). The full qI redesign is authorized on this pattern.

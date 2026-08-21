@@ -1,4 +1,4 @@
-# Project status — updated 2026-08-21 (build day 2: sw gq-v24 LIVE, session 3 Ongelykhede 2 SHIPPED — her phone-test is the gate; session 4 pre-authorized on a pass)
+# Project status — updated 2026-08-21 night (build day 2: qI REDESIGNED onto the two-pass live trail after her playtest + reteach, sw gq-v26 LIVE — her phone-test is the gate; session 4 pre-authorized on a pass)
 
 **Read this first.** The v2 spec is [RUN-PLAN.md](RUN-PLAN.md); Megan's own class notes
 are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTIONS-NOTES-DIGEST.md).
@@ -547,11 +547,49 @@ are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTI
     regenerated 738 → 794 bullets (Quest 13 · Ongelykhede 2 in, ready for her
     wording pass).
 
+- 2026-08-21 (night — her playtest of qI: FOUR findings, then the RETEACH):
+  (1) f(x)/g(x) must be a proper stacked fraction, not a slash; (1b) the two
+  givens ran together with a · that read as times; (2) g's section-② signs
+  rendered in section ①; (3) an exp round with an off-window section midpoint
+  collapsed to one tap and played itself, her wrong + surviving the reveal;
+  (4) THE BIG ONE — R1's "x drawn as the line y = x" is wrong pedagogy ("no
+  man, something went VERY wrong here"). She sent her own board pages
+  (funksies-grafieklees PDF, 4 pages) — digested with all her rulings into
+  **reference/RETEACH-XFX-2026-08-21.md**, which OUTRANKS the design docs for
+  this quest. Key rulings: no y = x line ever; x's signs are a second
+  colour-coded row riding f's curve; the question colour-codes its rows; the
+  answer is read off the x-axis (highlighter); one sign per section in-app;
+  the sweep is LIVE ("drag the line through and see the sign changes"); the
+  BOXES ARE OUT for qI entirely — the drag deposits the trail; and
+  prototype-first ("make one round, just one, then I play test it").
+- 2026-08-21 (night — prototype SHIPPED sw gq-v25, push `f721130`, behind
+  ?proto=xfx): trailSweep engine mechanic + one x·f(x) round. Foreman-reviewed
+  (233/233 ×3, played at 375 px). **Her verdict: PASS — "The rest looks
+  perfect" — with ONE amendment: two sweeps, one row per sweep** (first f's
+  signs, then x's).
+- 2026-08-21 (night — qI FULL REDESIGN, Sonnet under the same /go,
+  foreman-reviewed, SHIPPED sw gq-v26, commit `615a1cd` + ship commit,
+  live-verified byte-fresh): all three round types on the two-pass trail
+  (R1: f then x, stacked from f's curve; R2/R3 quotient: f then g, each row
+  on its own curve — HER EYE still owed on that pass order; R3 single: one
+  pass). Stacked fraction via funclib's existing frac(); givens on two
+  .eq-line rows; windowForRound() rejects any draw whose window can't hold
+  every section midpoint (the build measured the old sizing at ~66% violy,
+  0% after); ?proto=xfx door REMOVED — the trail IS the quest; old
+  signPaint/box flows + their §28 checks deleted with their mechanic (the
+  tekentabel precedent), new §28 drives both passes with synthetic pointers.
+  Foreman review: 233/233 ×3 own runs, R2 played through both passes at
+  375 px (chip row-pure, pass-specific coach lines, exactly 2 options
+  differing only at g's root, verbatim "Deel deur nul mag nie" + open-circle
+  scaffold on the wrong pick), fraction + two-line givens confirmed in DOM.
+
 ## Pending on Megan
 
-- 📱 [blocking] 5 min: fully close + reopen Fun Functions, play **Ongelykhede 2**
-  (14th card) — say pass/fail; on a pass session 4 dispatches (pre-authorized
-  2026-08-21: "If it passes the play test, I want to move forward with session 4").
+- 📱 [blocking] 5 min: fully close + reopen Fun Functions, play the REBUILT
+  **Ongelykhede 2** — the whole quest now runs your two-sweep trail. One thing
+  is specifically yours to rule on: in the f/g rounds the passes go f first,
+  THEN g (my extension of your R1 ruling). Pass = session 4 dispatches
+  (pre-authorized: "If it passes the play test, I want to move forward").
 
 ## Next up
 
@@ -624,9 +662,9 @@ js/
          qL-lengths.js · qG-gradient.js · qT-transform.js ·
          qE-equation.js (formFill: tap the marked feature, value pours in;
          dealEachKindFirst) · qK-roots.js (Aard van wortels: y = k, varSlider) ·
-         qI-inequal2.js (Ongelykhede 2: x·f(x) with x drawn as the line y = x,
-         f/g open circle, endpoint discipline; four-step flow
-         cutSockets → signPaint → sweep) ·
+         qI-inequal2.js (Ongelykhede 2: two-pass live trail per her reteach —
+         sockets → trailSweep pass per sign-row → answer with the axis-shade;
+         NO boxes, NO y = x line; spec = reference/RETEACH-XFX-2026-08-21.md) ·
          q7-exam.js      ← map order; screens.js exports questUnlocked()
 supabase/schema.sql   written, not run
 verify.html           the harness: 225 checks, deterministic count — §4b (shared
