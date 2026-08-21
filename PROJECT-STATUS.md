@@ -1,4 +1,4 @@
-# Project status — updated 2026-08-21 night (batch 3 SESSION 2 BUILT + foreman-reviewed, NOT shipped — awaiting her "ship it")
+# Project status — updated 2026-08-21 night (batch 3 SESSION 2 SHIPPED on sw gq-v22 — awaiting her phone-test)
 
 **Read this first.** The v2 spec is [RUN-PLAN.md](RUN-PLAN.md); Megan's own class notes
 are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTIONS-NOTES-DIGEST.md).
@@ -16,9 +16,10 @@ are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTI
   qK's kiss round now TYPES its answer; her other same-day ruling: qK's
   dealing stays randomized. Harness now 203 checks, three identical runs,
   console clean (buzz() no longer calls a vibrate the browser would block);
-  foreman played every kiss-round path at 375 px. Ship needs: add
-  `js/quests/qK-roots.js` AND `js/engine/keypad.js` to sw.js SHELL, bump
-  CACHE gq-v21 → gq-v22, push — on her word only.
+  foreman played every kiss-round path at 375 px. Ship DONE on her
+  "ship it": SHELL gained `js/quests/qK-roots.js` + `js/engine/keypad.js`,
+  CACHE gq-v21 → gq-v22, push `94eb17e`, live-verified byte-fresh (sw v22,
+  qK with the latest review fix, keypad, ui.js buzz guard, index 200).
 - **12 quests LIVE on sw `gq-v21`** (her playtest fixes shipped 2026-08-21,
   push `5c5bf57`, live-verified byte-fresh). qE now has FIVE round types:
   Kies die vorm · Tap die waardes in · Watter vergelyking · **Watter teken
@@ -448,11 +449,11 @@ are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTI
 
 ## Pending on Megan
 
-- 💻 1 min **[blocking]**: say **"ship it"** and the foreman ships session 2
-  (SHELL + cache bump + push) — then 📱 5 min: play **Aard van wortels** on
-  your phone (type an answer on the new keypad in the kiss round), and one
-  fresh **Vind die vergelyking** play to feel the one-of-each dealing.
-  Session 3 (Ongelykhede 2) dispatches after your test.
+- 📱 5 min **[blocking]**: fully close + reopen the PWA (twice — service
+  worker double-load), then play **Aard van wortels** (type an answer on the
+  new keypad in the kiss round) and one fresh **Vind die vergelyking** play
+  to feel the one-of-each dealing. Session 3 (Ongelykhede 2) dispatches
+  after your test.
 
 ## Next up
 
