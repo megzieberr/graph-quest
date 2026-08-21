@@ -4,7 +4,7 @@
    for fonts and images.
 
    ⚠ BUMP THIS VERSION ON EVERY SHIPPABLE CHANGE. */
-const CACHE = "gq-v23";
+const CACHE = "gq-v24";
 
 const SHELL = [
   "./", "./index.html", "./css/styles.css", "./manifest.json",
@@ -21,7 +21,7 @@ const SHELL = [
   "./js/quests/q6-compare.js", "./js/quests/qL-lengths.js",
   "./js/quests/qG-gradient.js", "./js/quests/qT-transform.js",
   "./js/quests/qE-equation.js", "./js/quests/qK-roots.js",
-  "./js/quests/q7-exam.js",
+  "./js/quests/qI-inequal2.js", "./js/quests/q7-exam.js",
 ];
 
 self.addEventListener("install", (e) => {

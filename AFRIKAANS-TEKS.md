@@ -478,7 +478,7 @@ Reël vir regmaak: **verander net die Afrikaanse sin self** — moenie die etike
 - Die gradiënt van die koord — lees twee punte, doen een klein som
 - **[intro-les]** Die gemiddelde gradiënt tussen twee punte op 'n kurwe is die gradiënt van die reguit LYN wat hulle verbind — die koord.
 - **[intro-les]** Klik op die skets om die koord te teken — niks word vir jou uitgewerk nie, jy sien net die lyn.
-- **[intro-les]** Lees dan elke punt se hoogte van die rooster af: gemiddelde gradiënt = Δy oor Δx.
+- **[intro-les]** Lees dan elke punt se hoogte van die rooster af:⟨…⟩
 
 ## Quest 10 · Transformasies
 - ⟨…⟩ op
@@ -528,7 +528,207 @@ Reël vir regmaak: **verander net die Afrikaanse sin self** — moenie die etike
 - **[intro-les]** Nou verskyn sy beeld as solied en f word 'n vaal stippellyn. Dit is die before en after op een skets.
 - **[intro-les]** Die vergelyking word nooit uitgebrei of vereenvoudig nie — dit bly altyd in dieselfde vorm. Jou taak is om die skuif te SIEN.
 
-## Quest 11 · Eksamenmodus
+## Quest 11 · Vind die vergelyking
+- Dis 'n x-afsnit — waar die kurwe die x-as sny. Hierdie vorm vra nie daarvoor nie.
+- Dis die draaipunt — hierdie vorm word uit die x-afsnitte gebou.
+- Dis die y-afsnit — waar die kurwe die y-as sny. Die asimptoot is die stippellyn.
+- Nie daardie een nie — kyk weer waarvoor die vorm vra.
+- Daardie grondtal lê plat teen die asimptoot aan die verkeerde kant — hierdie kurwe lê plat aan die LINKERKANT.
+- Daardie grondtal lê plat teen die asimptoot aan die verkeerde kant — hierdie kurwe lê plat aan die REGTERKANT.
+- Hierdie vorm het die x-afsnitte nodig — hierdie skets merk dit nie.
+- Hierdie vorm het die draaipunt nodig — hierdie skets merk dit nie.
+- Hierdie vorm het net die y-afsnit nodig — hierdie skets merk iets anders.
+- **[vraag]** Watter vorm pas by hierdie skets?
+- **[byskrif]** Wat gee die skets vir jou?
+- **[wenk]** Kyk na wat werklik op die skets gemerk is — watter vorm se letters vul dit direk in?
+- **[metodekaart]** Die gemerkte punt vul ⟨…⟩ direk in, sonder enige werk.
+- happy — arms OP
+- sad — arms AF
+- **[vraag]** Klik op die draaipunt om p en q in te vul.
+- **[byskrif]** y = a(x − p)² + q
+- **[instruksie]** Kry die gemerkte punt en klik daarop.
+- **[wenk]** Die draaipunt se eie koördinate IS p en q — lees dit reguit af, niks om uit te werk nie.
+- Ingevul!
+- **[vraag]** Is f happy of sad?
+- **[metodekaart]** a = ⟨…⟩, dus is f ⟨…⟩.
+- **[vraag]** Klik op elke x-afsnit, links na regs, om x₁ en x₂ in te vul.
+- **[byskrif]** y = a(x − x₁)(x − x₂)
+- **[instruksie]** Begin met die LINKSE x-afsnit.
+- **[wenk]** Elke x-afsnit se eie x-waarde IS x₁ of x₂ — lees dit reguit af, niks om uit te werk nie.
+- die vlerkies lê regs-bo & links-onder van die kruis
+- die vlerkies lê links-bo & regs-onder van die kruis
+- **[vraag]** Klik op die stippellyn-kruis om p en q in te vul.
+- **[instruksie]** Kry waar die twee stippellyne kruis en klik daarop.
+- **[wenk]** Die kruis se eie koördinate IS p en q — lees dit reguit af, niks om uit te werk nie.
+- **[vraag]** In watter paar hoeke lê die vlerkies?
+- **[metodekaart]** a = ⟨…⟩, dus ⟨…⟩
+- bo die asimptoot
+- onder die asimptoot
+- **[vraag]** Klik op die stippellyn-asimptoot om q in te vul.
+- **[instruksie]** Kry die stippel-horisontale lyn en klik daarop.
+- **[wenk]** Die asimptoot se eie y-waarde IS q — lees dit reguit af, niks om uit te werk nie.
+- **[vraag]** Lê die kurwe bo of onder die asimptoot?
+- **[metodekaart]** a = ⟨…⟩, dus lê die kurwe ⟨…⟩ die asimptoot.
+- **[vraag]** Watter vergelyking pas by hierdie skets?
+- **[nudge (na verkeerde keuse)]** Regte grootte, verkeerde teken op p — die hakie draai die teken van wat jy afgelees het om.
+- **[nudge (na verkeerde keuse)]** Dis die y-afsnit se waarde, nie die draaipunt se y nie.
+- **[nudge (na verkeerde keuse)]** Verkeerde teken op a — kyk weer: happy of sad?
+- **[byskrif]** Al vier opsies is in dieselfde vorm geskryf.
+- **[wenk]** Lees die draaipunt reguit van die skets af — dit gee jou p en q direk.
+- Wees versigtig met p: die hakie is (x − p), so 'n draaipunt LINKS van die y-as gee 'n PLUS binne-in.
+- Kyk laastens na die arms: op beteken a is positief, af beteken a is negatief.
+- **[metodekaart]** Die draaipunt is ⟨…⟩, dus is p = ⟨…⟩ en q = ⟨…⟩.
+- Die arms wys ⟨…⟩, dus is a ⟨…⟩.
+- **[nudge (na verkeerde keuse)]** Verkeerde teken op p — die vertikale asimptoot sou aan die ANDER kant lê.
+- **[nudge (na verkeerde keuse)]** Verkeerde teken op q — die horisontale asimptoot sou aan die ANDER kant lê.
+- **[nudge (na verkeerde keuse)]** Verkeerde teken op a — dit sit die vlerkies in die verkeerde paar hoeke.
+- **[wenk]** Lees die asimptoot-kruis reguit van die skets af — dit gee jou p en q direk.
+- Wees versigtig met p: die noemer is (x − p), so 'n kruis LINKS van die y-as gee 'n PLUS onder.
+- Kyk laastens in watter paar hoeke die vlerkies lê — dis die teken van a.
+- **[metodekaart]** Die asimptote kruis by ⟨…⟩, dus is p = ⟨…⟩ en q = ⟨…⟩.
+- Die vlerkies lê regs-bo en links-onder van die kruis, dus is a positief.
+- Die vlerkies lê links-bo en regs-onder van die kruis, dus is a negatief.
+- **[nudge (na verkeerde keuse)]** Verkeerde teken op q — die asimptoot sou aan die ANDER kant van die x-as lê.
+- **[nudge (na verkeerde keuse)]** Verkeerde teken op a — dit sit die kurwe aan die verkeerde kant van die asimptoot.
+- **[wenk]** Lees die asimptoot reguit van die skets af — dit gee jou q direk.
+- Kyk nou na die kurwe teenoor daardie asimptoot: lê dit bo of onder? Dis die teken van a.
+- Kyk laastens aan watter kant die kurwe plat teen die asimptoot lê — plat aan die LINKERKANT beteken 'n grondtal groter as 1, plat aan die REGTERKANT beteken 'n grondtal kleiner as 1.
+- **[metodekaart]** Die asimptoot lê by y = ⟨…⟩, dus is q = ⟨…⟩.
+- Die kurwe lê ⟨…⟩ dit, dus is a ⟨…⟩.
+- Dit lê plat teen die asimptoot aan die ⟨…⟩, dus is die grondtal ⟨…⟩ as 1.
+- **[nudge (na verkeerde keuse)]** Daardie a het die verkeerde teken — dit sou die arms die ander kant toe draai.
+- **[wenk]** Kyk na die arms: wys hulle op of af? Op beteken a is positief, af beteken a is negatief.
+- **[metodekaart]** Die arms wys ⟨…⟩, dus is a ⟨…⟩.
+- **[nudge (na verkeerde keuse)]** Daardie a het die verkeerde teken — dit sou die vlerkies na die ander paar hoeke skuif.
+- **[wenk]** Kry waar die twee stippellyne kruis, en kyk dan in watter paar hoeke die vlerkies lê.
+- **[metodekaart]** Die vlerkies lê regs-bo en links-onder van die kruis, dus is a positief.
+- **[metodekaart]** Die vlerkies lê links-bo en regs-onder van die kruis, dus is a negatief.
+- **[nudge (na verkeerde keuse)]** Daardie a het die verkeerde teken — dit sou die kurwe aan die ander kant van die asimptoot sit.
+- **[wenk]** Kry die stippellyn-asimptoot, en kyk dan of die kurwe bo of onder dit lê.
+- **[metodekaart]** Die kurwe lê ⟨…⟩ die asimptoot, dus is a ⟨…⟩.
+- **[byskrif]** Die twee opsies is dieselfde, behalwe vir die teken van a.
+- (⟨…⟩)ˣ en ⟨…⟩⁻ˣ is twee maniere om dieselfde grafiek te skryf.
+- 'n Grondtal groter as 1 klim na regs; sy omgekeerde klim na links.
+- **[vraag]** Watter grondtal het hierdie kurwe?
+- **[byskrif]** Al vier opsies het dieselfde a en dieselfde q — net die grondtal verskil.
+- **[wenk]** Moenie iets uitwerk nie — kyk aan watter kant die kurwe plat teen die asimptoot lê.
+- Plat aan die LINKERKANT beteken 'n grondtal groter as 1. Plat aan die REGTERKANT beteken 'n grondtal kleiner as 1.
+- 'n Breuk en 'n negatiewe eksponent doen dieselfde werk — albei laat die kurwe na regs wegval.
+- Bly daar nog twee opsies oor? Die gemerkte punt is waar die kurwe die x-as sny — toets elke grondtal by daardie x en net een kom op nul uit.
+- **[metodekaart]** Die kurwe lê plat teen die asimptoot aan die ⟨…⟩, dus is die grondtal ⟨…⟩ as 1.
+- Dit sny die x-as by ⟨…⟩, en net hierdie grondtal kom daar op nul uit.
+- Vind die vergelyking
+- Wat gee die skets vir jou?
+- **[intro-les]** Die vraag: watter vergelyking is dit? Elke rondte in hierdie soektog begin met so 'n prent.
+- **[intro-les]** Die skets merk die draaipunt — dit sê vir jou watter vorm om te gebruik:⟨…⟩
+- **[intro-les]** Die draaipunt se eie koördinate IS p en q — niks word uitgewerk nie, dit word reguit afgelees:⟨…⟩
+
+## Quest 12 · Aard van wortels
+- Trek dit deur die hele reeks — die opsies gaan eers oop as jy elke stop gesien het.
+- Wat het jy gesien?
+- Trek die lyn na die gemerkte punt en lees die k af waarop jy land.
+- Trek die lyn as jy wil kyk hoe dit sny.
+- Trek die lyn na die asimptoot toe en kyk hoe die snypunt verdwyn.
+- Bo die draaipunt: 2 snye. Presies daarop: 1 (dit raak net-net). Onder dit: 0.
+- Onder die draaipunt: 2 snye. Presies daarop: 1 (dit raak net-net). Bo dit: 0.
+- **[afleier]** Bo die draaipunt: 0 snye. Presies daarop: 1. Onder dit: 2.
+- **[afleier]** Onder die draaipunt: 0 snye. Presies daarop: 1. Bo dit: 2.
+- **[nudge (na verkeerde keuse)]** Kyk weer na watter kant die arms werklik oopmaak — dis die kant met twee snye, nie nul nie.
+- **[afleier]** Die lyn sny die grafiek altyd presies een keer, ongeag waar k sit.
+- **[nudge (na verkeerde keuse)]** Trek k weer en tel die kolletjies — party stoppe het twee gegee, ander geeneen nie.
+- **[afleier]** Die aantal snye het niks met die draaipunt te doen nie.
+- **[nudge (na verkeerde keuse)]** Die net-net-raak het by presies een k gebeur — dieselfde getal as die draaipunt se eie y.
+- **[vraag]** Trek k. Kyk hoeveel keer die lyn f ontmoet.
+- **[wenk]** Vergelyk 'n stop bo die draaipunt met een onder dit — tel die kolletjies elke keer.
+- Dit is die draaipunt se x — die net-net-raak hang van sy y af, nie sy x nie.
+- Lees die gemerkte punt se y reguit van die skets af — die net-net-raak gebeur presies daar.
+- **[vraag]** Vir watter k raak y = k die grafiek net-net?
+- **[byskrif]** Die draaipunt is gemerk.
+- **[wenk]** Die net-net-raak gebeur presies by die draaipunt — sy y IS die k wat jy soek, lees dit reguit af.
+- **[metodekaart]** Die draaipunt is ⟨…⟩, dus raak y = k dit net-net by k = ⟨…⟩.
+- **[vraag]** Vir watter waardes van k sny y = k die grafiek TWEE keer?
+- **[wenk]** Die arms wys op, dus gebeur twee snye net bo die draaipunt se eie y.
+- **[wenk]** Die arms wys af, dus gebeur twee snye net onder die draaipunt se eie y.
+- **[nudge (na verkeerde keuse)]** Verkeerde kant — kyk aan watter kant van die draaipunt die arms werklik oopmaak.
+- **[nudge (na verkeerde keuse)]** Dit vergelyk k met p, die draaipunt se x — twee snye hang van q af, sy y.
+- **[metodekaart]** Die draaipunt se y is ⟨…⟩, dus gebeur twee snye wanneer ⟨…⟩.
+- **[nudge (na verkeerde keuse)]** y = k lê hier presies op die asimptoot — 'n hiperbool ontmoet nooit sy eie asimptoot nie.
+- **[nudge (na verkeerde keuse)]** Elke vlerkie lê aan sy eie kant van die asimptoot-kruis — 'n horisontale lyn bereik altyd net EEN daarvan.
+- **[vraag]** Hoeveel keer sny y = k hierdie grafiek?
+- **[wenk]** Hierdie k is dieselfde getal as die horisontale asimptoot — wat gebeur presies op 'n asimptoot?
+- **[wenk]** Kyk waar die lyn kruis — bereik dit albei vlerkies, of net een?
+- **[metodekaart]** k = ⟨…⟩ is presies die horisontale asimptoot, dus ontmoet y = k die grafiek nooit nie: 0 snye.
+- **[metodekaart]** k is nie ⟨…⟩ nie (die asimptoot), dus sny y = k presies een vlerkie — een snypunt.
+- **[nudge (na verkeerde keuse)]** Hierdie k lê aan die kurwe se eie kant van die asimptoot — die kurwe bereik dit wel, presies een keer.
+- **[nudge (na verkeerde keuse)]** Hierdie k lê aan die ANDER kant van die asimptoot as die kurwe — die kurwe bereik dit nooit nie.
+- **[wenk]** Die kurwe lê bo sy asimptoot — dus kan 'n snypunt net bo die asimptoot lê.
+- **[wenk]** Die kurwe lê onder sy asimptoot — dus kan 'n snypunt net onder die asimptoot lê.
+- **[metodekaart]** Die kurwe lê ⟨…⟩ die asimptoot, dus sny y = k dit net ⟨…⟩ y = ⟨…⟩.
+- Aard van wortels
+- Hoeveel keer sny y = k die grafiek?
+- **[intro-les]** Elke rondte in hierdie soektog trek 'n horisontale lyn, y = k, oor 'n grafiek.
+- **[intro-les]** Soms lê die lyn presies op die draaipunt — 'n net-net-raak, net een punt.
+- **[intro-les]** Trek k in jou eie rondtes en kyk hoeveel keer die lyn die grafiek sny.
+
+## Quest 13 · Ongelykhede 2
+- 'n Draaipunt is nie waar die grafiek van teken verander nie — geen lyn daar nie.
+- Jy kort die y-as — dis waar x self van teken verander.
+- Jy kort 'n grens — g se eie x-afsnit tel ook, want f/g is onbepaald daar.
+- Deel deur nul mag nie — daardie x bly oop.
+- Die grafiek bereik nooit werklik sy asimptoot nie — daardie x kan nooit toemaak nie, selfs met ≤ of ≥.
+- Daardie x is 'n regte x-afsnit — 'n werklike punt op die grafiek, so ≤ of ≥ KAN dit toemaak.
+- Lyne geplaas! Merk nou + en − op elke ry.
+- Gemerk! Skuif nou die skandeerlyn links na regs om te toets.
+- ⟨…⟩ van ⟨…⟩ gemerk.
+- ⟨…⟩ van ⟨…⟩ geplaas.
+- **[nudge (na verkeerde keuse)]** Daai is die afdelings waar x en f(x) dieselfde teken deel — kwadrant 1 of 3, x·f(x) is positief daar.
+- **[nudge (na verkeerde keuse)]** Daai is die afdelings waar x en f(x) verskillende tekens het — kwadrant 2 of 4, x·f(x) is negatief daar.
+- **[nudge (na verkeerde keuse)]** 'n Streng ongelykheid sluit nooit die grense in nie.
+- **[nudge (na verkeerde keuse)]** ≤ en ≥ sluit WEL die x-afsnitte in — die y-as grens maak net so toe, dis 'n regte nulpunt, nie 'n asimptoot nie.
+- **[nudge (na verkeerde keuse)]** Die antwoord moet x-waardes wees, nie y nie.
+- **[vraag]** Vir watter waardes van x is x·f(x) ⟨…⟩?
+- **[instruksie]** Stap 1: klik op elke plek wat 'n lyn nodig het — elke x-afsnit en asimptoot van f, en ook die y-as.
+- **[wenk]** x is negatief links van die y-as en positief regs daarvan — daai ry het ook 'n lyn nodig by x = 0.
+- Vergelyk dan die twee rye: dieselfde tekens → +, verskillende tekens → − (kwadrant 1/3 teenoor 2/4).
+- **[vraag]** Lees die antwoord van albei rye af.
+- **[metodekaart]** 1. 'n Lyn by elke x-afsnit/asimptoot van f, EN by die y-as (waar x self van teken verander).
+- 2. Merk elke ry: x se ry (links − · regs +) en f se ry (bo die x-as + · onder −).
+- 3. Dieselfde tekens op albei rye → +. Verskillende tekens → − (kwadrant 1/3 teenoor 2/4).
+- 4. Lees die antwoord van die ooreenstemmende afdelings af, links na regs.
+- **[wenk]** Vergelyk x se ry met f se ry, afdeling vir afdeling.
+- **[vraag]** Vir watter waardes van x is f(x)/g(x) ⟨…⟩?
+- **[instruksie]** Stap 1: klik op elke plek wat 'n lyn nodig het — elke x-afsnit van f, en ook g se eie x-afsnit.
+- **[wenk]** Merk dit presies soos f·g, afdeling vir afdeling — dieselfde tekens +, verskillende tekens −.
+- By g se eie x-afsnit is f/g onbepaald — jy kan nie deur nul deel nie, so daardie x kan nooit toemaak nie.
+- **[vraag]** Kies die antwoord met die regte toe/oop kant.
+- **[metodekaart]** 1. 'n Lyn by elke x-afsnit van f, en by g se eie x-afsnit.
+- 2. Merk f se ry en g se ry, afdeling vir afdeling, presies soos vir f·g.
+- 3. Lees die afdelings af — maar by g se eie x-afsnit is f/g onbepaald, so daardie x maak NOOIT toe nie, selfs met ≤ of ≥.
+- **[wenk]** Elke regte x-afsnit van f kan toemaak. g se eie x-afsnit kan nooit nie — deling deur nul.
+- **[vraag]** Vir watter waardes van x is f(x) ⟨…⟩?
+- **[instruksie]** Stap 1: klik op elke plek wat 'n lyn nodig het — elke x-afsnit en asimptoot.
+- **[wenk]** Merk + en − op f, afdeling vir afdeling, en lees dan jou eie merke af.
+- 'n Regte x-afsnit KAN toemaak onder ≤ of ≥. 'n Asimptoot kan nooit nie — die grafiek bereik dit nooit werklik nie.
+- **[metodekaart]** 1. 'n Lyn by elke x-afsnit en asimptoot.
+- 2. Merk + en − op f, afdeling vir afdeling.
+- 3. 'n Regte x-afsnit kan toemaak (≤/≥). 'n Asimptoot kan nooit nie.
+- **[wenk]** Watter van jou snylyne sit op 'n regte punt van die grafiek, en watter op 'n asimptoot?
+- **[instruksie]** Stap 1: klik op elke plek wat 'n lyn nodig het — f se eie x-afsnitte en asimptote, en ook g se x-afsnit.
+- **[wenk]** Merk dit presies soos f·g, afdeling vir afdeling.
+- 'n Regte x-afsnit van f kan toemaak. f se eie asimptoot en g se eie x-afsnit kan nooit nie.
+- **[metodekaart]** 1. 'n Lyn by elke grens: f se x-afsnitte/asimptoot, en g se x-afsnit.
+- 2. Merk f se ry en g se ry, afdeling vir afdeling.
+- 3. Net 'n regte x-afsnit van f kan toemaak. 'n Asimptoot of g se eie x-afsnit kan nooit nie.
+- **[wenk]** Watter grens is 'n regte punt op f, en watter is 'n asimptoot of g se eie nulpunt?
+- Ongelykhede 2
+- x·f(x), f/g en watter grense kan toemaak
+- **[intro-les]** Die vraag: vir watter waardes van x is x·f(x) > 0?
+- **[intro-les]** Stap 1: 'n lyn deur elke x-afsnit van f — EN deur die y-as, waar x self van teken verander.
+- **[intro-les]** Stap 2: nommer die afdelings, links na regs.
+- **[intro-les]** Stap 3: merk x se ry ÉN f se ry — x is negatief links van 0, positief regs daarvan.
+- **[intro-les]** Stap 4: dieselfde tekens op albei rye → +. Lees dit af: −3 < x < 0 of x > 1.
+
+## Quest 14 · Eksamenmodus
 - **[byskrif]** Die skets toon die halfsirkel h met middelpunt by die oorsprong, en die eksponensiële funksie g gegee deur ⟨…⟩.
 - Skryf die vergelyking van die asimptoot van g neer.
 - Bereken die x-afsnit van g.
@@ -622,9 +822,10 @@ Reël vir regmaak: **verander net die Afrikaanse sin self** — moenie die etike
 - x-as
 - y-as
 - albei
+- Dien in ✓
 
 ## Kaart & skerms
-- Elf soektogte. Elkeen leer jou oë een taak — deur eers jou hand dit te laat doen.
+- Veertien soektogte. Elkeen leer jou oë een taak — deur eers jou hand dit te laat doen.
 
 ## App-raam
 - Kon nie stoor nie — jou vordering kan verlore gaan
