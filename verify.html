@@ -2849,9 +2849,13 @@ for (const lang of ["af", "en"]) {
   });
   check(g, `R3: the inequality direction matches a fresh sign-of-a recompute, and always compares k with q (${countChecked} rounds)`, bad === 0 && countChecked > 0, why);
 
-  /* R4 other families: a hyperbola never claims two cuts, and every
-     k = q round is marked ZERO — never "een" — the exact ruling from the
-     brief. The exp side matches a fresh intersections() recompute too.
+  /* R4 other families: every answer must equal BOTH a fresh
+     intersections() recompute AND the family's closed-form truth
+     (hyperbola: 0 at k = q, exactly 1 otherwise; exp: 1 on the curve's
+     own side of the asymptote, 0 on the other). The double bar is the
+     point — the recompute alone would happily bless a round whose cut
+     was cropped out of its own window (foreman review, session 2: the
+     generators now reject such draws, and this keeps them honest).
      Hyperbola and exp keep SEPARATE bad/why counters — sharing one would
      let a hyperbola failure's message silently leak into the exp check's
      verdict (or vice versa) even though that check itself never saw a
@@ -2869,18 +2873,19 @@ for (const lang of ["af", "en"]) {
       if (Math.abs(dc.k - dc.cv.q) < 1e-9) {
         hypZeroSeen++;
         if (gotN !== 0) { hypBad++; hypWhy = "a k = q hyperbola round was marked correct with a non-zero cut count — never \"een\""; }
-      } else if (gotN === 2) {
-        hypBad++; hypWhy = "a hyperbola round claims TWO cuts — a horizontal line meets a hyperbola at most once";
+      } else if (gotN !== 1) {
+        hypBad++; hypWhy = `a k ≠ q hyperbola round claims ${gotN} cuts — the closed-form truth is exactly one (a cropped cut must redraw, never ship)`;
       }
     } else if (dc.family === "exp") {
       expChecked++;
       if (gotN !== wantN) { expBad++; expWhy = `exp: answer says ${gotN} cuts, funclib's intersections() says ${wantN}`; return; }
-      if (gotN !== 0 && gotN !== 1) { expBad++; expWhy = `exp round claims ${gotN} cuts — only 0 or 1 is possible`; }
+      const expTruth = (dc.k - dc.cv.q) / dc.cv.a > 0 ? 1 : 0;
+      if (gotN !== expTruth) { expBad++; expWhy = `exp round claims ${gotN} cuts — the closed-form side-of-asymptote truth is ${expTruth}`; }
     }
   });
-  check(g, `R4 hyperbola: never claims two cuts, and every k = q round is marked zero, never "een" (${hypChecked} rounds, ${hypZeroSeen} at k = q)`,
+  check(g, `R4 hyperbola: every k ≠ q round claims exactly ONE cut and every k = q round zero, never "een" (${hypChecked} rounds, ${hypZeroSeen} at k = q)`,
     hypBad === 0 && hypChecked > 0 && hypZeroSeen > 0, hypWhy);
-  check(g, `R4 exp: the cut count (0 or 1) always matches a fresh funclib intersections() recompute (${expChecked} rounds)`,
+  check(g, `R4 exp: the cut count matches a fresh intersections() recompute AND the closed-form side-of-asymptote truth (${expChecked} rounds)`,
     expBad === 0 && expChecked > 0, expWhy);
 
   /* every real spec is visible to the harness — §4b/§22/§25a's generic

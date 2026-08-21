@@ -37,7 +37,7 @@ import {
 const ACC = "#60a5fa";
 
 const DRAGALL = B("Drag it through the whole range — the options only open once you have seen every stop.",
-                  "Trek dit deur die hele reeks — die opsies maak eers oop as jy elke stop gesien het.");
+                  "Trek dit deur die hele reeks — die opsies gaan eers oop as jy elke stop gesien het.");
 const SAWWHAT = B("What did you see?", "Wat het jy gesien?");
 
 /* ============================================================
@@ -88,7 +88,7 @@ function discoverBeat() {
       { label: B("The line always cuts the graph exactly once, wherever k sits.",
                  "Die lyn sny die grafiek altyd presies een keer, ongeag waar k sit."),
         misc: B("Drag k again and count the dots — some stops gave two, some gave none.",
-                "Trek k weer en tel die kolletjies — party stoppe het twee gegee, party geeneen.") },
+                "Trek k weer en tel die kolletjies — party stoppe het twee gegee, ander geeneen nie.") },
       { label: B("The number of cuts has nothing to do with the turning point.",
                  "Die aantal snye het niks met die draaipunt te doen nie."),
         misc: B("The touch happened at exactly one k — the same number as the turning point's own y.",
@@ -216,13 +216,21 @@ function hyperbolaCutRound() {
     const cv = randHyperbolaOffAxis();
     const wantZero = pick([true, false, false]);       // weight toward the "≠ q" case
     const k = wantZero ? cv.q : cv.q + pick([-2, -1, 1, 2]);
-    const win = windowFor([cv], { include: [{ y: k }] });
+    /* closed form, for SIZING the window only (R1's pattern): the round
+       is ABOUT the cut point, so it goes into include: — windows crop
+       everything else. The truth still comes from intersections() below. */
+    const cutX = wantZero ? null : cv.p + cv.a / (k - cv.q);
+    const win = windowFor([cv], { include: cutX == null ? [{ y: k }] : [{ y: k }, { x: cutX, y: k }] });
     if (!win) continue;
     const line = { kind: "line", a: 0, q: k };
     if (!mostlyInFrame(cv, win) || !mostlyInFrame(line, win)) continue;
     const spec = specFor([cv, line], { win, accent: ACC, ticks: "labels", labels: ["f"], tones: ["a", "b"] });
     if (!spec) continue;
     const n = intersections(cv, line, win.xmin, win.xmax).length;
+    /* a drawn window that contradicts the family truth (a cropped cut, a
+       numeric edge) must REDRAW — never ship a round whose solution text
+       explains a different picture than its own key */
+    if (n !== (wantZero ? 0 : 1)) continue;
     const zero = n === 0;
     const correct = String(n);
     const wrongs = ["0", "1", "2"].filter((s) => s !== correct).map((s) => ({
@@ -230,7 +238,7 @@ function hyperbolaCutRound() {
       misc: zero
         ? B("y = k sits exactly on the asymptote here — a hyperbola never meets its own asymptote.",
             "y = k lê hier presies op die asimptoot — 'n hiperbool ontmoet nooit sy eie asimptoot nie.")
-        : B("Each vlerkie lies on its own side of the asymptote cross — a horizontal line only ever reaches ONE of them.",
+        : B("Each branch lies on its own side of the asymptote cross — a horizontal line only ever reaches ONE of them.",
             "Elke vlerkie lê aan sy eie kant van die asimptoot-kruis — 'n horisontale lyn bereik altyd net EEN daarvan."),
     }));
     const built = mc("roots",
@@ -242,13 +250,13 @@ function hyperbolaCutRound() {
         hints: [zero
           ? B("This k is the same number as the horizontal asymptote — what happens right on an asymptote?",
               "Hierdie k is dieselfde getal as die horisontale asimptoot — wat gebeur presies op 'n asimptoot?")
-          : B("Look at where the line crosses — does it reach both vlerkies, or only one?",
+          : B("Look at where the line crosses — does it reach both branches, or only one?",
               "Kyk waar die lyn kruis — bereik dit albei vlerkies, of net een?")],
         solution: [zero
           ? B(`k = ${C(k)} is exactly the horizontal asymptote, so y = k never meets the graph: 0 cuts.`,
               `k = ${C(k)} is presies die horisontale asimptoot, dus ontmoet y = k die grafiek nooit nie: 0 snye.`)
-          : B(`k is not ${C(cv.q)} (the asymptote), so y = k cuts exactly one vlerkie: 1 cut.`,
-              `k is nie ${C(cv.q)} nie (die asimptoot), dus sny y = k presies een vlerkie: 1 snit.`)],
+          : B(`k is not ${C(cv.q)} (the asymptote), so y = k cuts exactly one branch — one cut.`,
+              `k is nie ${C(cv.q)} nie (die asimptoot), dus sny y = k presies een vlerkie — een snypunt.`)],
         answerLabel: correct,
       });
     built.debugOther = { family: "hyperbola", cv, k, win, n };
@@ -266,13 +274,19 @@ function expCutRound() {
     const k = wantCut
       ? (above ? cv.q + dK : cv.q - dK)
       : (above ? cv.q - dK : cv.q + dK);
-    const win = windowFor([cv], { include: [{ y: k }] });
+    /* closed form, for SIZING only (R1's pattern) — the cut the round is
+       ABOUT must sit inside the window; truth still from intersections() */
+    const cutX = wantCut ? cv.p + Math.log((k - cv.q) / cv.a) / Math.log(cv.b) : null;
+    const win = windowFor([cv], { include: cutX == null ? [{ y: k }] : [{ y: k }, { x: cutX, y: k }] });
     if (!win) continue;
     const line = { kind: "line", a: 0, q: k };
     if (!mostlyInFrame(cv, win) || !mostlyInFrame(line, win)) continue;
     const spec = specFor([cv, line], { win, accent: ACC, ticks: "labels", labels: ["f"], tones: ["a", "b"] });
     if (!spec) continue;
     const n = intersections(cv, line, win.xmin, win.xmax).length;
+    /* same insurance as the hyperbola round: the drawn window must agree
+       with the family truth or the draw redraws */
+    if (n !== (wantCut ? 1 : 0)) continue;
     const cuts = n === 1;
     const correct = String(n);
     const wrongs = ["0", "1", "2"].filter((s) => s !== correct).map((s) => ({
@@ -290,10 +304,10 @@ function expCutRound() {
         graph: spec,
         stem: EQ(`y = ${C(k)}`),
         hints: [above
-          ? B("The curve lies above its asymptote — a cut can only happen above the asymptote too.",
-              "Die kurwe lê bo sy asimptoot — 'n snit kan net bo die asimptoot ook gebeur.")
-          : B("The curve lies below its asymptote — a cut can only happen below the asymptote too.",
-              "Die kurwe lê onder sy asimptoot — 'n snit kan net onder die asimptoot ook gebeur.")],
+          ? B("The curve lies above its asymptote — so a cut can only happen above the asymptote.",
+              "Die kurwe lê bo sy asimptoot — dus kan 'n snypunt net bo die asimptoot lê.")
+          : B("The curve lies below its asymptote — so a cut can only happen below the asymptote.",
+              "Die kurwe lê onder sy asimptoot — dus kan 'n snypunt net onder die asimptoot lê.")],
         solution: [B(`The curve lies ${above ? "above" : "below"} the asymptote, so y = k only ever cuts it ${above ? "above" : "below"} y = ${C(cv.q)}.`,
                      `Die kurwe lê ${above ? "bo" : "onder"} die asimptoot, dus sny y = k dit net ${above ? "bo" : "onder"} y = ${C(cv.q)}.`)],
         answerLabel: correct,
