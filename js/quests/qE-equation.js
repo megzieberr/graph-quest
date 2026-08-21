@@ -887,7 +887,10 @@ export const questEquation = quest("qE",
     { id: "aSign", concept: "equation", gen: aSignRound, weight: 1 },
     { id: "whichBase", concept: "equation", gen: whichBaseRound, weight: 1 },
   ],
-  { rounds: 6, accent: ACC });
+  /* her dealing ruling (2026-08-21): one round of every kind, every play,
+     until the learner has met all five — then the plain weighted draw.
+     See buildRound()'s dealEachKindFirst handling in quests/index.js. */
+  { rounds: 6, accent: ACC, dealEachKindFirst: true });
 
 /* worked example, once, at module load: a happy parabola, TP marked,
    hakie-vorm filled — the shortest honest path through all three ideas

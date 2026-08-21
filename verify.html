@@ -28,7 +28,7 @@ import { axisGate, sweep } from "./js/engine/interactive.js";
 import { L, UI, setLang } from "./js/i18n.js";
 import { fmtComma } from "./js/check.js";
 import {
-  makeFn, criticalXs, sections, signAt, intersections, paraTP, paraRoots,
+  makeFn, criticalXs, sections, signAt, intersections, paraTP, paraStd, paraRoots,
   makeFn as mf, intervalStr, mergeSections, joinIntervals,
   lengthBetween, avgGradient, gradientStr, eqStr, eqTPStr, EQ, hypXInt,
 } from "./js/funclib.js";
@@ -1103,11 +1103,12 @@ for (const lang of ["af", "en"]) {
      (Lengths) and qG (Average gradient) — between q6 and q7; batch 2 session 2
      (2026-08-12) added a third, qT (Transformations), right after qG. Batch 3
      session 1 (2026-08-14) added a fourth, qE (Vind die vergelyking), right
-     after qT. This literal is a roster-size regression guard, updated
-     deliberately here, not relaxed: it still fails the moment a quest
-     silently vanishes or duplicates. */
-  check(g, "QUESTS holds exactly 12 quests and q4 no longer exists as a separate quest",
-    ids.length === 12 && !ids.includes("q4"), `ids: ${ids.join(", ")}`);
+     after qT. Batch 3 session 2 (2026-08-21) added a fifth, qK (Aard van
+     wortels), right after qE. This literal is a roster-size regression
+     guard, updated deliberately here, not relaxed: it still fails the
+     moment a quest silently vanishes or duplicates. */
+  check(g, "QUESTS holds exactly 13 quests and q4 no longer exists as a separate quest",
+    ids.length === 13 && !ids.includes("q4"), `ids: ${ids.join(", ")}`);
 }
 
 /* ---------- 9. Round D (q6) — pre-drawn cuts, stamp, sweep, scaffold-on-error (session 5) ----------
@@ -1224,8 +1225,8 @@ for (const lang of ["af", "en"]) {
     });
   }
   const ids = QUESTS.map((q) => q.id);
-  check(g, "q6's retired v1 skills (topSweep/whichCuts) are gone and the new compareSweep round is in, QUESTS holds 12 (batch 2 added qL/qG/qT, batch 3 added qE)",
-    !sawOld && sawNew && ids.length === 12 && ids.includes("q6"), `ids: ${ids.join(", ")}`);
+  check(g, "q6's retired v1 skills (topSweep/whichCuts) are gone and the new compareSweep round is in, QUESTS holds 13 (batch 2 added qL/qG/qT, batch 3 added qE/qK)",
+    !sawOld && sawNew && ids.length === 13 && ids.includes("q6"), `ids: ${ids.join(", ")}`);
 
   /* 9f. a two-part answer must show real space around "of"/"or" INSIDE an
      option button. .opt is display:flex, and flex trims the edge spaces off
@@ -2632,6 +2633,311 @@ for (const lang of ["af", "en"]) {
     if (!it.solution || it.solution.length < 2) { bad++; why = `${it.debugEquation.family}: the worked solution has fewer than 2 lines`; }
   });
   check(g, `every "which equation" round has a three-rung ladder and a worked solution (${laddersChecked} rounds)`, bad === 0 && laddersChecked > 0, why);
+
+  host.remove();
+}
+
+/* ---------- 26. qE dealing ruling — one of each kind until met, then random (2026-08-21) — NEVER RELAX ---------- */
+{
+  setLang("af");
+  const g = group("26. qE dealing ruling — one of each kind until met, then random (2026-08-21)");
+
+  const qe = getQuest("qE");
+  const skillIds = qe.skills.map((s) => s.id).sort();
+
+  /* scope: only qE opts into this — every other quest's dealing is
+     byte-for-byte unchanged (buildRound never even reads metState unless
+     the quest itself opted in) */
+  const flagged = QUESTS.filter((q) => q.dealEachKindFirst).map((q) => q.id);
+  check(g, `only qE opts into dealEachKindFirst (saw: ${flagged.join(", ") || "none"})`,
+    flagged.length === 1 && flagged[0] === "qE");
+
+  /* fresh met-state: every play deals one of EVERY usable skill kind —
+     never relaxed */
+  let bad = 0, why = "", repsChecked = 0;
+  for (let rep = 0; rep < 60; rep++) {
+    const rounds = buildRound("qE", {});
+    repsChecked++;
+    if (rounds.length !== qe.rounds) { bad++; why = `dealt ${rounds.length}, wanted ${qe.rounds}`; break; }
+    const seen = new Set(rounds.map((it) => it.skillId));
+    if (!skillIds.every((id) => seen.has(id))) {
+      bad++; why = `fresh state missed a kind — dealt {${[...seen].sort().join(", ")}}, wanted all of {${skillIds.join(", ")}}`;
+      break;
+    }
+  }
+  check(g, `fresh met-state ({}) → every qE skill id is present in the dealt ${qe.rounds} (${repsChecked} reps)`, bad === 0, why);
+
+  /* the same holds when buildRound("qE") is called with no second
+     argument — the real shape a brand-new profile hits in play.js */
+  bad = 0; why = "";
+  for (let rep = 0; rep < 20; rep++) {
+    const rounds = buildRound("qE");
+    const seen = new Set(rounds.map((it) => it.skillId));
+    if (!skillIds.every((id) => seen.has(id))) { bad++; why = "an omitted metState skipped a kind"; break; }
+  }
+  check(g, `buildRound("qE") with NO metState argument behaves exactly like fresh state (20 reps)`, bad === 0, why);
+
+  /* PARTIAL met-state — some kinds already met, some not — still deals
+     ALL FIVE kinds, not just the missing ones (the exact nuance her
+     ruling calls for: "every usable skill", not "every unmet skill") */
+  bad = 0; why = ""; let partialChecked = 0;
+  for (let rep = 0; rep < 30; rep++) {
+    const partial = {};
+    skillIds.forEach((id, i) => { if (i % 2 === 0) partial[id] = true; });   // met every OTHER kind
+    const rounds = buildRound("qE", partial);
+    partialChecked++;
+    const seen = new Set(rounds.map((it) => it.skillId));
+    if (!skillIds.every((id) => seen.has(id))) {
+      bad++; why = `partial met-state dealt {${[...seen].sort().join(", ")}}, wanted all of {${skillIds.join(", ")}}`;
+      break;
+    }
+  }
+  check(g, `a partial met-state (some kinds met, some not) still deals all five — "every kind unmet" gates the guard, never "only the unmet ones" (${partialChecked} reps)`,
+    bad === 0 && partialChecked > 0, why);
+
+  /* FULL met-state — every kind already met — turns the guarantee OFF.
+     Proven the way this file already proves an absence elsewhere (§25d/e's
+     family-coverage sampling): enough independent reps that a surviving
+     guarantee could not hide. PROJECT-STATUS's own measurement (6 rounds
+     from 5 kinds, unguided) skips at least one kind in ~5 plays out of 6,
+     so 60 reps without a single miss would be roughly a 1-in-10^46 fluke —
+     this asserts the coverage constraint is gone, not a statistic about it. */
+  const fullMet = {}; skillIds.forEach((id) => { fullMet[id] = true; });
+  const FULL_REPS = 60;
+  let sawIncomplete = false;
+  for (let rep = 0; rep < FULL_REPS; rep++) {
+    const rounds = buildRound("qE", fullMet);
+    const seen = new Set(rounds.map((it) => it.skillId));
+    if (!skillIds.every((id) => seen.has(id))) { sawIncomplete = true; break; }
+  }
+  check(g, `full met-state (every kind met) → the coverage guarantee is truly OFF, not just rare (at least one of ${FULL_REPS} reps missed a kind — the plain weighted draw)`,
+    sawIncomplete === true);
+
+  /* full met-state still deals a COMPLETE round every time — the plain
+     weighted draw, never an empty or short list */
+  bad = 0; why = "";
+  for (let rep = 0; rep < 20; rep++) {
+    const rounds = buildRound("qE", fullMet);
+    if (rounds.length !== qe.rounds) { bad++; why = `dealt ${rounds.length}, wanted ${qe.rounds}`; break; }
+  }
+  check(g, `full met-state still deals a complete round (${qe.rounds} items, 20 reps)`, bad === 0, why);
+
+  /* the spread rule survives in BOTH phases: never the same skill kind
+     immediately next to itself */
+  bad = 0; why = ""; let adjChecked = 0;
+  [{}, fullMet].forEach((state) => {
+    for (let rep = 0; rep < 30; rep++) {
+      const rounds = buildRound("qE", state);
+      adjChecked++;
+      for (let i = 1; i < rounds.length; i++) {
+        if (rounds[i].skillId === rounds[i - 1].skillId) {
+          bad++; why = `${rounds[i].skillId} appeared twice in a row (${Object.keys(state).length ? "full" : "fresh"} met-state)`;
+        }
+      }
+    }
+  });
+  check(g, `the same skill kind never sits immediately next to itself, in either dealing phase (${adjChecked} deals checked)`, bad === 0, why);
+
+  /* every other quest never even looks at metState — a bogus argument is
+     silently ignored, including the buildAll early-return path (q1) */
+  bad = 0; why = "";
+  ["q5", "q1"].forEach((id) => {
+    try {
+      const withBogus = buildRound(id, { anything: true });
+      const without = buildRound(id);
+      if (withBogus.length !== without.length) { bad++; why = `${id}: metState changed the round count (${withBogus.length} vs ${without.length})`; }
+    } catch (e) { bad++; why = `${id}: threw with a metState argument — ${e.message}`; }
+  });
+  check(g, "a bogus metState argument is silently ignored by quests that never opted in (q5, a weighted-skill quest; q1, a buildAll quest)", bad === 0, why);
+}
+
+/* ---------- 27. Quest qK (Aard van wortels) — batch 3, session 2 ---------- */
+{
+  setLang("af");
+  const g = group("27. Quest qK (Aard van wortels) — batch 3, session 2");
+  const host = document.createElement("div");
+  host.style.position = "absolute"; host.style.left = "-9999px"; host.style.width = "360px";
+  document.body.appendChild(host);
+
+  const REPS = 30;
+  const rounds = [];
+  for (let i = 0; i < REPS; i++) rounds.push(...buildRound("qK"));
+  check(g, `qK builds rounds across ${REPS} reps`, rounds.length > 0, `saw ${rounds.length}`);
+
+  const r1 = rounds.filter((it) => it.skillId === "discover");
+  const r2 = rounds.filter((it) => it.skillId === "kiss");
+  const r3 = rounds.filter((it) => it.skillId === "count");
+  const r4 = rounds.filter((it) => it.skillId === "other");
+  check(g, `all four round types appear across ${REPS} reps (R1 ${r1.length}, R2 ${r2.length}, R3 ${r3.length}, R4 ${r4.length})`,
+    r1.length > 0 && r2.length > 0 && r3.length > 0 && r4.length > 0);
+
+  /* R1: at EVERY slider stop, the marked snypunte count exactly matches
+     funclib's own intersections() — recomputed fresh from the exposed
+     {cv, win}, never trusted from the round's own claim (30 rounds × the
+     full slider range) */
+  let bad = 0, why = "", stopsChecked = 0;
+  r1.slice(0, 30).forEach((it) => {
+    const dc = it.debugRoots;
+    if (!dc) { bad++; why = "an R1 round exposes no debugRoots"; return; }
+    const box = document.createElement("div");
+    host.appendChild(box);
+    let ctl;
+    try { ctl = it.build(box, () => {}, () => {}); } catch (e) { bad++; why = `R1 threw on mount: ${e.message}`; return; }
+    const s = ctl.sliders[0];
+    s.values().forEach((k, idx) => {
+      s.setIndex(idx);
+      stopsChecked++;
+      const wantN = intersections(dc.cv, { kind: "line", a: 0, q: k }, dc.win.xmin, dc.win.xmax).length;
+      const gotN = (s.spec().points || []).length;
+      if (gotN !== wantN) { bad++; why = `k=${k}: drawn ${gotN} snypunte, funclib's intersections() says ${wantN}`; }
+    });
+  });
+  check(g, `R1: the marked snypunte count matches funclib's intersections() at every slider stop (${stopsChecked} stops, 30 rounds × full range)`,
+    bad === 0 && stopsChecked > 0, why);
+
+  /* R1 stays locked (Law 7) until every stop has been visited, and its
+     conclusion is never stated before the commit */
+  bad = 0; why = ""; let lockChecked = 0;
+  r1.slice(0, 15).forEach((it) => {
+    const box = document.createElement("div");
+    host.appendChild(box);
+    let fired = 0;
+    const ctl = it.build(box, () => { fired++; }, () => {});
+    lockChecked++;
+    const s = ctl.sliders[0];
+    const n = s.values().length;
+    for (let k = 0; k < n - 1; k++) s.setIndex(k);
+    if (fired) { bad++; why = "unlocked before the whole range was dragged"; return; }
+    s.setIndex(n - 1);
+    if (fired !== 1) { bad++; why = `fired done ${fired}× on completing the range`; return; }
+    const said = strip(L(it.prompt || "")) + " " + strip(L(it.stem || "")) + " " + strip(L(it.coach || ""));
+    const answer = strip(L(it.then.answerLabel || ""));
+    if (answer && said.includes(answer)) { bad++; why = "states its own finding up front"; }
+  });
+  check(g, `R1 stays locked until every stop is seen, and never states its finding before the commit (${lockChecked} rounds)`, bad === 0 && lockChecked > 0, why);
+
+  /* R2 die kiss: the marked point IS the turning point, and the correct
+     answer equals its y, recomputed fresh from paraTP(), never trusted
+     from the round's own stored value */
+  bad = 0; why = ""; let kissChecked = 0;
+  r2.forEach((it) => {
+    const dc = it.debugKiss;
+    if (!dc) { bad++; why = "an R2 round exposes no debugKiss"; return; }
+    kissChecked++;
+    const freshTp = paraTP(dc.cv);
+    if (Math.abs(freshTp.y - dc.tp.y) > 1e-9) { bad++; why = "exposed tp.y does not match a fresh paraTP() recompute"; return; }
+    const pts = (it.graph && it.graph.points) || [];
+    if (pts.length !== 1) { bad++; why = `R2 sketch marks ${pts.length} points, wanted exactly the turning point`; return; }
+    if (Math.abs(pts[0].y - freshTp.y) > 1e-9 || Math.abs(pts[0].x - freshTp.x) > 1e-9) { bad++; why = "the marked point is not the turning point"; return; }
+    if (strip(L(it.answerLabel)) !== fmtComma(freshTp.y)) { bad++; why = `answer "${strip(L(it.answerLabel))}" does not equal the turning point's y (${fmtComma(freshTp.y)})`; }
+  });
+  check(g, `R2: the marked point is the turning point and the answer equals its y, recomputed fresh (${kissChecked} rounds)`, bad === 0 && kissChecked > 0, why);
+
+  /* R3 hoeveel snypunte: the inequality direction matches a fresh
+     sign-of-a recompute, and always compares k with q (never p) */
+  bad = 0; why = ""; let countChecked = 0;
+  r3.forEach((it) => {
+    const dc = it.debugCount;
+    if (!dc) { bad++; why = "an R3 round exposes no debugCount"; return; }
+    countChecked++;
+    const wantUp = paraStd(dc.cv).a > 0;
+    if (wantUp !== dc.up) { bad++; why = "the round's own up-flag disagrees with a fresh sign-of-a recompute"; return; }
+    const ans = strip(L(it.answerLabel));
+    const wantSign = wantUp ? ">" : "<";
+    if (!ans.includes(wantSign)) { bad++; why = `answer "${ans}" does not carry the "${wantSign}" a fresh recompute of a's sign demands`; }
+    if (!ans.includes(fmtComma(dc.tp.y))) { bad++; why = `answer "${ans}" does not compare k with the turning point's own y (${fmtComma(dc.tp.y)})`; }
+  });
+  check(g, `R3: the inequality direction matches a fresh sign-of-a recompute, and always compares k with q (${countChecked} rounds)`, bad === 0 && countChecked > 0, why);
+
+  /* R4 other families: a hyperbola never claims two cuts, and every
+     k = q round is marked ZERO — never "een" — the exact ruling from the
+     brief. The exp side matches a fresh intersections() recompute too.
+     Hyperbola and exp keep SEPARATE bad/why counters — sharing one would
+     let a hyperbola failure's message silently leak into the exp check's
+     verdict (or vice versa) even though that check itself never saw a
+     single bad round. */
+  let hypBad = 0, hypWhy = "", expBad = 0, expWhy = "";
+  let hypChecked = 0, hypZeroSeen = 0, expChecked = 0;
+  r4.forEach((it) => {
+    const dc = it.debugOther;
+    if (!dc) { hypBad++; hypWhy = "an R4 round exposes no debugOther"; return; }
+    const wantN = intersections(dc.cv, { kind: "line", a: 0, q: dc.k }, dc.win.xmin, dc.win.xmax).length;
+    const gotN = Number(strip(L(it.answerLabel)));
+    if (dc.family === "hyperbola") {
+      hypChecked++;
+      if (gotN !== wantN) { hypBad++; hypWhy = `hyperbola: answer says ${gotN} cuts, funclib's intersections() says ${wantN}`; return; }
+      if (Math.abs(dc.k - dc.cv.q) < 1e-9) {
+        hypZeroSeen++;
+        if (gotN !== 0) { hypBad++; hypWhy = "a k = q hyperbola round was marked correct with a non-zero cut count — never \"een\""; }
+      } else if (gotN === 2) {
+        hypBad++; hypWhy = "a hyperbola round claims TWO cuts — a horizontal line meets a hyperbola at most once";
+      }
+    } else if (dc.family === "exp") {
+      expChecked++;
+      if (gotN !== wantN) { expBad++; expWhy = `exp: answer says ${gotN} cuts, funclib's intersections() says ${wantN}`; return; }
+      if (gotN !== 0 && gotN !== 1) { expBad++; expWhy = `exp round claims ${gotN} cuts — only 0 or 1 is possible`; }
+    }
+  });
+  check(g, `R4 hyperbola: never claims two cuts, and every k = q round is marked zero, never "een" (${hypChecked} rounds, ${hypZeroSeen} at k = q)`,
+    hypBad === 0 && hypChecked > 0 && hypZeroSeen > 0, hypWhy);
+  check(g, `R4 exp: the cut count (0 or 1) always matches a fresh funclib intersections() recompute (${expChecked} rounds)`,
+    expBad === 0 && expChecked > 0, expWhy);
+
+  /* every real spec is visible to the harness — §4b/§22/§25a's generic
+     scans over QUESTS/buildRound already cover qK for free once it sits
+     in the registry; this just confirms every round actually exposes one */
+  bad = 0; why = ""; let graphChecked = 0;
+  rounds.forEach((it) => {
+    graphChecked++;
+    if (!it.graph) { bad++; why = `${it.skillId}: no it.graph exposed to the harness`; }
+  });
+  check(g, `every qK round exposes its real spec via it.graph (${graphChecked} rounds)`, bad === 0 && graphChecked > 0, why);
+
+  /* the language ruling for this quest: "raak" always comes paired with
+     "net-net" (never a bare tangent word), and the design doc's own
+     English working term "kiss" never leaks into a learner-facing
+     string. The general banned-word list (sleep/frase/sywaarts/
+     hoegenaamd/tak(ke)) already sweeps qK for free via §4a's QUESTS loop. */
+  bad = 0; why = ""; let stringsChecked = 0;
+  const qkStrings = [];
+  const collectQK = (v) => { if (v != null) qkStrings.push(strip(L(v))); };
+  const qk = getQuest("qK");
+  collectQK(qk.title); collectQK(qk.blurb);
+  if (qk.intro) qk.intro.beats.forEach((b) => collectQK(b.cap));
+  for (let i = 0; i < 20; i++) {
+    buildRound("qK").forEach((it) => {
+      [it.prompt, it.stem, it.coach, it.unlockMsg].forEach(collectQK);
+      (it.hints || []).forEach(collectQK);
+      const mcq = it.then || it;
+      collectQK(mcq.prompt); collectQK(mcq.answerLabel);
+      (mcq.options || []).forEach((o) => { collectQK(o.label); collectQK(o.misc); });
+      (mcq.solution || []).forEach(collectQK);
+      (mcq.hints || []).forEach(collectQK);
+      collectQK(mcq.hint);
+    });
+  }
+  qkStrings.forEach((s) => {
+    stringsChecked++;
+    if (/\bkiss\b/i.test(s)) { bad++; why = `the design doc's working term "kiss" leaked into a learner string — "${s.slice(0, 60)}"`; }
+    if (/\braak\b/i.test(s) && !/net-net/.test(s)) { bad++; why = `"raak" appears without "net-net" — "${s.slice(0, 60)}"`; }
+  });
+  check(g, `qK's language ruling holds: "raak" always paired with "net-net", the working name "kiss" never leaks into a learner string (${stringsChecked} strings checked)`,
+    bad === 0 && stringsChecked > 0, why);
+
+  /* explicit regression guard for the exact bug batch 2 hit: inserting a
+     new quest must never re-lock Eksamenmodus for a profile that had
+     ALREADY finished it before this quest ever existed — qK itself is
+     never played, and now sits immediately before q7 in the array (the
+     exact shape of the regression: q7 keeps its OWN "done" record, so
+     grandfathering never needs to look at whatever new quest landed
+     right before it). */
+  {
+    const ids = QUESTS.map((q) => q.id);
+    const iq7 = ids.indexOf("q7");
+    const profile = { quests: { q7: { done: true, best: 6, total: 6, plays: 3 } } };
+    check(g, "inserting qK does not re-lock Eksamenmodus for a profile that already finished it before qK existed (qK itself never played)",
+      questUnlocked(profile, iq7) === true);
+  }
 
   host.remove();
 }

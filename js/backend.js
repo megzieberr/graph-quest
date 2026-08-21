@@ -17,7 +17,12 @@ import { SUPABASE } from "./supabase-config.js";
 const KEY = "gq.progress";
 const LOCAL_FLAG = "gq.forceLocal";
 
-const blank = () => ({ name: null, xp: 0, quests: {} });
+/* met: { questId: { skillId: true, … } } — which round KINDS a learner
+   has actually had presented in play (qK's dealEachKindFirst ruling,
+   2026-08-21). Lives at the top level, never inside quests[questId] —
+   saveResult() below REPLACES that record wholesale on every play, so a
+   met-record nested in there would be wiped the moment a quest finished. */
+const blank = () => ({ name: null, xp: 0, quests: {}, met: {} });
 
 function read() {
   try { return { ...blank(), ...JSON.parse(localStorage.getItem(KEY) || "{}") }; }
@@ -45,6 +50,20 @@ const LocalBackend = {
     return p;
   },
   async setName(name) { const p = read(); p.name = name; write(p); return p; },
+  /* "met" = the round was actually PRESENTED to the learner in play
+     (play.js's render() calls this once per skillId per play, the moment
+     an item is shown) — never merely dealt into a list they might quit
+     before reaching. Idempotent: a skill already marked never re-writes. */
+  async markMet(questId, skillId) {
+    const p = read();
+    p.met = p.met || {};
+    p.met[questId] = p.met[questId] || {};
+    if (!p.met[questId][skillId]) {
+      p.met[questId][skillId] = true;
+      write(p);
+    }
+    return p;
+  },
   async reset() { write(blank()); return read(); },
 };
 
@@ -72,6 +91,12 @@ function cloudBackend() {
       return call("gq_save_result", { p_token: token, p_quest: questId, p_score: score, p_total: total, p_xp: xp });
     },
     async setName(name) { return call("gq_set_name", { p_token: token, p_name: name }); },
+    /* mirrors LocalBackend.markMet() — the future cloud schema inherits
+       this field; the RPC itself is not written yet (schema.sql is still
+       "written, not run"), same status as every other gq_* call here. */
+    async markMet(questId, skillId) {
+      return call("gq_mark_met", { p_token: token, p_quest: questId, p_skill: skillId });
+    },
     async reset() { return call("gq_reset", { p_token: token }); },
   };
 }

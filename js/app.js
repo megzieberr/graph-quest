@@ -21,6 +21,7 @@ async function boot() {
   try { profile = await backend.profile(); }
   catch (e) { console.warn("profile load failed, using a blank one", e); }
   profile.quests = profile.quests || {};
+  profile.met = profile.met || {};
   paint();
 }
 
@@ -50,8 +51,28 @@ function play(questId, opts = {}) {
   const p = (profile.quests || {})[questId];
   const fails = p && !p.done ? (p.plays || 0) : 0;   // failed attempts → Boost mode after 2
   screen = { name: "play", questId };
+  const q = getQuest(questId);
+  /* only a quest that opted into dealEachKindFirst (qE) needs its met
+     record threaded through — every other quest ignores both fields */
+  const dealsByKind = !!(q && q.dealEachKindFirst);
   startQuest(questId, finished, () => { screen = { name: "map" }; paint(); },
-    { fails, forceIntro: opts.forceIntro });
+    {
+      fails, forceIntro: opts.forceIntro,
+      met: dealsByKind ? ((profile.met || {})[questId] || {}) : undefined,
+      onRoundShown: dealsByKind ? (skillId) => recordMet(questId, skillId) : null,
+    });
+}
+
+/* persists that `skillId` in `questId` was actually shown to the learner
+   — see play.js's render() for the "presented, not merely dealt" hook.
+   A fresh device (no localStorage) starts the one-of-each deals again,
+   her known and accepted consequence. */
+async function recordMet(questId, skillId) {
+  try {
+    if (backend.markMet) profile = await backend.markMet(questId, skillId);
+  } catch (e) { console.warn("markMet failed", e); }
+  profile.quests = profile.quests || {};
+  profile.met = profile.met || {};
 }
 
 async function finished(res) {
@@ -61,6 +82,7 @@ async function finished(res) {
     toast(L({ en: "Could not save — your progress may be lost", af: "Kon nie stoor nie — jou vordering kan verlore gaan" }), true);
   }
   profile.quests = profile.quests || {};
+  profile.met = profile.met || {};
   screen = { name: "result", res };
   paint();
 }
@@ -68,6 +90,7 @@ async function finished(res) {
 async function resetAll() {
   try { profile = await backend.reset(); } catch { /* ignore */ }
   profile.quests = profile.quests || {};
+  profile.met = profile.met || {};
   screen = { name: "map" };
   paint();
 }

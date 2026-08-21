@@ -65,13 +65,20 @@ const markIntroSeen = (id) => { try { localStorage.setItem(introKey(id), "1"); }
 
 export function startQuest(questId, onFinish, onQuit, opts = {}) {
   const q = getQuest(questId);
-  const items = buildRound(questId);
+  const items = buildRound(questId, opts.met);
   const forceBoost = (() => { try { return new URL(location.href).searchParams.get("boost") === "1"; } catch { return false; } })();
   const boost = forceBoost || (opts.fails || 0) >= BOOST_AFTER;
   S = {
     q, items, i: 0, score: 0, xp: 0, onFinish, onQuit,
     answered: false, usedHint: false, ctl: null,
     boost, fails: opts.fails || 0,
+    /* the qE dealing ruling's "met" hook — fired once per skillId, the
+       moment a round is actually PRESENTED (below in render()), never
+       for a round merely dealt into S.items that the learner may quit
+       before reaching. metShown dedupes across a language-toggle
+       re-render, which re-paints the SAME item without advancing i. */
+    onRoundShown: opts.onRoundShown || null,
+    metShown: new Set(),
   };
   if (q.intro && (opts.forceIntro || !introSeen(q.id))) renderIntro(q);
   else render();
@@ -169,6 +176,11 @@ function render() {
   const app = $("#app");
   const item = S.items[S.i];
   if (!item) return finish();
+
+  if (item.skillId && S.onRoundShown && !S.metShown.has(item.skillId)) {
+    S.metShown.add(item.skillId);
+    S.onRoundShown(item.skillId);
+  }
 
   const view = el("div", "view");
   view.style.setProperty("--accent", item.accent || S.q.accent || "#3aa0ff");

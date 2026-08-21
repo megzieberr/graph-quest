@@ -108,5 +108,14 @@ export function quest(id, title, blurb, skills, opts = {}) {
        end the question. The scaffold-on-every-wrong-answer behaviour is
        unchanged and app-wide; this flag only un-gates the retry. */
     alwaysSecondChance: !!opts.alwaysSecondChance,
+    /* her qE dealing ruling (2026-08-21): while the learner has not yet
+       MET every usable skill kind (a round of it was actually presented
+       in play, tracked in backend.js's profile.met), every play deals one
+       round of EVERY usable kind first, remaining slots from the normal
+       weighted bag — never skipping a kind on an early play. Once every
+       kind is met, dealing goes back to the plain weighted draw. Opt-in:
+       buildRound() in quests/index.js only looks at this for a quest that
+       sets it — every other quest's dealing is unchanged. */
+    dealEachKindFirst: !!opts.dealEachKindFirst,
   };
 }

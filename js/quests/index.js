@@ -48,6 +48,12 @@ import { questTransform } from "./qT-transform.js";
    before it, so it stays last. Working name "Vind die vergelyking", hers to
    rename: which form fits the sketch, then tap the marked feature to fill it. */
 import { questEquation } from "./qE-equation.js";
+/* batch 3, session 2: "Aard van wortels" slots in AFTER questEquation and
+   BEFORE quest7 (Eksamenmodus) — exam mode samples everything that exists
+   before it, so it stays last. y = k only (her kickoff answer,
+   2026-08-21) — the g + k sliding-tangent variant needs the discriminant,
+   which is algebra, Law 1, and stays out. */
+import { questRoots } from "./qK-roots.js";
 import { quest7, TECHOK, resetExam } from "./q7-exam.js";
 import { CONTENT } from "./_graphs.js";
 import { pick, shuffled } from "../ui.js";
@@ -58,7 +64,7 @@ import { pick, shuffled } from "../ui.js";
    The map unlocks strictly in this array's order, so this array IS the order. */
 export const QUESTS = [
   questDiscover, questDiscover2, questRecognize, quest2,
-  quest3, quest5, quest6, questLengths, questGradient, questTransform, questEquation, quest7,
+  quest3, quest5, quest6, questLengths, questGradient, questTransform, questEquation, questRoots, quest7,
 ];
 
 /* flip semicircle content on/off everywhere */
@@ -70,9 +76,57 @@ export function setSemicircles(on) {
 
 export const getQuest = (id) => QUESTS.find((q) => q.id === id);
 
+/* call a skill's generator, retrying a few times on a thrown/failed draw
+   (every generator already retries hard internally — ~60 tries — before
+   ever throwing, so this is belt-and-braces, not the real safety net) */
+function tryGen(s, tries = 10) {
+  for (let i = 0; i < tries; i++) {
+    let built = null;
+    try { built = s.gen(); } catch { built = null; }
+    if (built) return built;
+  }
+  return null;
+}
+
+/* the qE dealing ruling (her 2026-08-21): one round of EVERY usable skill
+   kind, in a random order, then the remaining slots from the normal
+   weighted bag — never the same skill immediately next to itself, the
+   same spread rule the plain draw below already keeps. */
+function buildCoverageRound(q, usable, bag) {
+  const required = shuffled(usable.slice());
+  const out = [];
+  required.forEach((s) => {
+    const built = tryGen(s);
+    if (!built) return;                    // a generator that can never draw is a bug elsewhere, not here
+    built.skillId = s.id;
+    built.concept = built.concept || s.concept;
+    out.push(built);
+  });
+  let guard = 0;
+  while (out.length < q.rounds && guard++ < 400) {
+    const lastId = out.length ? out[out.length - 1].skillId : null;
+    const choices = bag.filter((s) => s.id !== lastId);
+    const s = pick(choices.length ? choices : bag);
+    const built = tryGen(s, 5);
+    if (!built) continue;
+    built.skillId = s.id;
+    built.concept = built.concept || s.concept;
+    out.push(built);
+  }
+  return out;
+}
+
 /* build one round of questions for a quest, respecting the content flag
-   and each skill's weight (a weight of 3 appears three times as often) */
-export function buildRound(questId) {
+   and each skill's weight (a weight of 3 appears three times as often).
+
+   `metState` = { skillId: true, … } — which of this quest's skill kinds
+   the learner has already MET (a round of it was actually presented in
+   play, not merely dealt into a list — see play.js's render()). Only
+   consulted for a quest that opts into dealEachKindFirst (qE); every
+   other quest ignores the second argument entirely, so its dealing is
+   byte-for-byte unchanged. Omitting metState (or passing {}) means
+   "nothing met yet" — the safe default for a fresh profile. */
+export function buildRound(questId, metState) {
   const q = getQuest(questId);
   if (!q) return [];
   if (q.buildAll) {
@@ -83,6 +137,12 @@ export function buildRound(questId) {
   const usable = q.skills.filter((s) => !s.techOnly || CONTENT.semicircles);
   const bag = [];
   usable.forEach((s) => { for (let i = 0; i < (s.weight || 1); i++) bag.push(s); });
+
+  if (q.dealEachKindFirst) {
+    const met = metState || {};
+    const allMet = usable.every((s) => met[s.id]);
+    if (!allMet) return buildCoverageRound(q, usable, bag);
+  }
 
   const out = [];
   let guard = 0;

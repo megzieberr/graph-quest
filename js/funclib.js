@@ -139,13 +139,27 @@ export { EQ, EQL };
    ============================================================ */
 export function intersections(cvA, cvB, xmin, xmax, step = 0.01) {
   const f = makeFn(cvA), g = makeFn(cvB), xs = [];
-  const skip = (x) => (cvA.kind === "hyperbola" && Math.abs(x - cvA.p) < 1e-6) ||
-                      (cvB.kind === "hyperbola" && Math.abs(x - cvB.p) < 1e-6);
+  /* a hyperbola's own vertical asymptote is a genuine discontinuity
+     (±∞ on either side) — a sampling step whose interval STRADDLES it
+     swings from one infinity to the other, which looks exactly like a
+     sign change to a numeric scanner but is never a real intersection.
+     The old `skip()` only caught a sample landing improbably close
+     (1e-6) to p — at the default step of 0.01 that almost never fires,
+     so a hyperbola crossed by the scan reported one spurious extra
+     "root" sitting on top of its own asymptote (found building qK's
+     "how many times does y = k cut it?" round, batch 3 session 2: every
+     k ≠ q hyperbola case came back with 2 cuts instead of the true 1).
+     Skip any STEP that crosses cv.p, not just a sample near it. */
+  const straddles = (p, a, b) => p != null &&
+    ((p > a && p < b) || (p > b && p < a) || Math.abs(a - p) < 1e-9 || Math.abs(b - p) < 1e-9);
+  const crossesAsym = (a, b) =>
+    (cvA.kind === "hyperbola" && straddles(cvA.p, a, b)) ||
+    (cvB.kind === "hyperbola" && straddles(cvB.p, a, b));
   const d = (x) => f(x) - g(x);
   let px = xmin, pv = d(px);
   for (let x = xmin + step; x <= xmax + 1e-9; x += step) {
     const v = d(x);
-    if (skip(x) || skip(px) || !Number.isFinite(pv) || !Number.isFinite(v)) { px = x; pv = v; continue; }
+    if (crossesAsym(px, x) || !Number.isFinite(pv) || !Number.isFinite(v)) { px = x; pv = v; continue; }
     if (pv === 0 || pv * v < 0) {
       let lo = px, hi = x, flo = pv;
       for (let i = 0; i < 60; i++) {
