@@ -6,15 +6,19 @@ are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTI
 ## Where we are
 
 - **Batch 3 session 2 is BUILT, foreman-reviewed and committed LOCALLY**
-  (`29e300b` build + `1c89f53` review fixes, NOT pushed — live is still 12
-  quests on gq-v21). Two jobs, both her 2026-08-21 rulings: the **qE dealing
-  change** (one round of every kind per play until the learner has met all
-  five, then fully random — "met" is stored on-device, so a fresh phone
-  starts the one-of-each deals again) and the new quest **Aard van wortels**
-  (qK, y = k only). Harness now 202 checks, three identical runs, console
-  clean; foreman played qK end-to-end and the qE deal at 375 px. Ship needs:
-  add `js/quests/qK-roots.js` to sw.js SHELL, bump CACHE gq-v21 → gq-v22,
-  push — on her word only.
+  (`29e300b` build + `1c89f53` review fixes + `6bc8757` keypad amendment +
+  `2e6e7e2` its review fixes, NOT pushed — live is still 12 quests on
+  gq-v21). Three jobs, all her 2026-08-21 rulings: the **qE dealing change**
+  (one round of every kind per play until the learner has met all five, then
+  fully random — "met" is stored on-device, so a fresh phone starts the
+  one-of-each deals again), the new quest **Aard van wortels** (qK, y = k
+  only), and the **keypad** (ported from blipwork, her same-day ruling) —
+  qK's kiss round now TYPES its answer; her other same-day ruling: qK's
+  dealing stays randomized. Harness now 203 checks, three identical runs,
+  console clean (buzz() no longer calls a vibrate the browser would block);
+  foreman played every kiss-round path at 375 px. Ship needs: add
+  `js/quests/qK-roots.js` AND `js/engine/keypad.js` to sw.js SHELL, bump
+  CACHE gq-v21 → gq-v22, push — on her word only.
 - **12 quests LIVE on sw `gq-v21`** (her playtest fixes shipped 2026-08-21,
   push `5c5bf57`, live-verified byte-fresh). qE now has FIVE round types:
   Kies die vorm · Tap die waardes in · Watter vergelyking · **Watter teken
@@ -403,29 +407,61 @@ are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTI
     of the intersections() recompute; English canon "branches" restored
     (vlerkies stays Afrikaans-only, the q1b pattern); wording: "die opsies
     gaan eers oop", "een snypunt" (never "1 snit" — q6's snypunt canon).
-  - **Session judgment call, hers to overturn:** the design doc said R2 kiss
-    is a "keypad" round, but no keypad mechanic exists in the app and the same
-    doc rules "no new mechanic" — built as mc() with numeric decoys (the TP's
-    x always among them, the p-vs-q classic). Flagged, not silently resolved.
-  - **Open question for her:** qK itself does NOT use the one-of-each dealing
-    (her ruling named qE). Four kinds into six random rounds skips a kind in
-    roughly half of plays — the same thing she once read as missing rounds.
-    One flag turns it on if she wants it.
+  - ~~Session judgment call: R2 kiss built as mc() for lack of a keypad~~ —
+    **RESOLVED same evening, her ruling: add the keypad, reuse blipwork's.**
+  - ~~Open question: should qK also deal one-of-each?~~ — **RESOLVED same
+    evening, her ruling: qK's dealing stays randomized.**
+
+- 2026-08-21 (late night — keypad amendment, Sonnet build under the same /go
+  envelope, her explicit ruling in-chat; foreman-reviewed):
+  - **`js/engine/keypad.js`** ported from blipwork's js/keypad.js (on-screen
+    keys only, decimal comma, ± when negatives allowed): bilingual submit key
+    ("Dien in ✓"), and the display shows the REAL minus sign (−) while the
+    buffer keeps "-" for editing. Its CSS block ported verbatim — the two
+    apps share the System Window theme, no second look forked.
+  - **`kp()` round shape** in _shared.js + **`paintKeypad()`** in play.js:
+    scores exactly like an mc round (same XP constants, same
+    `secondChanceAllowed()` gate — first wrong entry with a chance clears
+    the buffer and nudges inline, next submit is final at half marks), runs
+    through the same showFeedback(). An empty/garbage submit is inert.
+    `wrongMisc(v)` picks the nudge BY TYPED VALUE — typing the TP's x gets
+    the specific p-vs-q nudge; `miscTexts` lists every possible return so
+    the language sweep can see strings a function hides.
+  - **qK's kiss round converted** from mc() to kp() (the design doc's
+    original R2 spec — mc existed only because no keypad did).
+  - **verify.html: 202 → 203.** §3's generic scan gained a kp branch (it
+    assumed every round has options and would have crashed); §27's R2
+    checks rewritten for the typed shape PLUS a mount-and-drive block that
+    clicks the real on-screen keys: the correct value completes, a wrong
+    one does not.
+  - **Foreman review fixes (`2e6e7e2`):** "van die sketch af" → "skets"
+    (English word inside an Afrikaans nudge — the banned-word check can't
+    see English function words; the native-eye pass exists for this), the
+    stale qK file header, and **ui.js buzz() now skips vibrate without user
+    activation** — harness runs drive mechanics synthetically and the
+    browser logged 485 blocked-vibrate errors per run (measured), noise
+    that once buried a real bug (q5's TDZ). Phone behaviour unchanged: a
+    learner has always tapped before anything buzzes.
+  - Foreman played every kiss path live at 375 px: correct-first (full
+    marks, keypad locks), typed tp.x (final wrong + the specific nudge),
+    Boost second chance (inline nudge → cleared buffer → half marks).
 
 ## Pending on Megan
 
 - 💻 1 min **[blocking]**: say **"ship it"** and the foreman ships session 2
   (SHELL + cache bump + push) — then 📱 5 min: play **Aard van wortels** on
-  your phone, and one fresh **Vind die vergelyking** play to feel the
-  one-of-each dealing. Session 3 (Ongelykhede 2) dispatches after your test.
+  your phone (type an answer on the new keypad in the kiss round), and one
+  fresh **Vind die vergelyking** play to feel the one-of-each dealing.
+  Session 3 (Ongelykhede 2) dispatches after your test.
 
 ## Next up
 
-- **NEXT = the session-2 ship** (foreman, on her "ship it"): SHELL entry for
-  `js/quests/qK-roots.js`, CACHE gq-v21 → gq-v22, push, live check, her phone
-  reopen. Then her phone-test (the Pending item above), then session 3.
-  (Session 2's two build jobs — the qE dealing ruling and Aard van wortels —
-  are DONE and locally committed; see Decisions.)
+- **NEXT = the session-2 ship** (foreman, on her "ship it"): SHELL entries for
+  `js/quests/qK-roots.js` AND `js/engine/keypad.js`, CACHE gq-v21 → gq-v22,
+  push, live check, her phone reopen. Then her phone-test (the Pending item
+  above), then session 3. (Session 2's three build jobs — the qE dealing
+  ruling, Aard van wortels, and the keypad — are DONE and locally committed;
+  see Decisions.)
 - Her two qE design questions are ANSWERED (2026-08-21) and shipped — do not
   re-flag them.
 - **Batch 3 continues (foreman = Fable; her ruling this batch: the foreman
@@ -479,6 +515,8 @@ js/
   backend.js          local + cloud behind one interface (cloud unused, no login yet)
   engine/function-graph.js   the one affine map, square-grid renderer, exit arrows
   engine/slider.js           varSlider/sliderPair — the discovery mechanic (S2)
+  engine/keypad.js           mountKeypad — typed-number entry (qK's kiss round;
+                             ported from blipwork, batch 3 session 2)
   engine/interactive.js      pointDrop · curtain · climb · signPaint · cutSockets ·
                              sweep(+plain/open) · comparePaint · axisGate · tapReveal
   quests/_shared.js (mc dedupes options) · _graphs.js (windowFor: square-grid, returns
@@ -491,7 +529,7 @@ js/
          dealEachKindFirst) · qK-roots.js (Aard van wortels: y = k, varSlider) ·
          q7-exam.js      ← map order; screens.js exports questUnlocked()
 supabase/schema.sql   written, not run
-verify.html           the harness: 202 checks, deterministic count — §4b (shared
+verify.html           the harness: 203 checks, deterministic count — §4b (shared
                       mostlyInFrame) + §22 real-spec off-axis + banned words incl.
                       titles/blurbs/intro caps + groups 14–23's fix-day guards +
                       §25's playtest guards (maths options one per line, no loose
