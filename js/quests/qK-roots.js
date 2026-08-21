@@ -92,7 +92,18 @@ function discoverBeat() {
 
     const specOf = (k) => {
       const line = { kind: "line", a: 0, q: k };
-      const pts = intersections(cv, line, win.xmin, win.xmax).map((x) => ({ x, y: k, on: 0 }));
+      /* foreman review find (2026-08-21 late): funclib's intersections()
+         finds roots by SIGN CHANGE — a tangency touches zero without
+         crossing it, so the scanner is structurally blind at exactly the
+         one stop this whole round is about. At k = tp.y the touch point
+         IS the turning point BY DEFINITION, so the closed form is the
+         honest source here — this is not the usual "closed form for
+         sizing only, truth from intersections()" rule (that one is about
+         sizing vs truth when the numeric tool is trustworthy); here the
+         numeric tool itself cannot see this stop at all. */
+      const pts = Math.abs(k - tp.y) < 1e-9
+        ? [{ x: tp.x, y: k, on: 0 }]
+        : intersections(cv, line, win.xmin, win.xmax).map((x) => ({ x, y: k, on: 0 }));
       return specFor([cv, line], { win, accent: ACC, ticks: "labels", labels: ["f"], tones: ["a", "b"], points: pts });
     };
 
@@ -251,7 +262,13 @@ function countRound() {
 
     const specOf = (k) => {
       const line = { kind: "line", a: 0, q: k };
-      const pts = intersections(cv, line, win.xmin, win.xmax).map((x) => ({ x, y: k, on: 0 }));
+      /* same foreman review find as discoverBeat()'s specOf above: the
+         sign-change scanner cannot see a tangency, so at k = tp.y the
+         touch point is drawn from the closed form (it IS the turning
+         point by definition), never from intersections(). */
+      const pts = Math.abs(k - tp.y) < 1e-9
+        ? [{ x: tp.x, y: k, on: 0 }]
+        : intersections(cv, line, win.xmin, win.xmax).map((x) => ({ x, y: k, on: 0 }));
       return specFor([cv, line], { win, accent: ACC, ticks: "labels", labels: ["f"], tones: ["a", "b"], points: pts });
     };
 

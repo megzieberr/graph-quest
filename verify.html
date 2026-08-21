@@ -2802,8 +2802,17 @@ for (const lang of ["af", "en"]) {
   /* R1: at EVERY slider stop, the marked snypunte count exactly matches
      funclib's own intersections() — recomputed fresh from the exposed
      {cv, win}, never trusted from the round's own claim (30 rounds × the
-     full slider range) */
-  let bad = 0, why = "", stopsChecked = 0;
+     full slider range).
+     NEVER RELAX the kiss-stop carve-out below (foreman review find,
+     2026-08-21 late): intersections() finds roots by SIGN CHANGE, so it
+     is structurally blind to a tangency — at k = tp.y it reports 0 where
+     the truth is exactly ONE touch, right where R1's own correct option
+     teaches "1 (dit raak net-net)". A learner counting dots at that stop
+     would see zero and be told the answer is one. The drawn dot at that
+     ONE stop must be checked against the closed-form turning point
+     directly, never against intersections() — that is the very tool
+     that cannot see it. */
+  let bad = 0, why = "", stopsChecked = 0, kissStopChecked = 0;
   r1.slice(0, 30).forEach((it) => {
     const dc = it.debugRoots;
     if (!dc) { bad++; why = "an R1 round exposes no debugRoots"; return; }
@@ -2815,13 +2824,20 @@ for (const lang of ["af", "en"]) {
     s.values().forEach((k, idx) => {
       s.setIndex(idx);
       stopsChecked++;
+      const pts = s.spec().points || [];
+      if (Math.abs(k - dc.tp.y) < 1e-9) {
+        kissStopChecked++;
+        const ok = pts.length === 1 && Math.abs(pts[0].x - dc.tp.x) < 1e-9 && Math.abs(pts[0].y - dc.tp.y) < 1e-9;
+        if (!ok) { bad++; why = `k=${k} (the kiss stop): drew ${pts.length} snypunte, wanted exactly ONE at the turning point (${dc.tp.x} ; ${dc.tp.y}) — intersections() cannot see a tangency`; }
+        return;
+      }
       const wantN = intersections(dc.cv, { kind: "line", a: 0, q: k }, dc.win.xmin, dc.win.xmax).length;
-      const gotN = (s.spec().points || []).length;
+      const gotN = pts.length;
       if (gotN !== wantN) { bad++; why = `k=${k}: drawn ${gotN} snypunte, funclib's intersections() says ${wantN}`; }
     });
   });
-  check(g, `R1: the marked snypunte count matches funclib's intersections() at every slider stop (${stopsChecked} stops, 30 rounds × full range)`,
-    bad === 0 && stopsChecked > 0, why);
+  check(g, `R1: the marked snypunte count matches funclib's intersections() at every slider stop, and the kiss stop draws the closed-form touch point since intersections() cannot see a tangency (${stopsChecked} stops, ${kissStopChecked} kiss stops, 30 rounds × full range)`,
+    bad === 0 && stopsChecked > 0 && kissStopChecked > 0, why);
 
   /* R1 stays locked (Law 7) until every stop has been visited, and its
      conclusion is never stated before the commit */
@@ -2923,8 +2939,13 @@ for (const lang of ["af", "en"]) {
   /* R3: at EVERY slider stop, the marked snypunte count matches
      funclib's own intersections() — R1's own check pattern above, now
      proven for R3 too since her follow-up ruling gave it the identical
-     draggable-line mechanic (2026-08-21 evening). */
-  bad = 0; why = ""; let countStopsChecked = 0;
+     draggable-line mechanic (2026-08-21 evening).
+     NEVER RELAX the kiss-stop carve-out below — same foreman review find
+     as R1's own check above: intersections() is a sign-change scanner
+     and cannot see the tangency at k = tp.y, so that ONE stop is checked
+     against the closed-form turning point directly, not against the
+     blind tool itself. */
+  bad = 0; why = ""; let countStopsChecked = 0, countKissStopChecked = 0;
   r3.slice(0, 30).forEach((it) => {
     const dc = it.debugCount;
     if (!dc) return;                          // already flagged below
@@ -2936,13 +2957,20 @@ for (const lang of ["af", "en"]) {
     s.values().forEach((k, idx) => {
       s.setIndex(idx);
       countStopsChecked++;
+      const pts = s.spec().points || [];
+      if (Math.abs(k - dc.tp.y) < 1e-9) {
+        countKissStopChecked++;
+        const ok = pts.length === 1 && Math.abs(pts[0].x - dc.tp.x) < 1e-9 && Math.abs(pts[0].y - dc.tp.y) < 1e-9;
+        if (!ok) { bad++; why = `R3 k=${k} (the kiss stop): drew ${pts.length} snypunte, wanted exactly ONE at the turning point (${dc.tp.x} ; ${dc.tp.y}) — intersections() cannot see a tangency`; }
+        return;
+      }
       const wantN = intersections(dc.cv, { kind: "line", a: 0, q: k }, dc.win.xmin, dc.win.xmax).length;
-      const gotN = (s.spec().points || []).length;
+      const gotN = pts.length;
       if (gotN !== wantN) { bad++; why = `R3 k=${k}: drawn ${gotN} snypunte, funclib's intersections() says ${wantN}`; }
     });
   });
-  check(g, `R3: the marked snypunte count matches funclib's intersections() at every slider stop (${countStopsChecked} stops)`,
-    bad === 0 && countStopsChecked > 0, why);
+  check(g, `R3: the marked snypunte count matches funclib's intersections() at every slider stop, and the kiss stop draws the closed-form touch point (${countStopsChecked} stops, ${countKissStopChecked} kiss stops)`,
+    bad === 0 && countStopsChecked > 0 && countKissStopChecked > 0, why);
 
   /* R3 hoeveel snypunte: the inequality direction matches a fresh
      sign-of-a recompute, and always compares k with q (never p).
