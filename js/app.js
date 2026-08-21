@@ -17,14 +17,6 @@ let screen = { name: "map" };
    IEB Grade 11s never meet them. */
 setSemicircles(new URL(location.href).searchParams.get("nosemi") !== "1");
 
-/* ?proto=xfx — her phone-test path for qI's session-3 prototype round
-   (reference/RETEACH-XFX-2026-08-21.md). Auto-starts qI, which the
-   quests/index.js dealer hook then deals ONLY the prototype round kind
-   for (6 rounds) — see buildRound()'s protoXfxOn() branch. No map
-   changes, no new quest card; WITHOUT the flag this const is simply
-   false and nothing below ever runs. */
-const PROTO_XFX = new URL(location.href).searchParams.get("proto") === "xfx";
-
 async function boot() {
   try { profile = await backend.profile(); }
   catch (e) { console.warn("profile load failed, using a blank one", e); }
@@ -110,5 +102,4 @@ if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
   });
 }
 
-if (PROTO_XFX) boot().then(() => play("qI"));
-else boot();
+boot();

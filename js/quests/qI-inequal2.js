@@ -1,53 +1,55 @@
 /* ============================================================
    QUEST I · ONGELYKHEDE 2 — x·f(x), f/g and which endpoints close
-   ★ batch 3, session 3
+   ★ batch 3, session 3 — full redesign (2026-08-21)
    ------------------------------------------------------------
-   Design: GQ-BATCH3-DESIGN.md § "Quest: Ongelykhede 2". The two
-   inequality variants quest 5/6 do not cover, on her full board method
-   — and the sockets return (RUN-PLAN's original kickoff (b)): the
-   learner places EVERY cut line themselves again, like quest 5, not
-   pre-drawn like quest 6's Round D.
+   Rebuilt onto her live-trail method, per the reteach + prototype
+   verdict (reference/RETEACH-XFX-2026-08-21.md): place the cut lines
+   (cutSockets, unchanged from the first build) → sweep the scan line
+   across the WHOLE range TWICE, one sign-row per sweep (trailSweep,
+   engine/interactive.js §6.5) → read off. No signPaint, no boxes, no
+   confirm-tap sweep — a round with only one row (R3's single-curve
+   half) gets ONE sweep, not two.
 
-   Three round types, all sharing ONE flow (her four-step method, in
-   full, for the first time in one round): place the cut lines
-   (cutSockets) → paint + and − on each row (signPaint) → slide the
-   scan line left to right to confirm (sweep) → read off. Quest 5 stops
-   after painting; quest 6 pre-draws its lines and skips straight to
-   stamping — this is the first round to chain all three mechanics in
-   her exact order. No new engine code anywhere in this file.
+   Three round types, one shared flow, one shared mechanic:
+     R1  x·f(x), quadrant signs (Law 5). x has no curve of its own —
+         its row rides f's curve, one step further out (trailSweep's
+         `stackFrom`). Pass 1 lays f's row, pass 2 lays x's row
+         underneath. Its own x-intercept sits exactly at x = 0: the
+         y-axis boundary a learner must remember falls straight out
+         of the picture. Forgetting that socket is THE teaching
+         moment. THERE IS NO LINE y = x — deleted, per her finding #4
+         and "HER FINAL CALL" in the reteach file. Never rebuild it.
+     R2  f/g, the open circle. f and g each carry their OWN sweep,
+         each riding its own drawn curve, in its own colour — pass 1
+         f, pass 2 g. Compared exactly as f·g. The one difference is
+         at g's own root, which NEVER closes — division by zero.
+         Options differ ONLY in < vs ≤ at that one x (her spec,
+         verbatim); the open circle is a scaffold, hidden by default,
+         shown only after a wrong pick (Law 6).
+     R3  endpoint discipline, mixed. Same lesson as R2, generalised: a
+         real x-intercept of f can always close; an asymptote or a
+         quotient's g-root never can. Half the time a single curve —
+         ONE sweep, one row; half the time a quotient — TWO sweeps,
+         f then g, richer than R2 (f may be a hyperbola too, carrying
+         BOTH kinds of forbidden boundary at once).
 
-     R1  x·f(x), quadrant signs (Law 5). "x" is drawn as the straight
-         line y = x — its own sign IS the sign of x, so painting its
-         row is literally the same signPaint mechanic as f's row, and
-         its own x-intercept sits exactly at x = 0: the y-axis boundary
-         a learner must remember falls straight out of the picture
-         instead of needing a special case. Forgetting that socket is
-         THE teaching moment (Law 5's "quadrant signs" — same signs =
-         quadrant 1/3, different = quadrant 2/4).
-     R2  f/g, the open circle. Painted exactly as f·g (same signs +,
-         different −); the one difference is at g's own root, which
-         NEVER closes — division by zero. Options differ ONLY in
-         < vs ≤ at that one x (her spec, verbatim); the open circle is
-         drawn as a scaffold, hidden by default, shown only after a
-         wrong pick (Law 6).
-     R3  endpoint discipline, mixed. The same lesson as R2, generalised:
-         a real x-intercept of f can always close; an asymptote or a
-         quotient's g-root never can. Half the time a single curve
-         (parabola/hyperbola/exp, no g at all); half the time a
-         quotient (richer than R2 — f may be a hyperbola too, so a
-         round can carry BOTH kinds of forbidden boundary at once).
+   Every generator uses the prototype's window rule (windowForRound,
+   below): a candidate window is re-derived so its `include` list also
+   holds every section's own midpoint, for every curve in the round —
+   reject-and-redraw if no window can hold the whole story. This is
+   what killed the old self-playing round: a section whose midpoint
+   the window could not show at all made the whole thing collapse to
+   one paintable box.
 
-   Kiss-stop lesson (PROJECT-STATUS, carried into this brief): NONE of
-   these rounds compare two DRAWN curves for a tangency — R1's second
-   curve is the fixed line y = x (never tangent to anything but its own
-   axis-crossing), R2/R3's quotient rounds only ever look at each
-   curve's OWN zeros/asymptotes, never an f-vs-g intersection. The
-   sign-change blind spot that bit qK's y = k slider does not apply
-   here; nothing in this file calls intersections().
+   Kiss-stop lesson (carried over): NONE of these rounds compare two
+   DRAWN curves for a tangency — R1 has no second drawn curve at all,
+   R2/R3's quotient rounds only ever look at each curve's OWN
+   zeros/asymptotes, never an f-vs-g intersection. Nothing in this
+   file calls intersections().
    ============================================================ */
 import { mc, iq, quest } from "./_shared.js";
 import { B, getLang } from "../i18n.js";
-import { cutSockets, signPaint, sweep, trailSweep } from "../engine/interactive.js";
+import { cutSockets, trailSweep } from "../engine/interactive.js";
 import { renderFunction, computeFunction } from "../engine/function-graph.js";
 import {
   specFor, randParabola, randLine, randHyperbolaOffAxis, randExp,
@@ -55,26 +57,69 @@ import {
 } from "./_graphs.js";
 import {
   criticalXs, sections, signAt, xIntercepts, vAsymptotes, lineXInt,
-  paraTP, parabolaFromRoots, eqStr, pick, makeFn, mergeSections,
+  paraTP, parabolaFromRoots, eqStr, pick, makeFn, mergeSections, frac,
 } from "../funclib.js";
 import { answerString, complementString, flipStrictString, asYString } from "./_intervals.js";
 
 const ACC = "#f87171";
 
+/* app-convention row colours (her prototype verdict): f always cyan;
+   the second row is red — x's abstract sign in R1, g's own drawn
+   colour in the quotient rounds (var(--fg-b) is BOTH already, by
+   construction: specFor()'s curve[1] gets tone "b" automatically). */
+const FTONE = "var(--fg-a)";
+const XTONE = "var(--fg-b)";
+const GTONE = "var(--fg-b)";
+
 /* ---------------- shared helpers ---------------- */
 
-/* signPaint only mounts a paint box where a curve's section-midpoint lies
-   INSIDE the window — same guard quest 5 needs (fix day, 2026-08-14),
-   copied here rather than exported since each quest file owns its own
-   generator-side safety net. */
-function paintable(curvesArr, secs, win) {
-  return curvesArr.every((cv) => {
-    const f = makeFn(cv);
-    return secs.some((s) => {
-      const y = f(s.mid);
-      return Number.isFinite(y) && y >= win.ymin && y <= win.ymax;
-    });
-  });
+/* the prototype's window rule (her ruling: "the picture must hold the
+   whole story"), now required by EVERY qI generator, not just R1. An
+   initial window is built from the curves' own identity features,
+   then a section-truth pass forces a SECOND window whose `include`
+   list also holds every section's own midpoint (for every curve in
+   the round) — the actual thing a learner needs to see, not just
+   intercepts and asymptotes. Reject-and-redraw (return null) if no
+   window at either stage can hold it.
+   cutsFn(win) computes this round's own cut list against a candidate
+   window; it returns null for a draw that fails the round's OWN
+   constraints (crowding, a trap landing on a real zero, …) — that
+   null propagates straight through as "no window", so a single
+   guard function carries every generator's reject conditions. */
+function windowForRound(curves, cutsFn) {
+  const win0 = windowFor(curves);
+  if (!win0) return null;
+  const cuts0 = cutsFn(win0);
+  if (!cuts0 || !cuts0.length) return null;
+  const secs0 = sections(cuts0, win0.xmin, win0.xmax);
+  const include = [];
+  secs0.forEach((s) => curves.forEach((cv) => {
+    const y = makeFn(cv)(s.mid);
+    include.push(Number.isFinite(y) ? { x: s.mid, y } : { x: s.mid });
+  }));
+  const win = windowFor(curves, { include });
+  if (!win) return null;
+  const cuts = cutsFn(win);
+  if (!cuts || !cuts.length) return null;
+  /* the include-list trick above sizes the window off secs0 — the
+     FIRST pass's sections. But a wider window can pull new features
+     into range and shift the cuts (more of the curve becomes visible,
+     or a distant asymptote enters frame), so the FINAL cuts/sections
+     (recomputed against the new window) can differ from secs0 — most
+     often right next to a hyperbola's own asymptote, where a narrow
+     section's midpoint still blows up even in a much bigger window.
+     Verify the actual guarantee directly against the FINAL result
+     rather than trusting the first pass: every final section's own
+     midpoint, for every curve, must genuinely land inside the final
+     window. Reject-and-redraw if not — measured empirically at ~66%
+     of draws failing this without the check, so it is not optional. */
+  const secs = sections(cuts, win.xmin, win.xmax);
+  const allInside = secs.every((s) => curves.every((cv) => {
+    const y = makeFn(cv)(s.mid);
+    return !Number.isFinite(y) || (y >= win.ymin - 1e-6 && y <= win.ymax + 1e-6);
+  }));
+  if (!allInside) return null;
+  return { win, cuts };
 }
 
 const DECOY_MSG = {
@@ -174,52 +219,46 @@ const withScaffoldOn = (x, tableSpec) => {
   return (b) => ({ en: b.en + scaffold, af: b.af + scaffold });
 };
 
-/* re-paint the finished marks onto the fresh svg sweep() just mounted
-   (sweep()'s own mount() replaces host.innerHTML, wiping signPaint's
-   marks — her board method reads the answer OFF the painting, so it
-   must survive; the exact offset formula signPaint itself uses, so a
-   redrawn mark lands exactly where the original paint box sat). */
-function redrawMarks(svg, geo, curvesArr, curveIdx, secs, state) {
-  const SPREAD = 26;
-  curveIdx.forEach((ci, cidx) => {
-    const f = makeFn(curvesArr[ci]);
-    const xOffset = curveIdx.length > 1 ? (cidx - (curveIdx.length - 1) / 2) * SPREAD : 0;
-    secs.forEach((s, si) => {
-      const v = state[ci] && state[ci][si];
-      if (!v) return;
-      const y = f(s.mid);
-      if (!Number.isFinite(y)) return;
-      const px = geo.X(s.mid) + xOffset;
-      const py = geo.Y(y) + (y >= 0 ? -17 : 17);
-      const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
-      t.setAttribute("class", "iv-sign " + (v === 1 ? "plus" : "minus"));
-      t.setAttribute("x", px.toFixed(1));
-      t.setAttribute("y", py.toFixed(1));
-      t.setAttribute("text-anchor", "middle");
-      t.setAttribute("dominant-baseline", "middle");
-      t.textContent = v === 1 ? "+" : "−";
-      svg.appendChild(t);
-    });
-  });
+/* the winning sections, shaded along the x-axis with their numbers
+   circled — her ruling: "the answer is read OFF the x-axis". Appended
+   onto the LAST solution line of every round type, so the axis
+   read-off shows in the feedback panel on every outcome. */
+function answerShadeHtml(tableSpec, secsAll, chosen, win) {
+  const shades = mergeSections(chosen).map((iv) => ({ x0: iv.x0, x1: iv.x1 }));
+  const marked = { ...tableSpec, shades };
+  const g = computeFunction(marked);
+  const chosenIdx = new Set(chosen.map((s) => s.i));
+  const numFrag = secsAll.map((s, i) => {
+    const cx = g.X((s.x0 + s.x1) / 2).toFixed(1), cy = (g.Y(win.ymax) + 12).toFixed(1);
+    const circleEl = chosenIdx.has(s.i) ? `<circle class="iv-sectcircle" cx="${cx}" cy="${cy}" r="9"/>` : "";
+    return `${circleEl}<text class="iv-sectlab${chosenIdx.has(s.i) ? " won" : ""}" x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="middle">${"①②③④⑤⑥⑦⑧"[i] || String(i + 1)}</text>`;
+  }).join("");
+  const svgHtml = renderFunction(marked).replace("</svg>", numFrag + "</svg>");
+  return `<div class="graphbox" style="margin-top:8px">${svgHtml}</div>`;
 }
+const withAnswerShade = (secsAll, chosen, win, tableSpec) => {
+  const html = answerShadeHtml(tableSpec, secsAll, chosen, win);
+  return (b) => ({ en: b.en + html, af: b.af + html });
+};
 
-const COACH_PAINT = B("Lines placed! Now mark + and − on each row.", "Lyne geplaas! Merk nou + en − op elke ry.");
-const COACH_SLIDE = B("Marked! Now slide the scan line left to right to check.",
-                      "Gemerk! Skuif nou die skandeerlyn links na regs om te toets.");
+/* the two-pass coach line: pass 1 names only the first row, pass 2
+   names only the second — each pass promises exactly what it does,
+   never the whole result. `letter` is the row's own plain name ("f",
+   "x", "g") — coach text is textContent-only (play.js), so no HTML. */
+const COACH_LINES_PLACED = B("Lines placed!", "Lyne geplaas!");
+const coachPass1 = (letter) => B(
+  `Now drag the line across to trace ${letter}'s sign.`,
+  `Trek nou die lyn oor om ${letter} se teken te volg.`);
+const coachPass2 = (letter) => B(
+  `Traced! Now drag again to trace ${letter}'s sign underneath.`,
+  `Gevolg! Trek nou weer oor om ${letter} se teken daaronder te volg.`);
 
-/* the shared four-step flow: sockets -> paint -> slide -> unlock the
-   read-off. opts: { spec, cands, secs, curveIdx, names, tableSpec,
-   curvesArr, missingWhy, missingMsg } — missingWhy/missingMsg name ONE
-   specific required cut when it is the only thing still missing
-   (R1's y-axis, R2/R3's g-root); pass null/null for a round with no
-   single boundary worth calling out by name (R3's single-curve half). */
-function buildFlow({ spec, cands, secs, curveIdx, names, tableSpec, curvesArr, missingWhy, missingMsg }) {
+/* the shared flow, every qI round: sockets → one or two trailSweep
+   passes → unlock. No signPaint, no confirm sweep — her ruling. `rows`
+   is trailSweep's own row array (1 or 2 entries; see engine §6.5),
+   already wired by the caller to the round's actual curves. */
+function buildTrailFlow({ spec, cands, secs, tableSpec, rows, missingWhy, missingMsg }) {
   const requiredIdx = new Set(cands.map((c, i) => (c.need ? i : -1)).filter((i) => i >= 0));
-  const truth = {};
-  curveIdx.forEach((ci) => {
-    truth[ci] = {};
-    secs.forEach((s, si) => { truth[ci][si] = signAt(curvesArr[ci], s.mid); });
-  });
   return (host, done, nudge) => {
     const sockets = cutSockets(host, {
       spec, candidates: cands,
@@ -227,23 +266,12 @@ function buildFlow({ spec, cands, secs, curveIdx, names, tableSpec, curvesArr, m
         const same = chosen.size === requiredIdx.size && [...requiredIdx].every((i) => chosen.has(i));
         if (same) {
           sockets.reveal(requiredIdx);
-          nudge(COACH_PAINT);
+          nudge(COACH_LINES_PLACED);
           setTimeout(() => {
-            let painter;
-            painter = signPaint(host, {
-              spec: tableSpec, sections: secs, curves: curveIdx, names,
-              onChange: (state, allMarked) => {
-                if (allMarked && painter) {
-                  painter.reveal(truth);
-                  nudge(COACH_SLIDE);
-                  const finalState = painter.state();
-                  setTimeout(() => startSlide(finalState), 400);
-                  return;
-                }
-                let n = 0, total = 0;
-                curveIdx.forEach((ci) => { Object.values(state[ci]).forEach((v) => { total++; if (v !== 0) n++; }); });
-                nudge(B(`Marked ${n} of ${total}.`, `${n} van ${total} gemerk.`));
-              },
+            trailSweep(host, {
+              spec: tableSpec, sections: secs, rows,
+              onPassStart: (i, row) => nudge(i === 0 ? coachPass1(row.name) : coachPass2(row.name)),
+              onComplete: () => setTimeout(done, 300),
             });
           }, 350);
           return;
@@ -255,20 +283,6 @@ function buildFlow({ spec, cands, secs, curveIdx, names, tableSpec, curvesArr, m
         else nudge(B(`Placed ${chosen.size} of ${requiredIdx.size}.`, `${chosen.size} van ${requiredIdx.size} geplaas.`));
       },
     });
-    function startSlide(finalState) {
-      let finished = false;
-      sweep(host, {
-        spec: tableSpec, sections: secs, plain: true, open: true,
-        onEnter: (sec, i) => {
-          if (finished || i < secs.length - 1) return;
-          finished = true;
-          setTimeout(done, 300);
-        },
-      });
-      const svg = host.querySelector("svg");
-      const geo = computeFunction(tableSpec);
-      redrawMarks(svg, geo, curvesArr, curveIdx, secs, finalState);
-    }
     return sockets;
   };
 }
@@ -284,33 +298,50 @@ function addTPDecoy(cands, f, win) {
   cands.push({ x: tpx, why: "tp", need: false });
 }
 
+/* R2/R3-quotient share the stacked f(x)/g(x) fraction (her CSS-only
+   vinculum, funclib's own frac() — already used for a hyperbola's
+   coefficient) and the two-givens-on-separate-lines stem. Both are
+   colour-coded to match their sweep rows, matching the fraction. */
+const QUOTIENT_FRAC = frac(`<span style="color:${FTONE}">f(x)</span>`, `<span style="color:${GTONE}">g(x)</span>`);
+function quotientStem(f, g) {
+  const fRhs = eqStr(f, "").replace(/^\s*=\s*/, "");
+  const gRhs = eqStr(g, "").replace(/^\s*=\s*/, "");
+  return `<span class="eq-line">f(x) = ${fRhs}</span><span class="eq-line">g(x) = ${gRhs}</span>`;
+}
+
 /* ---------------- the skills ---------------- */
 
 const SKILLS = {
-  /* ---------- R1: x·f(x), quadrant signs ---------- */
+  /* ---------- R1: x·f(x), quadrant signs — two sweeps, f then x ---------- */
   timesFRound: () => {
     for (let tries = 0; tries < 60; tries++) {
-      const xLine = { kind: "line", a: 1, q: 0 };
-      const f = pick([randParabola(), randHyperbolaOffAxis(), randExp(), randLine()]);
-      if (f.kind === "line" && f.a === 1 && f.q === 0) continue;   // f would BE the x-line itself
-      const win = windowFor([f, xLine]);
-      if (!win) continue;
-      if (!mostlyInFrame(f, win) || !mostlyInFrame(xLine, win)) continue;
-      const spec = specFor([f, xLine], { win, accent: ACC, ticks: "labels", labels: ["f", "x"], asymLabels: true });
-      const cuts = criticalXs([f, xLine], win.xmin, win.xmax);
-      if (cuts.length < 2) continue;
-      const cands = cuts.map((c) => ({ x: c.x, why: Math.abs(c.x) < 1e-6 ? "yaxis" : c.why, need: true }));
+      /* parabola / hyperbola (off-axis) / exp — NO line: a line for f
+         would make x·f(x) a familiar two-line quadratic picture, not
+         the curve-plus-y-axis picture her reteach spec draws */
+      const f = pick([randParabola(), randHyperbolaOffAxis(), randExp()]);
+      const cutsFn = (w) => {
+        const fCuts = criticalXs([f], w.xmin, w.xmax);
+        if (!fCuts.length || fCuts.some((c) => Math.abs(c.x) < 1.0)) return null;   // keep the y-axis cut clean of crowding
+        return [...fCuts, { x: 0, why: "yaxis" }].sort((a, b) => a.x - b.x);
+      };
+      const wr = windowForRound([f], cutsFn);
+      if (!wr) continue;
+      const { win, cuts } = wr;
+      if (!mostlyInFrame(f, win)) continue;
+
+      const cands = cuts.map((c) => ({ x: c.x, why: c.why, need: true }));
       addTPDecoy(cands, f, win);
       cands.sort((a, b) => a.x - b.x);
+      const spec = specFor([f], { win, accent: ACC, ticks: "labels", labels: ["f"], asymLabels: true });
       const tableSpec = { ...spec, vlines: cuts.map((c) => ({ x: c.x })) };
       const secs = sections(cuts, win.xmin, win.xmax);
-      if (!paintable([f, xLine], secs, win)) continue;
 
       const wantNeg = pick([true, false]);
       const strict = pick([true, false]);
       const lang = getLang();
       const chosen = secs.filter((s) => {
-        const p = signAt(xLine, s.mid) * signAt(f, s.mid);
+        const xs = s.mid < 0 ? -1 : 1;
+        const p = xs * signAt(f, s.mid);
         return wantNeg ? p < 0 : p > 0;
       });
       if (!chosen.length || chosen.length === secs.length) continue;
@@ -340,69 +371,78 @@ const SKILLS = {
           misc: B("The answer must be x-values, not y.", "Die antwoord moet x-waardes wees, nie y nie.") },
       ];
       const sym = wantNeg ? (strict ? "&lt; 0" : "≤ 0") : (strict ? "&gt; 0" : "≥ 0");
+      const xSpan = `<span style="color:${XTONE}">x</span>`;
+      const fSpan = `<span style="color:${FTONE}">f(x)</span>`;
+      const rows = [
+        { tone: FTONE, name: "f", sign: (x) => signAt(f, x), anchorCurve: 0 },
+        { tone: XTONE, name: "x", sign: (x) => (x < 0 ? -1 : x > 0 ? 1 : 0), stackFrom: 0 },
+      ];
 
       const built = iq({
-        concept: "inequal2", kind: "cutPaintSweep", accent: ACC,
-        prompt: B(`For which values of x is <span class='eq'>x·f(x) ${sym}</span>?`,
-                  `Vir watter waardes van x is <span class='eq'>x·f(x) ${sym}</span>?`),
+        concept: "inequal2", kind: "trailSweep", accent: ACC,
+        prompt: B(`For which values of x is <span class='eq'>${xSpan}·${fSpan} ${sym}</span>?`,
+                  `Vir watter waardes van x is <span class='eq'>${xSpan}·${fSpan} ${sym}</span>?`),
         stem: `<span class="eq">${eqStr(f, "f(x)")}</span>`,
         coach: B("Step 1: tap on every place that needs a line — every x-intercept and asymptote of f, and the y-axis too.",
                  "Stap 1: klik op elke plek wat 'n lyn nodig het — elke x-afsnit en asimptoot van f, en ook die y-as."),
         hints: [
           B("x is negative left of the y-axis and positive right of it — that row needs a line at x = 0 too.",
             "x is negatief links van die y-as en positief regs daarvan — daai ry het ook 'n lyn nodig by x = 0."),
-          B("Then compare the two rows: same signs → +, different signs → − (quadrant 1/3 versus 2/4).",
-            "Vergelyk dan die twee rye: dieselfde tekens → +, verskillende tekens → − (kwadrant 1/3 teenoor 2/4)."),
+          B("Drag the line across and watch both signs — same signs → +, different signs → − (quadrant 1/3 versus 2/4).",
+            "Trek die lyn oor en kyk na albei tekens — dieselfde tekens → +, verskillende tekens → − (kwadrant 1/3 teenoor 2/4)."),
         ],
-        build: buildFlow({
-          spec, cands, secs, curveIdx: [0, 1], names: ["f", "x"], tableSpec, curvesArr: [f, xLine],
-          missingWhy: "yaxis", missingMsg: MISSING_MSG.yaxis,
+        build: buildTrailFlow({
+          spec, cands, secs, tableSpec, rows, missingWhy: "yaxis", missingMsg: MISSING_MSG.yaxis,
         }),
         then: mc("inequal2",
-          B("Read the answer off both rows.", "Lees die antwoord van albei rye af."),
+          B("Read the answer off the trail you just swept.", "Lees die antwoord van die spoor wat jy pas deurgeskuif het."),
           correct, wrongs,
           { answerLabel: correct,
             solution: [
               B("1. A line at every x-intercept/asymptote of f, AND at the y-axis (where x itself changes sign).",
                 "1. 'n Lyn by elke x-afsnit/asimptoot van f, EN by die y-as (waar x self van teken verander)."),
-              B("2. Mark each row: x's row (left −, right +) and f's row (above the x-axis +, below −).",
-                "2. Merk elke ry: x se ry (links − · regs +) en f se ry (bo die x-as + · onder −)."),
+              B("2. Drag the line across for f's sign. Drag it again for x's sign, underneath.",
+                "2. Trek die lyn oor vir f se teken. Trek dit weer oor vir x se teken, daaronder."),
               B("3. Same signs on both rows → +. Different signs → − (quadrant 1/3 versus 2/4).",
                 "3. Dieselfde tekens op albei rye → +. Verskillende tekens → − (kwadrant 1/3 teenoor 2/4)."),
-              B("4. Read the answer off the matching sections, left to right.",
-                "4. Lees die antwoord van die ooreenstemmende afdelings af, links na regs."),
+              withAnswerShade(secs, chosen, win, tableSpec)(
+                B("4. Read the answer off the highlighted sections, left to right.",
+                  "4. Lees die antwoord van die uitgeligte afdelings af, links na regs.")),
             ],
-            hint: B("Compare x's row with f's row, section by section.", "Vergelyk x se ry met f se ry, afdeling vir afdeling.") }),
+            hint: B("Compare x's sign with f's sign as the line crosses each cut.",
+                    "Vergelyk x se teken met f se teken soos die lyn elke snylyn kruis.") }),
       });
-      built.debugTimesF = { f, xLine, win, cuts, secs, cands, wantNeg, strict };
+      built.debugTimesF = { f, win, cuts, secs, cands, wantNeg, strict };
       built.graph = tableSpec;
       return built;
     }
     throw new Error("qI timesF: no honest window fits any draw");
   },
 
-  /* ---------- R2: f/g, the open circle ---------- */
+  /* ---------- R2: f/g, the open circle — two sweeps, f then g ---------- */
   quotientOpenRound: () => {
     for (let tries = 0; tries < 60; tries++) {
       const f = pick([randParabola(), randExp()]);      // no asymptote of its own — g's root stays the ONE forbidden x
       const g = randLine();
       const gRoot = lineXInt(g);
-      const win = windowFor([f, g]);
-      if (!win) continue;
+      const cutsFn = (w) => {
+        if (gRoot == null || gRoot <= w.xmin + 0.5 || gRoot >= w.xmax - 0.5) return null;
+        const fZeros = xIntercepts(f, w.xmin, w.xmax);
+        if (!fZeros.length) return null;
+        if (fZeros.some((x) => Math.abs(x - gRoot) < 0.5)) return null;   // keep the trap distinct from a real f-zero
+        return [...fZeros.map((x) => ({ x, why: "zero" })), { x: gRoot, why: "gzero" }].sort((a, b) => a.x - b.x);
+      };
+      const wr = windowForRound([f, g], cutsFn);
+      if (!wr) continue;
+      const { win, cuts } = wr;
       if (!mostlyInFrame(f, win) || !mostlyInFrame(g, win)) continue;
-      if (gRoot == null || gRoot <= win.xmin + 0.5 || gRoot >= win.xmax - 0.5) continue;
-      const fZerosRaw = xIntercepts(f, win.xmin, win.xmax);
-      if (!fZerosRaw.length) continue;
-      if (fZerosRaw.some((x) => Math.abs(x - gRoot) < 0.5)) continue;   // keep the trap distinct from a real f-zero
 
-      const spec = specFor([f, g], { win, accent: ACC, ticks: "labels", labels: ["f", "g"], asymLabels: true });
-      const cuts = [...fZerosRaw.map((x) => ({ x, why: "zero" })), { x: gRoot, why: "gzero" }].sort((a, b) => a.x - b.x);
       const cands = cuts.map((c) => ({ ...c, need: true }));
       addTPDecoy(cands, f, win);
       cands.sort((a, b) => a.x - b.x);
+      const spec = specFor([f, g], { win, accent: ACC, ticks: "labels", labels: ["f", "g"], asymLabels: true });
       const tableSpec = { ...spec, vlines: cuts.map((c) => ({ x: c.x })) };
       const secs = sections(cuts, win.xmin, win.xmax);
-      if (!paintable([f, g], secs, win)) continue;
 
       const wantNeg = pick([true, false]);
       const lang = getLang();
@@ -417,23 +457,26 @@ const SKILLS = {
 
       const sym = wantNeg ? "≤ 0" : "≥ 0";
       const withScaffold = withScaffoldOn(opts.forbidden.x, tableSpec);
+      const rows = [
+        { tone: FTONE, name: "f", sign: (x) => signAt(f, x), anchorCurve: 0 },
+        { tone: GTONE, name: "g", sign: (x) => signAt(g, x), anchorCurve: 1 },
+      ];
 
       const built = iq({
-        concept: "inequal2", kind: "cutPaintSweep", accent: ACC,
-        prompt: B(`For which values of x is <span class='eq'>f(x)/g(x) ${sym}</span>?`,
-                  `Vir watter waardes van x is <span class='eq'>f(x)/g(x) ${sym}</span>?`),
-        stem: `<span class="eq">f(x) = ${eqStr(f, "").replace(/^\s*=\s*/, "")}</span> &nbsp;·&nbsp; <span class="eq">g(x) = ${eqStr(g, "").replace(/^\s*=\s*/, "")}</span>`,
+        concept: "inequal2", kind: "trailSweep", accent: ACC,
+        prompt: B(`For which values of x is <span class='eq'>${QUOTIENT_FRAC} ${sym}</span>?`,
+                  `Vir watter waardes van x is <span class='eq'>${QUOTIENT_FRAC} ${sym}</span>?`),
+        stem: quotientStem(f, g),
         coach: B("Step 1: tap on every place that needs a line — every x-intercept of f, and g's own x-intercept too.",
                  "Stap 1: klik op elke plek wat 'n lyn nodig het — elke x-afsnit van f, en ook g se eie x-afsnit."),
         hints: [
-          B("Paint it exactly as f·g, section by section — same signs +, different signs −.",
-            "Merk dit presies soos f·g, afdeling vir afdeling — dieselfde tekens +, verskillende tekens −."),
+          B("Trace it exactly as f·g, section by section — same signs +, different signs −.",
+            "Volg dit presies soos f·g, afdeling vir afdeling — dieselfde tekens +, verskillende tekens −."),
           B("At g's own x-intercept, f/g is undefined — you cannot divide by zero, so that x can never close.",
             "By g se eie x-afsnit is f/g onbepaald — jy kan nie deur nul deel nie, so daardie x kan nooit toemaak nie."),
         ],
-        build: buildFlow({
-          spec, cands, secs, curveIdx: [0, 1], names: ["f", "g"], tableSpec, curvesArr: [f, g],
-          missingWhy: "gzero", missingMsg: MISSING_MSG.gzero,
+        build: buildTrailFlow({
+          spec, cands, secs, tableSpec, rows, missingWhy: "gzero", missingMsg: MISSING_MSG.gzero,
         }),
         then: mc("inequal2",
           B("Pick the correctly closed answer.", "Kies die antwoord met die regte toe/oop kant."),
@@ -442,10 +485,13 @@ const SKILLS = {
             solution: [
               B("1. A line at every x-intercept of f, and at g's own x-intercept.",
                 "1. 'n Lyn by elke x-afsnit van f, en by g se eie x-afsnit."),
-              B("2. Paint f's row and g's row, section by section, exactly as for f·g.",
-                "2. Merk f se ry en g se ry, afdeling vir afdeling, presies soos vir f·g."),
+              B("2. Drag the line across for f's sign. Drag it again for g's sign, exactly as for f·g.",
+                "2. Trek die lyn oor vir f se teken. Trek dit weer oor vir g se teken, presies soos vir f·g."),
               B("3. Read the sections off — but at g's own x-intercept, f/g is undefined, so that x NEVER closes, even with ≤ or ≥.",
                 "3. Lees die afdelings af — maar by g se eie x-afsnit is f/g onbepaald, so daardie x maak NOOIT toe nie, selfs met ≤ of ≥."),
+              withAnswerShade(secs, chosen, win, tableSpec)(
+                B("4. Read the answer off the highlighted sections, left to right.",
+                  "4. Lees die antwoord van die uitgeligte afdelings af, links na regs.")),
             ],
             hint: B("Every real x-intercept of f can close. g's own x-intercept never can — division by zero.",
                     "Elke regte x-afsnit van f kan toemaak. g se eie x-afsnit kan nooit nie — deling deur nul.") }),
@@ -457,22 +503,25 @@ const SKILLS = {
     throw new Error("qI quotientOpen: no honest window fits any draw");
   },
 
-  /* ---------- R3a: endpoint discipline, single curve ---------- */
+  /* ---------- R3a: endpoint discipline, single curve — ONE sweep ---------- */
   singleEndpointRound: () => {
     for (let tries = 0; tries < 60; tries++) {
       const f = pick([randParabola(), randHyperbolaOffAxis(), randExp()]);
-      const win = windowFor([f]);
-      if (!win) continue;
+      const cutsFn = (w) => {
+        const cuts = criticalXs([f], w.xmin, w.xmax);
+        return cuts.length ? cuts : null;
+      };
+      const wr = windowForRound([f], cutsFn);
+      if (!wr) continue;
+      const { win, cuts } = wr;
       if (!mostlyInFrame(f, win)) continue;
-      const spec = specFor([f], { win, accent: ACC, ticks: "labels", labels: ["f"], asymLabels: true });
-      const cuts = criticalXs([f], win.xmin, win.xmax);
-      if (!cuts.length) continue;
+
       const cands = cuts.map((c) => ({ x: c.x, why: c.why, need: true }));
       addTPDecoy(cands, f, win);
       cands.sort((a, b) => a.x - b.x);
+      const spec = specFor([f], { win, accent: ACC, ticks: "labels", labels: ["f"], asymLabels: true });
       const tableSpec = { ...spec, vlines: cuts.map((c) => ({ x: c.x })) };
       const secs = sections(cuts, win.xmin, win.xmax);
-      if (!paintable([f], secs, win)) continue;
 
       const wantNeg = pick([true, false]);
       const lang = getLang();
@@ -484,23 +533,23 @@ const SKILLS = {
 
       const sym = wantNeg ? "≤ 0" : "≥ 0";
       const withScaffold = opts.forbidden ? withScaffoldOn(opts.forbidden.x, tableSpec) : (b) => b;
+      const rows = [{ tone: FTONE, name: "f", sign: (x) => signAt(f, x), anchorCurve: 0 }];
 
       const built = iq({
-        concept: "inequal2", kind: "cutPaintSweep", accent: ACC,
+        concept: "inequal2", kind: "trailSweep", accent: ACC,
         prompt: B(`For which values of x is <span class='eq'>f(x) ${sym}</span>?`,
                   `Vir watter waardes van x is <span class='eq'>f(x) ${sym}</span>?`),
         stem: `<span class="eq">${eqStr(f, "f(x)")}</span>`,
         coach: B("Step 1: tap on every place that needs a line — every x-intercept and asymptote.",
                  "Stap 1: klik op elke plek wat 'n lyn nodig het — elke x-afsnit en asimptoot."),
         hints: [
-          B("Mark + and − on f, section by section, then read your own marks off.",
-            "Merk + en − op f, afdeling vir afdeling, en lees dan jou eie merke af."),
+          B("Trace + and − on f, then read your own trail off.",
+            "Volg + en − op f, en lees dan jou eie spoor af."),
           B("A real x-intercept CAN close under ≤ or ≥. An asymptote never can — the graph never actually reaches it.",
             "'n Regte x-afsnit KAN toemaak onder ≤ of ≥. 'n Asimptoot kan nooit nie — die grafiek bereik dit nooit werklik nie."),
         ],
-        build: buildFlow({
-          spec, cands, secs, curveIdx: [0], names: ["f"], tableSpec, curvesArr: [f],
-          missingWhy: null, missingMsg: null,
+        build: buildTrailFlow({
+          spec, cands, secs, tableSpec, rows, missingWhy: null, missingMsg: null,
         }),
         then: mc("inequal2",
           B("Pick the correctly closed answer.", "Kies die antwoord met die regte toe/oop kant."),
@@ -508,9 +557,12 @@ const SKILLS = {
           { answerLabel: opts.correct,
             solution: [
               B("1. A line at every x-intercept and asymptote.", "1. 'n Lyn by elke x-afsnit en asimptoot."),
-              B("2. Mark + and − on f, section by section.", "2. Merk + en − op f, afdeling vir afdeling."),
+              B("2. Drag the line across once: f's sign, section by section.", "2. Trek die lyn een keer oor: f se teken, afdeling vir afdeling."),
               B("3. A real x-intercept can close (≤/≥). An asymptote never can.",
                 "3. 'n Regte x-afsnit kan toemaak (≤/≥). 'n Asimptoot kan nooit nie."),
+              withAnswerShade(secs, chosen, win, tableSpec)(
+                B("4. Read the answer off the highlighted sections, left to right.",
+                  "4. Lees die antwoord van die uitgeligte afdelings af, links na regs.")),
             ],
             hint: B("Which of your cut lines sit on a real point of the graph, and which sit on an asymptote?",
                     "Watter van jou snylyne sit op 'n regte punt van die grafiek, en watter op 'n asimptoot?") }),
@@ -522,33 +574,35 @@ const SKILLS = {
     throw new Error("qI endpointSingle: no honest window fits any draw");
   },
 
-  /* ---------- R3b: endpoint discipline, quotient ---------- */
+  /* ---------- R3b: endpoint discipline, quotient — two sweeps, f then g ---------- */
   quotientEndpointRound: () => {
     for (let tries = 0; tries < 60; tries++) {
       const f = pick([randParabola(), randHyperbolaOffAxis(), randExp()]);
       const g = randLine();
       const gRoot = lineXInt(g);
-      const win = windowFor([f, g]);
-      if (!win) continue;
+      const cutsFn = (w) => {
+        if (gRoot == null || gRoot <= w.xmin + 0.5 || gRoot >= w.xmax - 0.5) return null;
+        const fZeros = xIntercepts(f, w.xmin, w.xmax);
+        const fAsym = vAsymptotes(f).filter((x) => x > w.xmin + 0.5 && x < w.xmax - 0.5);
+        if (!fZeros.length && !fAsym.length) return null;
+        if ([...fZeros, ...fAsym].some((x) => Math.abs(x - gRoot) < 0.5)) return null;
+        return [
+          ...fZeros.map((x) => ({ x, why: "zero" })),
+          ...fAsym.map((x) => ({ x, why: "asym" })),
+          { x: gRoot, why: "gzero" },
+        ].sort((a, b) => a.x - b.x);
+      };
+      const wr = windowForRound([f, g], cutsFn);
+      if (!wr) continue;
+      const { win, cuts } = wr;
       if (!mostlyInFrame(f, win) || !mostlyInFrame(g, win)) continue;
-      if (gRoot == null || gRoot <= win.xmin + 0.5 || gRoot >= win.xmax - 0.5) continue;
-      const fZerosRaw = xIntercepts(f, win.xmin, win.xmax);
-      const fAsymRaw = vAsymptotes(f).filter((x) => x > win.xmin + 0.5 && x < win.xmax - 0.5);
-      if (!fZerosRaw.length && !fAsymRaw.length) continue;
-      if ([...fZerosRaw, ...fAsymRaw].some((x) => Math.abs(x - gRoot) < 0.5)) continue;
 
-      const spec = specFor([f, g], { win, accent: ACC, ticks: "labels", labels: ["f", "g"], asymLabels: true });
-      const cuts = [
-        ...fZerosRaw.map((x) => ({ x, why: "zero" })),
-        ...fAsymRaw.map((x) => ({ x, why: "asym" })),
-        { x: gRoot, why: "gzero" },
-      ].sort((a, b) => a.x - b.x);
       const cands = cuts.map((c) => ({ ...c, need: true }));
       addTPDecoy(cands, f, win);
       cands.sort((a, b) => a.x - b.x);
+      const spec = specFor([f, g], { win, accent: ACC, ticks: "labels", labels: ["f", "g"], asymLabels: true });
       const tableSpec = { ...spec, vlines: cuts.map((c) => ({ x: c.x })) };
       const secs = sections(cuts, win.xmin, win.xmax);
-      if (!paintable([f, g], secs, win)) continue;
 
       const wantNeg = pick([true, false]);
       const lang = getLang();
@@ -563,22 +617,25 @@ const SKILLS = {
 
       const sym = wantNeg ? "≤ 0" : "≥ 0";
       const withScaffold = opts.forbidden ? withScaffoldOn(opts.forbidden.x, tableSpec) : (b) => b;
+      const rows = [
+        { tone: FTONE, name: "f", sign: (x) => signAt(f, x), anchorCurve: 0 },
+        { tone: GTONE, name: "g", sign: (x) => signAt(g, x), anchorCurve: 1 },
+      ];
 
       const built = iq({
-        concept: "inequal2", kind: "cutPaintSweep", accent: ACC,
-        prompt: B(`For which values of x is <span class='eq'>f(x)/g(x) ${sym}</span>?`,
-                  `Vir watter waardes van x is <span class='eq'>f(x)/g(x) ${sym}</span>?`),
-        stem: `<span class="eq">f(x) = ${eqStr(f, "").replace(/^\s*=\s*/, "")}</span> &nbsp;·&nbsp; <span class="eq">g(x) = ${eqStr(g, "").replace(/^\s*=\s*/, "")}</span>`,
+        concept: "inequal2", kind: "trailSweep", accent: ACC,
+        prompt: B(`For which values of x is <span class='eq'>${QUOTIENT_FRAC} ${sym}</span>?`,
+                  `Vir watter waardes van x is <span class='eq'>${QUOTIENT_FRAC} ${sym}</span>?`),
+        stem: quotientStem(f, g),
         coach: B("Step 1: tap on every place that needs a line — f's own x-intercepts and asymptotes, and g's x-intercept too.",
                  "Stap 1: klik op elke plek wat 'n lyn nodig het — f se eie x-afsnitte en asimptote, en ook g se x-afsnit."),
         hints: [
-          B("Paint it exactly as f·g, section by section.", "Merk dit presies soos f·g, afdeling vir afdeling."),
+          B("Trace it exactly as f·g, section by section.", "Volg dit presies soos f·g, afdeling vir afdeling."),
           B("A real x-intercept of f can close. f's own asymptote and g's own x-intercept never can.",
             "'n Regte x-afsnit van f kan toemaak. f se eie asimptoot en g se eie x-afsnit kan nooit nie."),
         ],
-        build: buildFlow({
-          spec, cands, secs, curveIdx: [0, 1], names: ["f", "g"], tableSpec, curvesArr: [f, g],
-          missingWhy: "gzero", missingMsg: MISSING_MSG.gzero,
+        build: buildTrailFlow({
+          spec, cands, secs, tableSpec, rows, missingWhy: "gzero", missingMsg: MISSING_MSG.gzero,
         }),
         then: mc("inequal2",
           B("Pick the correctly closed answer.", "Kies die antwoord met die regte toe/oop kant."),
@@ -587,9 +644,12 @@ const SKILLS = {
             solution: [
               B("1. A line at every boundary: f's x-intercepts/asymptote, and g's x-intercept.",
                 "1. 'n Lyn by elke grens: f se x-afsnitte/asimptoot, en g se x-afsnit."),
-              B("2. Paint f's row and g's row, section by section.", "2. Merk f se ry en g se ry, afdeling vir afdeling."),
+              B("2. Drag the line across for f's sign. Drag it again for g's sign.", "2. Trek die lyn oor vir f se teken. Trek dit weer oor vir g se teken."),
               B("3. Only a real x-intercept of f can close. An asymptote or g's own x-intercept never can.",
                 "3. Net 'n regte x-afsnit van f kan toemaak. 'n Asimptoot of g se eie x-afsnit kan nooit nie."),
+              withAnswerShade(secs, chosen, win, tableSpec)(
+                B("4. Read the answer off the highlighted sections, left to right.",
+                  "4. Lees die antwoord van die uitgeligte afdelings af, links na regs.")),
             ],
             hint: B("Which boundary is a real point on f, and which is an asymptote or g's own zero?",
                     "Watter grens is 'n regte punt op f, en watter is 'n asimptoot of g se eie nulpunt?") }),
@@ -609,204 +669,6 @@ function endpointRound() {
   return pick([SKILLS.singleEndpointRound, SKILLS.quotientEndpointRound])();
 }
 
-/* ============================================================
-   PROTOTYPE — x·f(x), the LIVE TRAIL (?proto=xfx only)
-   ------------------------------------------------------------
-   Her ruling, 2026-08-21 (reference/RETEACH-XFX-2026-08-21.md, HER
-   FINAL CALL): the shipped R1 above drew "x" as the line y = x
-   (finding #4, wrong); the first fix idea (tap-boxes for x's row) was
-   ALSO ruled out once she saw it on screen — "the app is dynamic so
-   this will work better," meaning the DRAG deposits the trail instead
-   of the learner tapping boxes. Process ruling: build ONE round this
-   new way, her phone-test rules on it, only THEN the full qI redesign.
-
-   Two steps only — no signPaint phase at all, that mechanic is not
-   used here:
-     1. cutSockets — f's zeros/asymptotes + the y-axis (x's own sign
-        boundary), unchanged in spirit from the shipped R1 above.
-     2. trailSweep — dragging the scan line deposits the sign trail;
-        the gate is "has the line visited the full range", never a
-        confirm-tap (engine/interactive.js §6.5).
-
-   Lives BESIDE SKILLS.timesFRound — that function, and the shipped
-   questInequal2 registration below, are both untouched. The ONLY
-   thing that ever calls timesFProtoRound() is the flag-gated dealer
-   hook in quests/index.js (?proto=xfx); normal qI play never sees it,
-   never deals it, never imports it. */
-const XTONE = "var(--fg-b)", FTONE = "var(--fg-a)";
-
-const COACH_SOCKETS_PROTO = B(
-  "Step 1: tap on every place that needs a line — every x-intercept and asymptote of f, and the y-axis too.",
-  "Stap 1: klik op elke plek wat 'n lyn nodig het — elke x-afsnit en asimptoot van f, en ook die y-as.");
-const COACH_TRAIL_PROTO = B(
-  "Lines placed! Now drag the scan line across — the options only open once you have swept the whole range.",
-  "Lyne geplaas! Trek nou die skandeerlyn oor — die opsies gaan eers oop as jy die hele reeks deurgeskuif het.");
-
-/* the winning sections, shaded along the x-axis with their numbers
-   circled — her ruling (RETEACH digest item 4): "the answer is read
-   OFF the x-axis", the same `shades` spec mechanism the qI intro
-   already uses (buildIntro()'s beat 5 below), reused exactly as-is.
-   Appended onto the LAST solution line, so it shows in the feedback
-   panel on every outcome — the axis read-off IS how she presents the
-   answer, right or wrong on the first try. */
-function answerShadeHtml(tableSpec, secsAll, chosen, win) {
-  const shades = mergeSections(chosen).map((iv) => ({ x0: iv.x0, x1: iv.x1 }));
-  const marked = { ...tableSpec, shades };
-  const g = computeFunction(marked);
-  const chosenIdx = new Set(chosen.map((s) => s.i));
-  const numFrag = secsAll.map((s, i) => {
-    const cx = g.X((s.x0 + s.x1) / 2).toFixed(1), cy = (g.Y(win.ymax) + 12).toFixed(1);
-    const circleEl = chosenIdx.has(s.i) ? `<circle class="iv-sectcircle" cx="${cx}" cy="${cy}" r="9"/>` : "";
-    return `${circleEl}<text class="iv-sectlab${chosenIdx.has(s.i) ? " won" : ""}" x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="middle">${"①②③④⑤⑥⑦⑧"[i] || String(i + 1)}</text>`;
-  }).join("");
-  const svgHtml = renderFunction(marked).replace("</svg>", numFrag + "</svg>");
-  return `<div class="graphbox" style="margin-top:8px">${svgHtml}</div>`;
-}
-const withAnswerShade = (secsAll, chosen, win, tableSpec) => {
-  const html = answerShadeHtml(tableSpec, secsAll, chosen, win);
-  return (b) => ({ en: b.en + html, af: b.af + html });
-};
-
-/* sockets → trailSweep → unlock. No signPaint step — her ruling. */
-function buildProtoFlow({ spec, cands, secs, tableSpec, missingWhy, missingMsg }) {
-  const requiredIdx = new Set(cands.map((c, i) => (c.need ? i : -1)).filter((i) => i >= 0));
-  return (host, done, nudge) => {
-    const sockets = cutSockets(host, {
-      spec, candidates: cands,
-      onChange: (chosen) => {
-        const same = chosen.size === requiredIdx.size && [...requiredIdx].every((i) => chosen.has(i));
-        if (same) {
-          sockets.reveal(requiredIdx);
-          nudge(COACH_TRAIL_PROTO);
-          setTimeout(() => {
-            trailSweep(host, {
-              spec: tableSpec, curve: 0, sections: secs, xTone: XTONE, fTone: FTONE,
-              onComplete: () => setTimeout(done, 300),
-            });
-          }, 350);
-          return;
-        }
-        const extra = [...chosen].find((i) => !cands[i].need);
-        if (extra != null) { nudge(DECOY_MSG[cands[extra].why] || DECOY_MSG.tp); return; }
-        const missing = missingWhy && cands.some((c, i) => c.need && c.why === missingWhy && !chosen.has(i));
-        if (missing && chosen.size >= requiredIdx.size - 1) nudge(missingMsg);
-        else nudge(B(`Placed ${chosen.size} of ${requiredIdx.size}.`, `${chosen.size} van ${requiredIdx.size} geplaas.`));
-      },
-    });
-    return sockets;
-  };
-}
-
-export function timesFProtoRound() {
-  for (let tries = 0; tries < 60; tries++) {
-    /* brief's pool, verbatim: parabola / hyperbola (off-axis) / exp —
-       NO line (line would make x·f(x) a familiar two-line quadratic
-       picture, not the curve-plus-y-axis picture her reteach spec
-       draws) */
-    const f = pick([randParabola(), randHyperbolaOffAxis(), randExp()]);
-    const win0 = windowFor([f]);
-    if (!win0) continue;
-    const fCuts0 = criticalXs([f], win0.xmin, win0.xmax);
-    if (!fCuts0.length || fCuts0.some((c) => Math.abs(c.x) < 1.0)) continue;   // keep the y-axis cut clean of crowding
-    const secs0 = sections([...fCuts0, { x: 0, why: "yaxis" }].sort((a, b) => a.x - b.x), win0.xmin, win0.xmax);
-    /* every section's midpoint goes into the window's own identity
-       features — "the picture must hold the whole story" (the brief's
-       reject-and-redraw rule), not just f's intercepts/asymptotes */
-    const include = secs0.map((s) => {
-      const y = makeFn(f)(s.mid);
-      return Number.isFinite(y) ? { x: s.mid, y } : { x: s.mid };
-    });
-    const win = windowFor([f], { include });
-    if (!win) continue;
-    if (!mostlyInFrame(f, win)) continue;
-
-    /* re-derive against the FINAL window — it may show more (or less)
-       of f than win0 did */
-    const fCuts = criticalXs([f], win.xmin, win.xmax);
-    if (!fCuts.length || fCuts.some((c) => Math.abs(c.x) < 1.0)) continue;
-    const cuts = [...fCuts, { x: 0, why: "yaxis" }].sort((a, b) => a.x - b.x);
-    const cands = cuts.map((c) => ({ x: c.x, why: c.why, need: true }));
-    addTPDecoy(cands, f, win);
-    cands.sort((a, b) => a.x - b.x);
-    const spec = specFor([f], { win, accent: ACC, ticks: "labels", labels: ["f"], asymLabels: true });
-    const tableSpec = { ...spec, vlines: cuts.map((c) => ({ x: c.x })) };
-    const secs = sections(cuts, win.xmin, win.xmax);
-    if (!paintable([f], secs, win)) continue;
-
-    const wantNeg = pick([true, false]);
-    const strict = pick([true, false]);
-    const lang = getLang();
-    const chosen = secs.filter((s) => {
-      const xs = s.mid < 0 ? -1 : 1;
-      const p = xs * signAt(f, s.mid);
-      return wantNeg ? p < 0 : p > 0;
-    });
-    if (!chosen.length || chosen.length === secs.length) continue;
-
-    const correct = answerString(chosen, cuts, win, { strict, lang });
-    /* same reject-and-redraw guard R1 above needs: a selection bounded
-       only by a boundary that forces open either way must not ship a
-       round one decoy short (flipStrictString would collide) */
-    if (flipStrictString(chosen, cuts, win, { strict, lang }) === correct) continue;
-    const wrongs = [
-      { label: complementString(chosen, secs, cuts, win, { strict, lang }),
-        misc: wantNeg
-          ? B("Those are the sections where x and f(x) share a sign — quadrant 1 or 3, x·f(x) is positive there.",
-              "Daai is die afdelings waar x en f(x) dieselfde teken deel — kwadrant 1 of 3, x·f(x) is positief daar.")
-          : B("Those are the sections where x and f(x) have different signs — quadrant 2 or 4, x·f(x) is negative there.",
-              "Daai is die afdelings waar x en f(x) verskillende tekens het — kwadrant 2 of 4, x·f(x) is negatief daar.") },
-      { label: flipStrictString(chosen, cuts, win, { strict, lang }),
-        misc: strict
-          ? B("A strict inequality never includes the boundaries.", "'n Streng ongelykheid sluit nooit die grense in nie.")
-          : B("≤ and ≥ DO include the x-intercepts — the y-axis boundary closes the same way, it is a real zero, not an asymptote.",
-              "≤ en ≥ sluit WEL die x-afsnitte in — die y-as grens maak net so toe, dis 'n regte nulpunt, nie 'n asimptoot nie.") },
-      { label: asYString(correct),
-        misc: B("The answer must be x-values, not y.", "Die antwoord moet x-waardes wees, nie y nie.") },
-    ];
-    const sym = wantNeg ? (strict ? "&lt; 0" : "≤ 0") : (strict ? "&gt; 0" : "≥ 0");
-    const xSpan = `<span style="color:${XTONE}">x</span>`;
-    const fSpan = `<span style="color:${FTONE}">f(x)</span>`;
-
-    const built = iq({
-      concept: "inequal2", kind: "trailSweep", accent: ACC,
-      prompt: B(`For which values of x is <span class='eq'>${xSpan}·${fSpan} ${sym}</span>?`,
-                `Vir watter waardes van x is <span class='eq'>${xSpan}·${fSpan} ${sym}</span>?`),
-      stem: `<span class="eq">${eqStr(f, "f(x)")}</span>`,
-      coach: COACH_SOCKETS_PROTO,
-      hints: [
-        B("x is negative left of the y-axis and positive right of it — that row needs a line at x = 0 too.",
-          "x is negatief links van die y-as en positief regs daarvan — daai ry het ook 'n lyn nodig by x = 0."),
-        B("Drag the line across and watch both signs — same signs → +, different signs → − (quadrant 1/3 versus 2/4).",
-          "Trek die lyn oor en kyk na albei tekens — dieselfde tekens → +, verskillende tekens → − (kwadrant 1/3 teenoor 2/4)."),
-      ],
-      build: buildProtoFlow({
-        spec, cands, secs, tableSpec, missingWhy: "yaxis", missingMsg: MISSING_MSG.yaxis,
-      }),
-      then: mc("inequal2",
-        B("Read the answer off the trail you just swept.", "Lees die antwoord van die spoor wat jy pas deurgeskuif het."),
-        correct, wrongs,
-        { answerLabel: correct,
-          solution: [
-            B("1. A line at every x-intercept/asymptote of f, AND at the y-axis (where x itself changes sign).",
-              "1. 'n Lyn by elke x-afsnit/asimptoot van f, EN by die y-as (waar x self van teken verander)."),
-            B("2. Dragging the line across showed you both signs at every point — x's row and f's row.",
-              "2. Deur die lyn oor te trek het jy albei tekens by elke punt gesien — x se ry en f se ry."),
-            B("3. Same signs on both rows → +. Different signs → − (quadrant 1/3 versus 2/4).",
-              "3. Dieselfde tekens op albei rye → +. Verskillende tekens → − (kwadrant 1/3 teenoor 2/4)."),
-            withAnswerShade(secs, chosen, win, tableSpec)(
-              B("4. Read the answer off the highlighted sections, left to right.",
-                "4. Lees die antwoord van die uitgeligte afdelings af, links na regs.")),
-          ],
-          hint: B("Compare x's sign with f's sign as the line crosses each cut.",
-                  "Vergelyk x se teken met f se teken soos die lyn elke snylyn kruis.") }),
-    });
-    built.debugTimesFProto = { f, win, cuts, secs, cands, wantNeg, strict };
-    built.graph = tableSpec;
-    return built;
-  }
-  throw new Error("qI timesFProto: no honest window fits any draw");
-}
-
 /* ---------------- the quest + intro ---------------- */
 
 export const questInequal2 = quest("qI",
@@ -820,13 +682,13 @@ export const questInequal2 = quest("qI",
   { rounds: 6, accent: ACC });
 
 /* worked example, once, at module load: x·f(x) > 0 for a happy parabola
-   with roots at −3 and 1 — the SAME picture as R1, walking the four
-   steps in her exact order, the y-axis socket named explicitly. */
+   with roots at −3 and 1 — the SAME picture as R1 (f alone — no y = x
+   line, ever), walking the four steps in her exact order: lines, number
+   the sections, sweep f's row, sweep x's row underneath, read off. */
 function buildIntro() {
   const f = parabolaFromRoots(1, -3, 1);
-  const xLine = { kind: "line", a: 1, q: 0 };
-  const win = windowFor([f, xLine]);
-  const base = specFor([f, xLine], { win, accent: ACC, ticks: "labels", labels: ["f", "x"] });
+  const win = windowFor([f]);
+  const base = specFor([f], { win, accent: ACC, ticks: "labels", labels: ["f"] });
   const lined = { ...base, vlines: [{ x: -3 }, { x: 0 }, { x: 1 }] };
   const g = computeFunction(base);
   const mids = [(win.xmin - 3) / 2, -1.5, 0.5, (win.xmax + 1) / 2];
@@ -834,18 +696,24 @@ function buildIntro() {
     `<text class="iv-sectlab" x="${g.X(m).toFixed(1)}" y="${(g.Y(win.ymax) + 12).toFixed(1)}" text-anchor="middle">${"①②③④"[i]}</text>`).join("");
   const fSigns = ["+", "−", "−", "+"];
   const xSigns = ["−", "−", "+", "+"];
-  const markFrag = (curveFn, signs, xOffset) => mids.map((m, i) => {
-    const y = curveFn(m);
-    const rawPy = g.Y(Math.max(win.ymin + 1, Math.min(win.ymax - 1, y))) + (y >= 0 ? -17 : 17);
-    /* clamp clear of the ①②③④ number row — the same fix q5's own intro
-       needed on fix day, 2026-08-13: a section near the top edge puts the
-       raw mark right off the top of the frame, above the labels. */
-    const py = Math.max(g.Y(win.ymax) + 30, Math.min(g.Y(win.ymin) - 14, rawPy));
-    const s = signs[i];
-    return `<text class="iv-sign ${s === "+" ? "plus" : "minus"}" x="${(g.X(m) + xOffset).toFixed(1)}" y="${py.toFixed(1)}" text-anchor="middle">${s}</text>`;
-  }).join("");
-  const fFrag = markFrag(makeFn(f), fSigns, -13);
-  const xFrag = markFrag(makeFn(xLine), xSigns, 13);
+  const fFn = makeFn(f);
+  /* both rows ride f's own curve — x's row one step further out, same
+     direction — exactly trailSweep's `stackFrom` convention, so the
+     lesson looks the same in the intro as it plays in the round.
+     Clamped clear of the frame edges AND the ①②③④ number row (the
+     same clamp lesson q5's and qI's own intro needed on fix day). */
+  function markFrag(signs, depth) {
+    return mids.map((m, i) => {
+      const y = fFn(m);
+      const dir = y >= 0 ? -1 : 1;
+      const rawPy = g.Y(Math.max(win.ymin + 1, Math.min(win.ymax - 1, y))) + dir * 17 * depth;
+      const py = Math.max(g.Y(win.ymax) + 30, Math.min(g.Y(win.ymin) - 14, rawPy));
+      const s = signs[i];
+      return `<text class="iv-sign ${s === "+" ? "plus" : "minus"}" x="${g.X(m).toFixed(1)}" y="${py.toFixed(1)}" text-anchor="middle">${s}</text>`;
+    }).join("");
+  }
+  const fFrag = markFrag(fSigns, 1);
+  const xFrag = markFrag(xSigns, 2);
   return { beats: [
     { spec: base, cap: B("The question: for which values of x is <span class='eq'>x·f(x) &gt; 0</span>?",
                          "Die vraag: vir watter waardes van x is <span class='eq'>x·f(x) &gt; 0</span>?") },
@@ -853,12 +721,15 @@ function buildIntro() {
                           "Stap 1: 'n lyn deur elke x-afsnit van f — EN deur die y-as, waar x self van teken verander.") },
     { spec: lined, frag: numFrag,
       cap: B("Step 2: number the sections, left to right.", "Stap 2: nommer die afdelings, links na regs.") },
+    { spec: lined, frag: numFrag + fFrag,
+      cap: B("Step 3: drag the line across once, left to right — f's sign lays down first.",
+             "Stap 3: trek die lyn een keer oor, links na regs — f se teken lê eerste neer.") },
     { spec: lined, frag: numFrag + fFrag + xFrag,
-      cap: B("Step 3: mark x's row AND f's row — x is negative left of 0, positive right of it.",
-             "Stap 3: merk x se ry ÉN f se ry — x is negatief links van 0, positief regs daarvan.") },
+      cap: B("Step 4: drag the line across again — x's sign lays down underneath. x is negative left of 0, positive right of it.",
+             "Stap 4: trek die lyn weer oor — x se teken lê onder neer. x is negatief links van 0, positief regs daarvan.") },
     { spec: { ...lined, shades: [{ x0: -3, x1: 0 }, { x0: 1, x1: win.xmax }] }, frag: numFrag + fFrag + xFrag,
-      cap: B("Step 4: same signs on both rows → +. Read it off: <b class=\"eq\">−3 &lt; x &lt; 0 or x &gt; 1</b>.",
-             "Stap 4: dieselfde tekens op albei rye → +. Lees dit af: <b class=\"eq\">−3 &lt; x &lt; 0 of x &gt; 1</b>.") },
+      cap: B("Step 5: same signs on both rows → +. Read it off: <b class=\"eq\">−3 &lt; x &lt; 0 or x &gt; 1</b>.",
+             "Stap 5: dieselfde tekens op albei rye → +. Lees dit af: <b class=\"eq\">−3 &lt; x &lt; 0 of x &gt; 1</b>.") },
   ] };
 }
 questInequal2.intro = buildIntro();

@@ -39,7 +39,6 @@ import {
   windowFor, features, asymOnAxis, randHyperbolaOffAxis, mostlyInFrame,
 } from "./js/quests/_graphs.js";
 import { answerString } from "./js/quests/_intervals.js";
-import { timesFProtoRound } from "./js/quests/qI-inequal2.js";
 
 const out = document.getElementById("out");
 let pass = 0, fail = 0;
@@ -3174,14 +3173,22 @@ for (const lang of ["af", "en"]) {
   host.remove();
 }
 
-/* ---------- 28. Quest qI (Ongelykhede 2) — batch 3, session 3 ---------- */
+/* ---------- 28. Quest qI (Ongelykhede 2) — batch 3, session 3, FULL
+   REDESIGN onto the two-pass live trail (reference/RETEACH-XFX-2026-08-21.md,
+   her prototype verdict). Replaces the old signPaint/box-based §28 AND the
+   flag-gated ?proto=xfx §29 in one go — the prototype IS the quest now, the
+   flag door is gone, so its checks fold in here rather than living beside a
+   mechanic that no longer exists (the sanctioned-replacement precedent: the
+   tekentabel's checks died with the tekentabel on fix day, 2026-08-13). ---------- */
 {
   setLang("af");
-  const g = group("28. Quest qI (Ongelykhede 2) — batch 3, session 3");
+  const g = group("28. Quest qI (Ongelykhede 2) — full redesign, the two-pass live trail");
   const host = document.createElement("div");
   host.style.position = "absolute"; host.style.left = "-9999px"; host.style.width = "360px";
   document.body.appendChild(host);
   const strip = (v) => String(v == null ? "" : v).replace(/<[^>]*>/g, "");
+  const bothLangs = (v) => (v && typeof v === "object" ? Object.values(v) : [v]);
+  const dcOf = (it) => it.debugTimesF || it.debugQuotient || it.debugEndpoint;
 
   const REPS = 30;
   const rounds = [];
@@ -3196,7 +3203,7 @@ for (const lang of ["af", "en"]) {
   check(g, `all three round types appear, R3 covers both its shapes (R1 ${r1.length}, R2 ${r2.length}, R3-single ${r3single.length}, R3-quotient ${r3quot.length})`,
     r1.length > 0 && r2.length > 0 && r3single.length > 0 && r3quot.length > 0);
 
-  /* every round mounts without throwing (the three-phase build itself,
+  /* every round mounts without throwing (the cutSockets phase itself,
      not yet driven — cheap smoke test before the maths checks below) */
   {
     let bad = 0, why = "";
@@ -3220,7 +3227,7 @@ for (const lang of ["af", "en"]) {
       if (!dc) { bad++; why = "a timesF round exposes no debugTimesF"; return; }
       zeroChecked++;
       const zeroCand = dc.cands.find((c) => Math.abs(c.x) < 1e-6);
-      if (!zeroCand || !zeroCand.need) { bad++; why = "an x·f(x) round does not REQUIRE a socket at x = 0"; }
+      if (!zeroCand || !zeroCand.need || zeroCand.why !== "yaxis") { bad++; why = "an x·f(x) round does not REQUIRE the y-axis socket at x = 0"; }
     });
     check(g, `every x·f(x) round requires the 0-socket (${zeroChecked} rounds checked) — NEVER RELAX`, bad === 0 && zeroChecked > 0, why);
     const dc0 = r1[0] && r1[0].debugTimesF;
@@ -3231,18 +3238,33 @@ for (const lang of ["af", "en"]) {
     }
   }
 
-  /* 28b. R1 — group-23-style independent sign recomputation for BOTH
-     rows (x's row and f's row), via signAt/sections/criticalXs, never
-     trusting the round's own stored answer. */
+  /* 28b. NEVER RELAX — no y = x line, ever, in R1 (her finding #4 /
+     "HER FINAL CALL"). x has no drawn curve of its own; its row rides
+     f's — a second drawn curve in an R1 spec would BE the banned line. */
+  {
+    let bad = 0, why = "";
+    r1.forEach((it) => {
+      if (!it.graph) { bad++; why = "an R1 round exposes no it.graph"; return; }
+      const n = (it.graph.curves || []).length;
+      if (n !== 1) { bad++; why = `an R1 spec draws ${n} curves, not 1 — a second curve would BE the banned y = x line`; }
+    });
+    check(g, `every R1 spec draws f alone — no y = x line, ever (${r1.length} rounds) — NEVER RELAX`, bad === 0 && r1.length > 0, why);
+  }
+
+  /* 28c. R1 — independent sign recomputation for BOTH rows (x's row
+     via its own definition, f's row via signAt), never trusting the
+     round's own stored answer. NEVER RELAX. */
   {
     let bad = 0, why = "", n = 0;
     r1.forEach((it) => {
       const dc = it.debugTimesF;
       if (!dc) return;
-      const freshCuts = criticalXs([dc.f, dc.xLine], dc.win.xmin, dc.win.xmax);
+      const freshFCuts = criticalXs([dc.f], dc.win.xmin, dc.win.xmax);
+      const freshCuts = [...freshFCuts, { x: 0, why: "yaxis" }].sort((a, b) => a.x - b.x);
       const freshSecs = sections(freshCuts, dc.win.xmin, dc.win.xmax);
       const chosen = freshSecs.filter((s) => {
-        const p = signAt(dc.xLine, s.mid) * signAt(dc.f, s.mid);
+        const xs = s.mid < 0 ? -1 : 1;
+        const p = xs * signAt(dc.f, s.mid);
         return dc.wantNeg ? p < 0 : p > 0;
       });
       const expected = strip(answerString(chosen, freshCuts, dc.win, { strict: dc.strict, lang: "af" }));
@@ -3253,7 +3275,7 @@ for (const lang of ["af", "en"]) {
     check(g, `R1: the correct answer matches an independent recompute of BOTH rows via signAt/sections/criticalXs (${n} rounds) — NEVER RELAX`, bad === 0 && n > 0, why);
   }
 
-  /* 28c. R2 — the shipped answer NEVER closes g's own root, whatever the
+  /* 28d. R2 — the shipped answer NEVER closes g's own root, whatever the
      wording; exactly 2 options, differing only at that one x. NEVER RELAX. */
   {
     let bad = 0, why = "", n = 0, neverClosed = 0;
@@ -3295,12 +3317,12 @@ for (const lang of ["af", "en"]) {
       const openForm = strip(answerString(chosen, freshCuts, dc.win, { strict: false, lang: "af" }));
       const closedCuts = freshCuts.map((c) => (Math.abs(c.x - freshGRoot) < 1e-6 ? { ...c, why: "zero" } : c));
       const closedForm = strip(answerString(chosen, closedCuts, dc.win, { strict: false, lang: "af" }));
-      check(g, "negative test: deliberately closing g's own root DOES change the written answer (28c's comparison is not vacuously equal)",
+      check(g, "negative test: deliberately closing g's own root DOES change the written answer (28d's comparison is not vacuously equal)",
         openForm !== closedForm);
     }
   }
 
-  /* 28d. R3 — independent recompute, and no forbidden boundary
+  /* 28e. R3 — independent recompute, and no forbidden boundary
      (an asymptote OR a quotient's g-root) ever closes in the shipped
      answer, across both of its shapes. NEVER RELAX. */
   {
@@ -3339,7 +3361,7 @@ for (const lang of ["af", "en"]) {
       bad === 0 && n > 0 && forbiddenChecked > 0, why);
   }
 
-  /* 28e. the open-circle scaffold (Law 6) is absent by default and
+  /* 28f. the open-circle scaffold (Law 6) is absent by default and
      present in every wrong-answer nudge that HAS a forbidden boundary
      to show — same pattern as q6's shaded-region scaffold check (§9c). */
   {
@@ -3359,21 +3381,18 @@ for (const lang of ["af", "en"]) {
       bad === 0 && scaffoldChecked > 0, why);
   }
 
-  /* 28f. every real spec is visible to the harness (§4b/§22/§25a's
-     generic scans over QUESTS/buildRound already cover qI for free once
-     it sits in the registry; this confirms every round exposes one) */
+  /* 28g. every real spec is visible to the harness, and every qI round
+     reports kind:"trailSweep" — regression guard, same style as q5's
+     retired-tekentabel check (§23h) */
   {
-    let bad = 0, why = "", n = 0;
-    rounds.forEach((it) => { n++; if (!it.graph) { bad++; why = `${it.skillId}: no it.graph exposed to the harness`; } });
+    let bad = 0, why = "", n = 0, kindBad = 0;
+    rounds.forEach((it) => {
+      n++;
+      if (!it.graph) { bad++; why = `${it.skillId}: no it.graph exposed to the harness`; }
+      if (it.kind !== "trailSweep") kindBad++;
+    });
     check(g, `every qI round exposes its real spec via it.graph (${n} rounds)`, bad === 0 && n > 0, why);
-  }
-
-  /* 28g. every qI round reports kind:"cutPaintSweep" — regression guard,
-     the same style as q5's retired-tekentabel check (§23h) */
-  {
-    let bad = 0;
-    rounds.forEach((it) => { if (it.kind !== "cutPaintSweep") bad++; });
-    check(g, "every qI round reports kind:\"cutPaintSweep\"", bad === 0);
+    check(g, "every qI round reports kind:\"trailSweep\" (never the retired \"cutPaintSweep\"/signPaint shape)", kindBad === 0);
   }
 
   /* 28h. R1 consistently ships 4 distinct options (the general q5-style
@@ -3395,137 +3414,198 @@ for (const lang of ["af", "en"]) {
       questUnlocked(profile, iq7) === true);
   }
 
-  host.remove();
-}
-
-/* ---------- 29. qI prototype (?proto=xfx) — the live trail (session 3 phone-test) ---------- */
-{
-  const g = group("29. qI prototype (?proto=xfx) — the live trail (RETEACH-XFX-2026-08-21)");
-  const host = document.createElement("div");
-  host.style.position = "absolute"; host.style.left = "-9999px"; host.style.width = "360px";
-  document.body.appendChild(host);
-  const strip = (v) => String(v == null ? "" : v).replace(/<[^>]*>/g, "");
-  const bothLangs = (v) => (v && typeof v === "object" ? Object.values(v) : [v]);
-
-  const REPS = 40;
-  const protoRounds = [];
-  for (let i = 0; i < REPS; i++) protoRounds.push(timesFProtoRound());
-  check(g, `timesFProtoRound() builds across ${REPS} reps`, protoRounds.length === REPS);
-
-  /* 29a. NEVER RELAX — no y = x line, ever. Her whole finding #4 was
-     the shipped R1 drawing "x" as a second curve; the prototype spec
-     must carry f ALONE. */
+  /* 28j. the stacked f(x)/g(x) fraction is present in every quotient
+     round's prompt (R2 and R3-quotient) and absent from R1/R3-single;
+     the two givens sit on SEPARATE lines (.eq-line, no "·" join dot)
+     in every quotient round's stem, never in R1/R3-single's (only one
+     given there — nothing to separate). Her playtest findings #1/#2. */
   {
-    let bad = 0, why = "";
-    protoRounds.forEach((it) => {
-      if (!it.graph) { bad++; why = "a prototype round exposes no it.graph"; return; }
-      const n = (it.graph.curves || []).length;
-      if (n !== 1) { bad++; why = `a prototype spec draws ${n} curves, not 1 — a second curve would BE the banned y = x line`; }
+    let bad = 0, why = "", fracChecked = 0, stemChecked = 0;
+    const promptHtml = (it) => bothLangs(it.prompt).map((v) => String(v || "")).join(" ");
+    const stemHtml = (it) => bothLangs(it.stem).map((v) => String(v || "")).join(" ");
+    [...r2, ...r3quot].forEach((it) => {
+      fracChecked++;
+      const p = promptHtml(it);
+      if (!/class="frac"/.test(p) || !/class="fr-n"/.test(p) || !/class="fr-d"/.test(p)) {
+        bad++; why = `${it.skillId}: quotient prompt missing the stacked fraction markup`;
+      }
+      stemChecked++;
+      const s = stemHtml(it);
+      const lineCount = (s.match(/class="eq-line"/g) || []).length;
+      if (lineCount !== 2) { bad++; why = `${it.skillId}: stem has ${lineCount} .eq-line rows, wanted 2`; }
+      /* the OLD join was a literal "&nbsp;·&nbsp;" BETWEEN the two given
+         spans — checking for that exact marker (not just any "·" in the
+         stem) since a "·" can legitimately appear INSIDE an exponential's
+         own coefficient notation, e.g. "y = 2·3ˣ" (funclib's eqStr) */
+      if (s.includes("&nbsp;·&nbsp;") || /<\/span>\s*·\s*<span/.test(s)) {
+        bad++; why = `${it.skillId}: stem still joins the two givens with a "·" separator dot`;
+      }
     });
-    check(g, `every prototype spec draws f alone — no y = x line, ever (${protoRounds.length} rounds) — NEVER RELAX`, bad === 0, why);
+    [...r1, ...r3single].forEach((it) => {
+      fracChecked++;
+      if (/class="frac"/.test(promptHtml(it))) { bad++; why = `${it.skillId}: a non-quotient prompt carries the stacked fraction (should have none)`; }
+      stemChecked++;
+      const lineCount = (stemHtml(it).match(/class="eq-line"/g) || []).length;
+      if (lineCount !== 0) { bad++; why = `${it.skillId}: a single-given stem carries ${lineCount} .eq-line rows (should have none — only one given)`; }
+    });
+    check(g, `the stacked fraction is present in every quotient prompt (R2/R3-quotient) and absent elsewhere (${fracChecked} prompts checked)`, bad === 0 && fracChecked > 0, why);
+    check(g, `the two givens sit on separate lines with no "·" join in every quotient stem, and single-given stems carry no .eq-line rows (${stemChecked} stems checked)`, bad === 0 && stemChecked > 0, why);
   }
 
-  /* 29b. NEVER RELAX — the y-axis socket is required in every draw,
-     same shape as §28a for the shipped R1 */
-  {
-    let bad = 0, why = "";
-    protoRounds.forEach((it) => {
-      const dc = it.debugTimesFProto;
-      if (!dc) { bad++; why = "a prototype round exposes no debugTimesFProto"; return; }
-      const yc = dc.cands.find((c) => Math.abs(c.x) < 1e-6);
-      if (!yc || !yc.need || yc.why !== "yaxis") { bad++; why = "a prototype round does not REQUIRE the y-axis socket"; }
-    });
-    check(g, `every prototype round requires the y-axis socket (${protoRounds.length} rounds) — NEVER RELAX`, bad === 0, why);
-  }
-
-  /* 29c. NEVER RELAX — the shipped answer matches an independent
-     recompute via signAt/sections/criticalXs, same discipline as §28b */
+  /* 28k. the include-section-midpoints window rule (her prototype's
+     "the picture must hold the whole story" rule, now required of
+     EVERY qI generator): every section's midpoint, for every curve
+     actually drawn in the round, lands inside the window — never just
+     the curve's intercepts/asymptotes. This is what stops a section
+     from being invisible and the round collapsing to a give-away. */
   {
     let bad = 0, why = "", n = 0;
-    protoRounds.forEach((it) => {
-      const dc = it.debugTimesFProto;
+    const curvesFor = (it) => {
+      if (it.skillId === "timesF") return [it.debugTimesF.f];
+      if (it.skillId === "quotientOpen") return [it.debugQuotient.f, it.debugQuotient.g];
+      const dc = it.debugEndpoint;
+      return dc.mode === "single" ? [dc.f] : [dc.f, dc.g];
+    };
+    rounds.forEach((it) => {
+      const dc = dcOf(it);
       if (!dc) return;
-      const freshFCuts = criticalXs([dc.f], dc.win.xmin, dc.win.xmax);
-      const freshCuts = [...freshFCuts, { x: 0, why: "yaxis" }].sort((a, b) => a.x - b.x);
-      const freshSecs = sections(freshCuts, dc.win.xmin, dc.win.xmax);
-      const chosen = freshSecs.filter((s) => {
-        const xs = s.mid < 0 ? -1 : 1;
-        const p = xs * signAt(dc.f, s.mid);
-        return dc.wantNeg ? p < 0 : p > 0;
-      });
-      const expected = strip(answerString(chosen, freshCuts, dc.win, { strict: dc.strict, lang: "af" }));
-      const got = strip(L(it.then.answerLabel || ""));
       n++;
-      if (expected !== got) { bad++; why = `timesFProto: expected "${expected}" got "${got}"`; }
+      curvesFor(it).forEach((cv) => {
+        dc.secs.forEach((s) => {
+          const y = mf(cv)(s.mid);
+          if (!Number.isFinite(y)) return;
+          if (y < dc.win.ymin - 1e-6 || y > dc.win.ymax + 1e-6) {
+            bad++; why = `${it.skillId}: a section's midpoint (y=${y.toFixed(2)}) sits outside the window the round shipped`;
+          }
+        });
+      });
     });
-    check(g, `the prototype's answer matches an independent recompute via signAt/sections/criticalXs (${n} rounds) — NEVER RELAX`, bad === 0 && n > 0, why);
+    check(g, `the include-section-midpoints window rule holds: every section's midpoint, every relevant curve, sits inside the window (${n} rounds sampled, well over 30 per type)`, bad === 0 && n > 0, why);
   }
 
-  /* 29d. trailSweep, driven for REAL: a fresh mount never reports
-     complete (no auto-complete — the brief's own negative test), and a
-     genuine full left-to-right drag DOES open the gate. */
+  /* 28l. trailSweep's two-pass shape, driven for REAL with synthetic
+     pointer events — a sample of every round shape (R1, R2, R3-single,
+     R3-quotient). A fresh mount never auto-completes (negative test);
+     a full first sweep closes pass 1 ONLY (deposits row 1's marks
+     alone, the round is NOT yet done — R1/R2/R3-quotient) or finishes
+     outright (R3-single, one row, one pass); after the pass-reset beat,
+     a second full sweep deposits row 2 beneath row 1 (which stays on
+     screen) and opens the gate; every deposited mark, read off the
+     DOM at its OWN rendered x, matches an independent signAt() recompute
+     — never the round's stored answer, never a stored index. */
   {
-    let bad = 0, why = "", negTested = 0, sweptTested = 0;
-    protoRounds.slice(0, 12).forEach((it) => {
-      const dc = it.debugTimesFProto;
-      if (!dc) return;
-      const box = document.createElement("div");
-      host.appendChild(box);
-      let completed = false, ctl;
-      try {
-        ctl = trailSweep(box, { spec: it.graph, curve: 0, sections: dc.secs, onComplete: () => { completed = true; } });
-      } catch (e) { bad++; why = `trailSweep threw on mount: ${e.message}`; return; }
-      const svg = box.querySelector("svg");
-      const r = svg.getBoundingClientRect();
-      if (!r.width || !r.height) return;   // no live layout in this environment — skip, don't fail
-      negTested++;
-      if (completed || (ctl.isComplete && ctl.isComplete())) {
-        bad++; why = "trailSweep reports complete on a fresh mount — auto-completed with nothing dragged";
-      }
-      const fire = (type, fracX) => svg.dispatchEvent(new PointerEvent(type, {
-        bubbles: true, cancelable: true, pointerId: 1,
-        clientX: r.left + r.width * fracX, clientY: r.top + r.height * 0.5,
-      }));
-      fire("pointerdown", 0);
-      for (let s = 1; s <= 24; s++) fire("pointermove", s / 24);   // a genuine full left-to-right sweep
-      sweptTested++;
-      if (!completed) { bad++; why = "a full left-to-right sweep never fired onComplete"; return; }
+    const SAMPLE = 3;
+    const byType = [
+      ["timesF (R1)", r1, true],
+      ["quotientOpen (R2)", r2, true],
+      ["endpoint-single (R3)", r3single, false],
+      ["endpoint-quotient (R3)", r3quot, true],
+    ];
+    let bad = 0, why = "", negTested = 0, pass1Tested = 0, pass2Tested = 0, marksSeen = 0;
 
-      /* every deposited mark, read straight off the DOM, matches an
-         independent recompute at its OWN rendered x — never the
-         round's stored answer, and never a stored index (the "wrong
-         section" trap the brief warns against) */
-      const g2 = computeFunction(it.graph);
-      let marksSeen = 0;
+    function rowsFor(it) {
+      const dc = dcOf(it);
+      if (it.skillId === "timesF") {
+        return [
+          { tone: "var(--fg-a)", sign: (x) => signAt(dc.f, x), anchorCurve: 0 },
+          { tone: "var(--fg-b)", sign: (x) => (x < 0 ? -1 : x > 0 ? 1 : 0), stackFrom: 0 },
+        ];
+      }
+      if (it.skillId === "quotientOpen" || dc.mode === "quotient") {
+        return [
+          { tone: "var(--fg-a)", sign: (x) => signAt(dc.f, x), anchorCurve: 0 },
+          { tone: "var(--fg-b)", sign: (x) => signAt(dc.g, x), anchorCurve: 1 },
+        ];
+      }
+      return [{ tone: "var(--fg-a)", sign: (x) => signAt(dc.f, x), anchorCurve: 0 }];
+    }
+    const fire = (svg, r, type, fracX) => svg.dispatchEvent(new PointerEvent(type, {
+      bubbles: true, cancelable: true, pointerId: 1,
+      clientX: r.left + r.width * fracX, clientY: r.top + r.height * 0.5,
+    }));
+    const sweepOnce = (svg, r) => {
+      fire(svg, r, "pointerdown", 0);
+      for (let s = 1; s <= 24; s++) fire(svg, r, "pointermove", s / 24);
+    };
+    const checkMarks = (box, dc, rows, label) => {
+      const g2 = computeFunction(box._graphSpec);
+      const seenTones = new Set();
       box.querySelectorAll(".iv-sign").forEach((el) => {
         const px = Number(el.getAttribute("x"));
         const x = g2.xAt(px);
         const glyphGot = el.textContent;
         const fillGot = el.style.fill || "";
-        const isFRow = fillGot.includes("fg-a");
-        const isXRow = fillGot.includes("fg-b");
-        if (!isFRow && !isXRow) { bad++; why = `a deposited mark's fill ("${fillGot}") matches neither row's colour`; return; }
+        const ri = rows.findIndex((rw) => fillGot.includes(rw.tone.replace("var(", "").replace(")", "")));
+        if (ri < 0) { bad++; why = `${label}: a deposited mark's fill ("${fillGot}") matches no row's colour`; return; }
+        seenTones.add(ri);
         marksSeen++;
-        if (isFRow) {
-          const want = signAt(dc.f, x) > 0 ? "+" : "−";
-          if (glyphGot !== want) { bad++; why = `f-row mark at x=${x.toFixed(2)} shows "${glyphGot}", signAt says "${want}"`; }
-        } else {
-          const want = x < 0 ? "−" : "+";
-          if (glyphGot !== want) { bad++; why = `x-row mark at x=${x.toFixed(2)} shows "${glyphGot}", x's own sign says "${want}"`; }
-        }
+        const s = rows[ri].sign(x);
+        const want = s > 0 ? "+" : s < 0 ? "−" : null;
+        if (want && glyphGot !== want) { bad++; why = `${label}: row ${ri} mark at x=${x.toFixed(2)} shows "${glyphGot}", independent recompute says "${want}"`; }
       });
-      if (!marksSeen) { bad++; why = "a full sweep deposited zero marks"; }
-    });
-    check(g, `trailSweep never auto-completes on mount (${negTested} probed) — NEVER RELAX`, bad === 0, why);
-    check(g, `a genuine full sweep opens the gate, and every deposited mark (both sides of every cut) matches an independent recompute (${sweptTested} rounds driven for real) — NEVER RELAX`,
-      bad === 0 && sweptTested > 0, why);
+      return seenTones;
+    };
+
+    for (const [label, pool, twoPass] of byType) {
+      for (const it of pool.slice(0, SAMPLE)) {
+        const dc = dcOf(it);
+        const rows = rowsFor(it);
+        const box = document.createElement("div");
+        box._graphSpec = it.graph;
+        host.appendChild(box);
+        let completed = false, passesStarted = [];
+        let ctl, mountFailed = false;
+        try {
+          ctl = trailSweep(box, {
+            spec: it.graph, sections: dc.secs, rows,
+            onPassStart: (i) => passesStarted.push(i),
+            onComplete: () => { completed = true; },
+          });
+        } catch (e) { bad++; why = `${label}: trailSweep threw on mount: ${e.message}`; mountFailed = true; }
+        if (mountFailed) continue;
+        const svg = box.querySelector("svg");
+        const r = svg.getBoundingClientRect();
+        if (!r.width || !r.height) continue;   // no live layout in this environment — skip, don't fail
+        negTested++;
+        if (completed || (ctl.isComplete && ctl.isComplete())) {
+          bad++; why = `${label}: trailSweep reports complete on a fresh mount — auto-completed with nothing dragged`;
+        }
+        sweepOnce(svg, r);                                 // pass 1, full range
+        if (rows.length === 1) {
+          if (!completed) { bad++; why = `${label} (one row): a full sweep never fired onComplete`; continue; }
+          pass1Tested++;
+          const seen = checkMarks(box, dc, rows, label);
+          if (!seen.has(0)) { bad++; why = `${label}: the single pass deposited zero row-0 marks`; }
+        } else {
+          if (completed) { bad++; why = `${label}: the round reported complete after PASS 1 alone — two rows must take two sweeps`; continue; }
+          pass1Tested++;
+          let seen = checkMarks(box, dc, rows, label);
+          if (!seen.has(0)) { bad++; why = `${label}: pass 1 deposited zero row-0 marks`; }
+          if (seen.has(1)) { bad++; why = `${label}: pass 1 already deposited row-1 marks — the two passes are not separated`; }
+          await new Promise((res) => setTimeout(res, 520));  // the pass-reset beat (trailSweep's own 450ms)
+          sweepOnce(svg, r);                                 // pass 2, full range
+          if (!completed) { bad++; why = `${label}: a full second sweep never fired onComplete`; continue; }
+          pass2Tested++;
+          seen = checkMarks(box, dc, rows, label);
+          if (!seen.has(0) || !seen.has(1)) { bad++; why = `${label}: after pass 2, both rows should have marks (row 1's trail stays visible)`; }
+          if (passesStarted.length !== 2 || passesStarted[0] !== 0 || passesStarted[1] !== 1) {
+            bad++; why = `${label}: onPassStart fired ${JSON.stringify(passesStarted)}, wanted [0,1] exactly once each`;
+          }
+        }
+      }
+    }
+    check(g, `trailSweep never auto-completes on a fresh mount, across every round shape (${negTested} probed) — NEVER RELAX`, bad === 0, why);
+    check(g, `a two-row round needs TWO full sweeps (pass 1 alone never completes it, deposits only row 1); a one-row round completes on its single sweep (${pass1Tested} pass-1, ${pass2Tested} pass-2, driven for real) — NEVER RELAX`,
+      bad === 0 && pass1Tested > 0 && pass2Tested > 0, why);
+    check(g, `every deposited mark (both sides of every cut, either pass) matches an independent recompute at its own rendered x (${marksSeen} marks checked)`,
+      bad === 0 && marksSeen > 0, why);
   }
 
-  /* 29e. §25a's option-layout discipline holds for the prototype's own
-     option lists (a maths option never shares a row) */
+  /* 28m. §25a's option-layout discipline holds for qI's own option
+     lists (a maths option never shares a row) */
   {
     let bad = 0, why = "", mathLists = 0;
-    protoRounds.forEach((it) => {
+    rounds.forEach((it) => {
       const asked = it.then;
       if (!asked || !asked.options) return;
       const isMath = asked.options.some((o) => bothLangs(o.label).some((v) => {
@@ -3537,21 +3617,10 @@ for (const lang of ["af", "en"]) {
       if (!isMath) return;
       mathLists++;
       if (!optionsNeedOneColumn(asked)) {
-        bad++; why = `a prototype maths option list is not one-per-line — ${asked.options.map((o) => strip(L(o.label))).join(" | ")}`;
+        bad++; why = `a qI maths option list is not one-per-line — ${asked.options.map((o) => strip(L(o.label))).join(" | ")}`;
       }
     });
-    check(g, `§25a discipline holds for the prototype: every maths option list is one-per-line (${mathLists} lists)`, bad === 0 && mathLists > 0, why);
-  }
-
-  /* 29f. the whole flag-gated dealer hook: WITHOUT ?proto=xfx, qI's
-     normal buildRound() is untouched (never calls timesFProtoRound,
-     never returns a "timesFProto" skillId) — this is what "absolutely
-     nothing about the app changes" means, made checkable */
-  {
-    const normal = buildRound("qI");
-    const anyProto = normal.some((it) => it.skillId === "timesFProto");
-    check(g, "without ?proto=xfx, qI's normal buildRound() never deals the prototype round",
-      normal.length > 0 && !anyProto);
+    check(g, `§25a discipline holds for qI: every maths option list is one-per-line (${mathLists} lists)`, bad === 0 && mathLists > 0, why);
   }
 
   host.remove();

@@ -677,47 +677,47 @@ Reël vir regmaak: **verander net die Afrikaanse sin self** — moenie die etike
 - Deel deur nul mag nie — daardie x bly oop.
 - Die grafiek bereik nooit werklik sy asimptoot nie — daardie x kan nooit toemaak nie, selfs met ≤ of ≥.
 - Daardie x is 'n regte x-afsnit — 'n werklike punt op die grafiek, so ≤ of ≥ KAN dit toemaak.
-- Lyne geplaas! Merk nou + en − op elke ry.
-- Gemerk! Skuif nou die skandeerlyn links na regs om te toets.
-- ⟨…⟩ van ⟨…⟩ gemerk.
+- Lyne geplaas!
+- Trek nou die lyn oor om ⟨…⟩ se teken te volg.
+- Gevolg! Trek nou weer oor om ⟨…⟩ se teken daaronder te volg.
 - ⟨…⟩ van ⟨…⟩ geplaas.
 - **[nudge (na verkeerde keuse)]** Daai is die afdelings waar x en f(x) dieselfde teken deel — kwadrant 1 of 3, x·f(x) is positief daar.
 - **[nudge (na verkeerde keuse)]** Daai is die afdelings waar x en f(x) verskillende tekens het — kwadrant 2 of 4, x·f(x) is negatief daar.
 - **[nudge (na verkeerde keuse)]** 'n Streng ongelykheid sluit nooit die grense in nie.
 - **[nudge (na verkeerde keuse)]** ≤ en ≥ sluit WEL die x-afsnitte in — die y-as grens maak net so toe, dis 'n regte nulpunt, nie 'n asimptoot nie.
 - **[nudge (na verkeerde keuse)]** Die antwoord moet x-waardes wees, nie y nie.
-- **[vraag]** Vir watter waardes van x is x·f(x) ⟨…⟩?
+- **[vraag]** Vir watter waardes van x is ⟨…⟩·⟨…⟩?
 - **[instruksie]** Stap 1: klik op elke plek wat 'n lyn nodig het — elke x-afsnit en asimptoot van f, en ook die y-as.
 - **[wenk]** x is negatief links van die y-as en positief regs daarvan — daai ry het ook 'n lyn nodig by x = 0.
-- Vergelyk dan die twee rye: dieselfde tekens → +, verskillende tekens → − (kwadrant 1/3 teenoor 2/4).
-- **[vraag]** Lees die antwoord van albei rye af.
+- Trek die lyn oor en kyk na albei tekens — dieselfde tekens → +, verskillende tekens → − (kwadrant 1/3 teenoor 2/4).
+- **[vraag]** Lees die antwoord van die spoor wat jy pas deurgeskuif het.
 - **[metodekaart]** 1. 'n Lyn by elke x-afsnit/asimptoot van f, EN by die y-as (waar x self van teken verander).
-- 2. Merk elke ry: x se ry (links − · regs +) en f se ry (bo die x-as + · onder −).
+- 2. Trek die lyn oor vir f se teken. Trek dit weer oor vir x se teken, daaronder.
 - 3. Dieselfde tekens op albei rye → +. Verskillende tekens → − (kwadrant 1/3 teenoor 2/4).
-- 4. Lees die antwoord van die ooreenstemmende afdelings af, links na regs.
-- **[wenk]** Vergelyk x se ry met f se ry, afdeling vir afdeling.
-- **[vraag]** Vir watter waardes van x is f(x)/g(x) ⟨…⟩?
+- 4. Lees die antwoord van die uitgeligte afdelings af, links na regs.
+- **[wenk]** Vergelyk x se teken met f se teken soos die lyn elke snylyn kruis.
+- **[vraag]** Vir watter waardes van x is ⟨…⟩?
 - **[instruksie]** Stap 1: klik op elke plek wat 'n lyn nodig het — elke x-afsnit van f, en ook g se eie x-afsnit.
-- **[wenk]** Merk dit presies soos f·g, afdeling vir afdeling — dieselfde tekens +, verskillende tekens −.
+- **[wenk]** Volg dit presies soos f·g, afdeling vir afdeling — dieselfde tekens +, verskillende tekens −.
 - By g se eie x-afsnit is f/g onbepaald — jy kan nie deur nul deel nie, so daardie x kan nooit toemaak nie.
 - **[vraag]** Kies die antwoord met die regte toe/oop kant.
 - **[metodekaart]** 1. 'n Lyn by elke x-afsnit van f, en by g se eie x-afsnit.
-- 2. Merk f se ry en g se ry, afdeling vir afdeling, presies soos vir f·g.
+- 2. Trek die lyn oor vir f se teken. Trek dit weer oor vir g se teken, presies soos vir f·g.
 - 3. Lees die afdelings af — maar by g se eie x-afsnit is f/g onbepaald, so daardie x maak NOOIT toe nie, selfs met ≤ of ≥.
 - **[wenk]** Elke regte x-afsnit van f kan toemaak. g se eie x-afsnit kan nooit nie — deling deur nul.
 - **[vraag]** Vir watter waardes van x is f(x) ⟨…⟩?
 - **[instruksie]** Stap 1: klik op elke plek wat 'n lyn nodig het — elke x-afsnit en asimptoot.
-- **[wenk]** Merk + en − op f, afdeling vir afdeling, en lees dan jou eie merke af.
+- **[wenk]** Volg + en − op f, en lees dan jou eie spoor af.
 - 'n Regte x-afsnit KAN toemaak onder ≤ of ≥. 'n Asimptoot kan nooit nie — die grafiek bereik dit nooit werklik nie.
 - **[metodekaart]** 1. 'n Lyn by elke x-afsnit en asimptoot.
-- 2. Merk + en − op f, afdeling vir afdeling.
+- 2. Trek die lyn een keer oor: f se teken, afdeling vir afdeling.
 - 3. 'n Regte x-afsnit kan toemaak (≤/≥). 'n Asimptoot kan nooit nie.
 - **[wenk]** Watter van jou snylyne sit op 'n regte punt van die grafiek, en watter op 'n asimptoot?
 - **[instruksie]** Stap 1: klik op elke plek wat 'n lyn nodig het — f se eie x-afsnitte en asimptote, en ook g se x-afsnit.
-- **[wenk]** Merk dit presies soos f·g, afdeling vir afdeling.
+- **[wenk]** Volg dit presies soos f·g, afdeling vir afdeling.
 - 'n Regte x-afsnit van f kan toemaak. f se eie asimptoot en g se eie x-afsnit kan nooit nie.
 - **[metodekaart]** 1. 'n Lyn by elke grens: f se x-afsnitte/asimptoot, en g se x-afsnit.
-- 2. Merk f se ry en g se ry, afdeling vir afdeling.
+- 2. Trek die lyn oor vir f se teken. Trek dit weer oor vir g se teken.
 - 3. Net 'n regte x-afsnit van f kan toemaak. 'n Asimptoot of g se eie x-afsnit kan nooit nie.
 - **[wenk]** Watter grens is 'n regte punt op f, en watter is 'n asimptoot of g se eie nulpunt?
 - Ongelykhede 2
@@ -725,8 +725,9 @@ Reël vir regmaak: **verander net die Afrikaanse sin self** — moenie die etike
 - **[intro-les]** Die vraag: vir watter waardes van x is x·f(x) > 0?
 - **[intro-les]** Stap 1: 'n lyn deur elke x-afsnit van f — EN deur die y-as, waar x self van teken verander.
 - **[intro-les]** Stap 2: nommer die afdelings, links na regs.
-- **[intro-les]** Stap 3: merk x se ry ÉN f se ry — x is negatief links van 0, positief regs daarvan.
-- **[intro-les]** Stap 4: dieselfde tekens op albei rye → +. Lees dit af: −3 < x < 0 of x > 1.
+- **[intro-les]** Stap 3: trek die lyn een keer oor, links na regs — f se teken lê eerste neer.
+- **[intro-les]** Stap 4: trek die lyn weer oor — x se teken lê onder neer. x is negatief links van 0, positief regs daarvan.
+- **[intro-les]** Stap 5: dieselfde tekens op albei rye → +. Lees dit af: −3 < x < 0 of x > 1.
 
 ## Quest 14 · Eksamenmodus
 - **[byskrif]** Die skets toon die halfsirkel h met middelpunt by die oorsprong, en die eksponensiële funksie g gegee deur ⟨…⟩.
