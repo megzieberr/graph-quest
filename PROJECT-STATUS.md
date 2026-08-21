@@ -1,4 +1,4 @@
-# Project status — updated 2026-08-21 night (batch 3 SESSION 2 SHIPPED on sw gq-v22 — awaiting her phone-test)
+# Project status — updated 2026-08-21 late night (her phone-test caught the missing line → EVERY qK round drags now; kiss-stop dot bug fixed; 2 commits ready to ship as gq-v23)
 
 **Read this first.** The v2 spec is [RUN-PLAN.md](RUN-PLAN.md); Megan's own class notes
 are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTIONS-NOTES-DIGEST.md).
@@ -447,13 +447,57 @@ are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTI
     marks, keypad locks), typed tp.x (final wrong + the specific nudge),
     Boost second chance (inline nudge → cleared buffer → half marks).
 
+- 2026-08-21 (late night — her live phone-test findings, built immediately,
+  Sonnet under the same session-2 /go envelope, foreman-reviewed; commits
+  `1029fb9` + `3f3ef0d`, NOT yet pushed):
+  - **Her ruling: EVERY qK round draws the y = k line, DRAGGABLE.** Her words,
+    mid-playtest, after a chips round showed no line at all: "the line always
+    needs to be there and draggable otherwise it never teaches their eyes
+    anything... they could've just been looking at a static diagram on a piece
+    of paper." R2 (kiss) drags the line and types the k it lands on (starts
+    away from the TP so the drag means something); R3 (count) drags with live
+    snypunte; R4 (hyperbola/exp) — extended mid-session by the foreman under
+    the same ruling — drags through a small range that always straddles the
+    asymptote AND holds the asked k, so the cut visibly appears/disappears at
+    q while the stem/key/options stay pinned to the printed k. Only R1 keeps
+    the Law-7 seen-every-stop gate; R2/R3/R4 are `freeDrag` (new varSlider
+    opt): chips/keypad live from the first paint, no counter shown, coach
+    lines rewritten so none promises a gate that doesn't exist (harness
+    checks: no-gate reveal-on-mount, hidden counter, coach wording).
+  - **R3 no longer labels the turning point** — you FIND it by dragging (the
+    dots vanish there). Session judgment following R1's pattern; flag for her
+    eye on the phone.
+  - Build session found + fixed: play.js's done() now picks paintKeypad vs
+    paintOptions off the ASKED shape (an interactive round whose `then` is a
+    keypad got the option grid before); a freeDrag round's authored coach line
+    was silently overwritten by the generic "unlocked" text before first
+    paint; verify.html §3's kp branch checked the wrong object (it.type vs
+    mcq.type — latent since the keypad amendment).
+  - **Foreman review find, fixed in `3f3ef0d`: the kiss stop drew ZERO dots.**
+    funclib's intersections() finds roots by sign change; a tangency never
+    crosses, so at k = tp.y the scanner sees nothing — R1 taught "Presies
+    daarop: 1 (dit raak net-net)" while its own picture at that stop had
+    nothing to count, LIVE since the session-2 ship (the harness's per-stop
+    recompute shared the same blind function, so it self-passed). Fix: R1/R3's
+    specOf draw the closed-form touch point at k = tp.y (it IS the TP by
+    definition); intersections() untouched; NEVER-RELAX kiss-stop assertions
+    in §27 checked against tp directly, never against the blind recompute.
+    Foreman verified live: 2/1/0 dots below/at/above the TP on a sad parabola.
+  - ⚠ Known coverage gap (flagged by the build session, real): verify.html
+    mounts builds directly and bypasses play.js's render/done wrapper, so
+    bugs in that wrapper (like the coach-overwrite) are invisible to the
+    harness — they surface only in live play. Candidate for a future
+    harness session.
+  - Harness 203 → 207, three identical runs post-fix; console clean (the
+    buzz guard now proven — a full synthetic-drag session logs zero errors).
+
 ## Pending on Megan
 
-- 📱 5 min **[blocking]**: fully close + reopen the PWA (twice — service
-  worker double-load), then play **Aard van wortels** (type an answer on the
-  new keypad in the kiss round) and one fresh **Vind die vergelyking** play
-  to feel the one-of-each dealing. Session 3 (Ongelykhede 2) dispatches
-  after your test.
+- 💻 1 min **[blocking]**: say **"ship it"** for the line build + kiss-stop
+  fix (cache → gq-v23, push) — then 📱 5 min: close + reopen the PWA twice,
+  play **Aard van wortels** (drag the line in every round; land it on the
+  turning point and see the ONE dot; type on the keypad) and one fresh
+  **Vind die vergelyking** play. Session 3 dispatches after your test.
 
 ## Next up
 
