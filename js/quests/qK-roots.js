@@ -24,14 +24,15 @@
    net-net", cut = "sny" — never mixed, never translated word-for-word.
    A hyperbola has vlerkies, never arms/tak(ke).
    ============================================================ */
-import { mc, iq, quest } from "./_shared.js";
+import { mc, iq, kp, quest } from "./_shared.js";
 import { varSlider } from "../engine/slider.js";
 import { B } from "../i18n.js";
+import { near } from "../check.js";
 import {
   specFor, windowFor, randParabola, randHyperbolaOffAxis, randExp, mostlyInFrame,
 } from "./_graphs.js";
 import {
-  intersections, paraTP, paraStd, EQ, C, ptStr, pick, numDecoys,
+  intersections, paraTP, paraStd, EQ, C, ptStr, pick,
 } from "../funclib.js";
 
 const ACC = "#60a5fa";
@@ -119,6 +120,13 @@ function discoverBeat() {
 
 /* ============================================================
    R2 — DIE KISS: the turning point is marked, its y IS k
+   ------------------------------------------------------------
+   Design amendment (foreman + Megan's ruling, 2026-08-21): the design
+   doc always meant this as a KEYPAD round — session 2 shipped mc() only
+   because no keypad mechanic existed yet. Typed entry now matches the
+   design: the answer is read straight off the marked point, not picked
+   out of four options. qK's dealing stays randomized (untouched by this
+   amendment — that ruling was separate).
    ============================================================ */
 function kissRound() {
   for (let tries = 0; tries < 60; tries++) {
@@ -131,20 +139,26 @@ function kissRound() {
       points: [{ x: tp.x, y: tp.y, on: 0, label: ptStr(tp.x, tp.y), place: tp.y < 0 ? "below" : "above" }],
     });
     if (!spec) continue;
-    const correct = C(tp.y);
-    const wrongs = numDecoys(tp.y, [tp.x]).map(C);
-    if (wrongs.length < 2) continue;          // keep the round to at least 3 options
-    const built = mc("roots",
+    /* the p-vs-q classic: typing the turning point's x instead of its y.
+       Any other wrong entry gets the generic read-it-off-the-point nudge. */
+    const missPX = B("That is the turning point's x — the touch depends on its y, not its x.",
+                      "Dit is die draaipunt se x — die net-net-raak hang van sy y af, nie sy x nie.");
+    const missGeneric = B("Read the marked point's y straight off the sketch — the touch happens exactly there.",
+                          "Lees die gemerkte punt se y reguit van die sketch af — die net-net-raak gebeur presies daar.");
+    const built = kp("roots",
       B("For which k does y = k just touch the graph?", "Vir watter k raak y = k die grafiek net-net?"),
-      correct, wrongs,
+      tp.y,
       {
         graph: spec,
         stem: B("The turning point is marked.", "Die draaipunt is gemerk."),
+        allowNeg: true,
         hints: [B("The touch happens exactly at the turning point — its y IS the k you want, read it straight off.",
                   "Die net-net-raak gebeur presies by die draaipunt — sy y IS die k wat jy soek, lees dit reguit af.")],
         solution: [B(`The turning point is ${ptStr(tp.x, tp.y)}, so y = k just touches it at k = ${C(tp.y)}.`,
                      `Die draaipunt is ${ptStr(tp.x, tp.y)}, dus raak y = k dit net-net by k = ${C(tp.y)}.`)],
-        answerLabel: correct,
+        answerLabel: C(tp.y),
+        wrongMisc: (v) => (near(v, tp.x) ? missPX : missGeneric),
+        miscTexts: [missPX, missGeneric],
       });
     built.debugKiss = { cv, tp, win };
     return built;

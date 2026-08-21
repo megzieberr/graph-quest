@@ -25,8 +25,9 @@ import { secondChanceAllowed, optionsNeedOneColumn } from "./js/play.js";
 import { questUnlocked, mapScreen, B_INTRO } from "./js/screens.js";
 import { verifyFunction, renderFunction, computeFunction } from "./js/engine/function-graph.js";
 import { axisGate, sweep } from "./js/engine/interactive.js";
+import { mountKeypad } from "./js/engine/keypad.js";
 import { L, UI, setLang } from "./js/i18n.js";
-import { fmtComma } from "./js/check.js";
+import { fmtComma, near } from "./js/check.js";
 import {
   makeFn, criticalXs, sections, signAt, intersections, paraTP, paraStd, paraRoots,
   makeFn as mf, intervalStr, mergeSections, joinIntervals,
@@ -158,6 +159,21 @@ for (const lang of ["af", "en"]) {
         const mcq = it.type === "interactive" ? it.then : it;
         if (it.type === "interactive" && !it.build) { bad++; why = "interactive without build()"; break; }
         if (!mcq) continue;
+        /* a keypad round (qK's R2 kiss, batch 3 session 2 keypad amendment)
+           has no discrete options — it is checked on its own numeric
+           answer, prompt and graph honesty instead of the option-list rules
+           below, which assume a tappable set of buttons. */
+        if (it.type === "kp") {
+          const ptext = strip(L(mcq.prompt || it.prompt || ""));
+          if (BAD.test(ptext) || !ptext.trim()) { bad++; why = "bad prompt: " + ptext; break; }
+          if (!strip(L(mcq.answerLabel || "")).trim()) { bad++; why = "empty answerLabel"; break; }
+          if (!Number.isFinite(mcq.correct)) { bad++; why = "kp round has no numeric correct value"; break; }
+          if (mcq.graph) {
+            const f = verifyFunction(mcq.graph).filter((r) => !r.ok);
+            if (f.length) { bad++; why = "graph not honest: " + f[0].label; break; }
+          }
+          continue;
+        }
         const labels = mcq.options.map((o) => strip(L(o.label)));
         if (mcq.options.filter((o) => o.correct).length !== 1) { bad++; why = "not exactly one correct option"; break; }
         if (new Set(labels).size !== labels.length) { bad++; why = "duplicate options: " + labels.join(" | "); break; }
@@ -2824,14 +2840,65 @@ for (const lang of ["af", "en"]) {
     const dc = it.debugKiss;
     if (!dc) { bad++; why = "an R2 round exposes no debugKiss"; return; }
     kissChecked++;
+    if (it.type !== "kp") { bad++; why = `R2 round has type "${it.type}", wanted the keypad shape "kp"`; return; }
     const freshTp = paraTP(dc.cv);
     if (Math.abs(freshTp.y - dc.tp.y) > 1e-9) { bad++; why = "exposed tp.y does not match a fresh paraTP() recompute"; return; }
+    if (Math.abs(it.correct - freshTp.y) > 1e-9) { bad++; why = `kp round's own correct (${it.correct}) does not equal a fresh paraTP().y (${freshTp.y})`; return; }
     const pts = (it.graph && it.graph.points) || [];
     if (pts.length !== 1) { bad++; why = `R2 sketch marks ${pts.length} points, wanted exactly the turning point`; return; }
     if (Math.abs(pts[0].y - freshTp.y) > 1e-9 || Math.abs(pts[0].x - freshTp.x) > 1e-9) { bad++; why = "the marked point is not the turning point"; return; }
     if (strip(L(it.answerLabel)) !== fmtComma(freshTp.y)) { bad++; why = `answer "${strip(L(it.answerLabel))}" does not equal the turning point's y (${fmtComma(freshTp.y)})`; }
   });
-  check(g, `R2: the marked point is the turning point and the answer equals its y, recomputed fresh (${kissChecked} rounds)`, bad === 0 && kissChecked > 0, why);
+  check(g, `R2: the marked point is the turning point, and both it.correct and the answer equal its y, recomputed fresh (${kissChecked} rounds)`, bad === 0 && kissChecked > 0, why);
+
+  /* R2 keypad: mount the ported control itself (the §27/R1 mounting style
+     — hidden host, build/mount, drive, assert) and drive it by clicking
+     its own on-screen buttons, exactly the way a learner would — never a
+     device keyboard, never a synthetic value handed straight to onSubmit.
+     Completion follows near(entry, it.correct), the SAME comparison
+     play.js's paintKeypad() uses — this proves the contract that
+     integration actually depends on, not a second copy of the rule. */
+  bad = 0; why = ""; let kpMountChecked = 0;
+  const typeIntoKeypad = (box, n) => {
+    const keys = [...box.querySelectorAll(".key")];
+    const press = (label) => {
+      const b = keys.find((k) => k.textContent === label);
+      if (!b) throw new Error(`no "${label}" key on the mounted keypad`);
+      b.click();
+    };
+    const s = fmtComma(n).replace("−", "-");
+    [...s].forEach((ch) => press(ch === "-" ? "±" : ch));
+  };
+  r2.slice(0, 20).forEach((it) => {
+    if (!it.debugKiss) return;               // already flagged above
+    const box = document.createElement("div");
+    host.appendChild(box);
+    let submitted = null;
+    let kpad;
+    try { kpad = mountKeypad(box, { allowNeg: it.allowNeg, onSubmit: (v) => { submitted = v; } }); }
+    catch (e) { bad++; why = `keypad threw on mount: ${e.message}`; return; }
+    if (!box.querySelector(".keypad")) { bad++; why = "R2 keypad did not mount"; return; }
+    kpMountChecked++;
+    const submitBtn = box.querySelector(".key.submit");
+    if (!submitBtn) { bad++; why = "R2 keypad mounted with no submit key"; return; }
+
+    typeIntoKeypad(box, it.correct);
+    submitBtn.click();
+    if (!(submitted != null && near(submitted, it.correct))) {
+      bad++; why = `typing the correct value (${it.correct}) did not read back as complete (submitted=${submitted})`; return;
+    }
+
+    kpad.clear();
+    submitted = null;
+    const wrongVal = it.correct + 3;         // guaranteed to differ (near()'s tolerance is 1e-6)
+    typeIntoKeypad(box, wrongVal);
+    submitBtn.click();
+    if (submitted != null && near(submitted, it.correct)) {
+      bad++; why = `a wrong value (${wrongVal}) read back as complete`;
+    }
+  });
+  check(g, `R2: the ported keypad mounts and drives via real clicks; the correct value completes, a wrong one does not (${kpMountChecked} rounds)`,
+    bad === 0 && kpMountChecked > 0, why);
 
   /* R3 hoeveel snypunte: the inequality direction matches a fresh
      sign-of-a recompute, and always compares k with q (never p) */
@@ -2916,6 +2983,11 @@ for (const lang of ["af", "en"]) {
       const mcq = it.then || it;
       collectQK(mcq.prompt); collectQK(mcq.answerLabel);
       (mcq.options || []).forEach((o) => { collectQK(o.label); collectQK(o.misc); });
+      /* a keypad round (R2) has no options array — its wrong-entry nudges
+         live in miscTexts instead (wrongMisc() is a function of the typed
+         value, so a static sweep can't call it; miscTexts lists every
+         string it can return, kp()'s own doc-comment in _shared.js) */
+      (mcq.miscTexts || []).forEach(collectQK);
       (mcq.solution || []).forEach(collectQK);
       (mcq.hints || []).forEach(collectQK);
       collectQK(mcq.hint);

@@ -1,11 +1,14 @@
 /* ============================================================
    THE PLAY LOOP  (rebuilt on Circle Quest's scaffolding toolkit)
    ------------------------------------------------------------
-   Three kinds of screen:
+   Four kinds of screen:
 
      intro         "Kyk eers een saam" — a click-paced worked example
                    that plays the first time a quest opens
      mc            picture (maybe) + prompt + tap an option
+     kp            picture (maybe) + prompt + type a number on the
+                   on-screen keypad (qK's R2 kiss round, batch 3
+                   session 2 keypad amendment) — no device keyboard
      interactive   DO the thing first — the options stay hidden
                    until the mechanic reports it is done
 
@@ -13,7 +16,8 @@
      · hint LADDER — one rung per tap; rung 1 names the move,
        never the answer
      · misconception nudges — a wrong pick leads with WHY that
-       specific wrong answer is tempting
+       specific wrong answer is tempting (mc: chosen by which option
+       was tapped; kp: chosen by the value typed — same idea)
      · solution steps — feedback shows the method, not just the
        answer
      · Boost mode — after 2 failed tries: hints open by themselves
@@ -22,12 +26,16 @@
      · a quest may set alwaysSecondChance to hand out that retry to
        every learner, Boost or not (Round D does — her ruling)
 
-   Nothing is typed. Marking is always about the maths.
+   Marking is always about the maths — a keypad answer is still checked
+   as a number (near(), the same tolerance the rest of the app uses),
+   never as matched text.
    ============================================================ */
 import { el, $, toast } from "./ui.js";
 import { L, UI, getLang } from "./i18n.js";
+import { near } from "./check.js";
 import { staticGraph } from "./engine/interactive.js";
 import { renderFunction } from "./engine/function-graph.js";
+import { mountKeypad } from "./engine/keypad.js";
 import { buildRound, getQuest } from "./quests/index.js";
 
 const XP_FULL = 10, XP_HINTED = 5, XP_HALF = 5, COMEBACK = 40, PASS = 0.7, BOOST_AFTER = 2;
@@ -217,7 +225,9 @@ function render() {
   const meter = el("div", "ivmeter");
   const askslot = el("div", "stack");
   const asked = (item.type === "interactive" && item.then) ? item.then : item;
-  const optbox = el("div", "opts"
+  /* a keypad round is not an option grid — its own host class skips the
+     .opts grid layout entirely (the ported .keypad block lays itself out) */
+  const optbox = el("div", (item.type === "kp" ? "kp-host" : "opts")
     + (item.wide || asked.wide || optionsNeedOneColumn(asked) ? " one" : ""));
   const fbslot = el("div", "stack");
 
@@ -247,7 +257,8 @@ function render() {
     meter.remove(); coach.remove(); askslot.remove();
     if (item.graph) staticGraph(gbox, item.graph);
     ladder = buildHintLadder(item, wrap);
-    paintOptions(item, optbox, fbslot, ladder);
+    if (item.type === "kp") paintKeypad(item, optbox, fbslot, ladder);
+    else paintOptions(item, optbox, fbslot, ladder);
   }
 
   /* Boost: the first hint rung opens by itself, so the scaffold is in front
@@ -361,6 +372,48 @@ function paintOptions(q, optbox, fbslot, ladder) {
       showFeedback(q, outcome, fbslot, ladder, o.correct ? null : o);
     });
     optbox.appendChild(b);
+  });
+  optbox.parentNode.insertBefore(nudgeEl, optbox.nextSibling);
+}
+
+/* ---------------- keypad + marking ----------------
+   A typed-number round (qK's R2 kiss round, batch 3 session 2 keypad
+   amendment). Same scoring and second-chance rules as paintOptions() —
+   the entry surface differs, the teach layer does not: secondChanceAllowed()
+   gates one retry exactly the way it gates a wrong mc tap, XP amounts are
+   the same constants, and the final submit runs through the same
+   showFeedback() every other round type uses. */
+function paintKeypad(q, optbox, fbslot, ladder) {
+  optbox.textContent = "";
+  let chanceUsed = false;
+  const nudgeEl = el("div", "second-nudge");
+  nudgeEl.hidden = true;
+
+  const kpad = mountKeypad(optbox, {
+    unit: q.unit, allowNeg: q.allowNeg,
+    onSubmit: (v) => {
+      if (S.answered || !Number.isFinite(v)) return;   // an empty/garbage submit never counts
+      const correct = near(v, q.correct);
+      const misc = correct ? null : (q.wrongMisc ? q.wrongMisc(v) : null);
+      /* Second chance: the first wrong entry clears and nudges instead of
+         ending the round; the next submit is final (correct = half marks).
+         Boost gives this to everyone; Round D gives it always
+         (alwaysSecondChance) — the exact same gate paintOptions() uses. */
+      if (secondChanceAllowed(S.q, S.boost) && !chanceUsed && !correct) {
+        chanceUsed = true;
+        kpad.clear();
+        nudgeEl.hidden = false;
+        nudgeEl.innerHTML = "💡 " + L(misc || UI.secondChance);
+        return;
+      }
+      S.answered = true;
+      nudgeEl.hidden = true;
+      kpad.disable();                                   // final — no double submits
+      let outcome = "wrong";
+      if (correct && chanceUsed) { outcome = "half"; S.score += 0.5; S.xp += XP_HALF; }
+      else if (correct) { outcome = "full"; S.score += 1; S.xp += S.usedHint ? XP_HINTED : XP_FULL; }
+      showFeedback(q, outcome, fbslot, ladder, correct ? null : { misc });
+    },
   });
   optbox.parentNode.insertBefore(nudgeEl, optbox.nextSibling);
 }

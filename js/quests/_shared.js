@@ -89,6 +89,34 @@ export function iq(cfg) {
   return { type: "interactive", ...cfg };
 }
 
+/* A keypad round: the learner types a number instead of tapping an
+   option (qK's R2 kiss round, batch 3 session 2 keypad amendment — her
+   ruling 2026-08-21). Scores and plays through play.js exactly like an
+   mc() round (same XP, same secondChanceAllowed() gate) — only the entry
+   surface differs.
+   opts.wrongMisc(v)  a bilingual nudge for a submitted WRONG value v,
+                      chosen BY VALUE (mc()'s per-option misc is chosen by
+                      which button was tapped — same idea, different key).
+                      Always called, even when no second chance applies.
+   opts.miscTexts     every bilingual string wrongMisc() can return, so a
+                      language sweep can see them without calling the
+                      function (mc()'s options array gives that for free;
+                      a function does not). */
+export function kp(concept, prompt, correct, opts = {}) {
+  return {
+    type: "kp", concept,
+    prompt, stem: opts.stem,
+    correct, unit: opts.unit || "", allowNeg: !!opts.allowNeg,
+    wrongMisc: opts.wrongMisc || null,
+    miscTexts: opts.miscTexts || [],
+    answerLabel: opts.answerLabel != null ? opts.answerLabel : correct,
+    hint: opts.hint, hints: opts.hints,
+    solution: opts.solution,
+    graph: opts.graph, graphCap: opts.graphCap,
+    wide: opts.wide,
+  };
+}
+
 /* a quest = an id, a title, and a list of skill generators */
 export function quest(id, title, blurb, skills, opts = {}) {
   return {

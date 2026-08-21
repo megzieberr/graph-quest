@@ -150,6 +150,25 @@ h2{font-size:20px} h3{font-size:16px}
 .chip.good{border-color:var(--good);background:var(--good-bg)}
 .chip.bad{border-color:var(--bad);background:var(--bad-bg)}
 
+/* the number keypad — typed entry (qK's R2 kiss round, batch 3 session 2
+   keypad amendment). Ported from blipwork's js/keypad.js + its CSS block;
+   same System Window theme, same token names, no second look forked. */
+.kp-host{margin-top:2px}
+.keypad{margin-top:4px}
+.kdisp{display:flex;align-items:center;justify-content:flex-end;gap:8px;font-family:var(--font-num);font-size:28px;font-weight:500;
+  background:rgba(58,160,255,.05);border:1px solid var(--brd-2);border-radius:var(--r-md);padding:14px 18px;min-height:62px;margin-bottom:10px}
+.kdisp .unit{color:var(--faint);font-size:15px;font-family:var(--font-body)}
+.kdisp.empty .kval{color:var(--faint)}
+.kgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.key{font-family:var(--font-num);font-weight:500;font-size:22px;color:var(--ink);background:var(--panel);border:1px solid var(--brd-2);
+  border-radius:var(--r-md);padding:17px 0;cursor:pointer;transition:.1s;text-align:center;user-select:none}
+.key:hover{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--panel))}
+.key:active{transform:scale(.96)}
+.key.wide{grid-column:span 3}
+.key.del{color:var(--warn)}
+.key.submit{color:#04101a;background:var(--accent);border-color:transparent;font-family:var(--font-display);font-weight:600;font-size:16px}
+.key:disabled{cursor:default}
+
 /* ---------- 5. graph engine ---------- */
 .fg{width:100%;height:auto;display:block;font-family:var(--font-num);touch-action:none;-webkit-user-select:none;user-select:none}
 .fg-grid{stroke:var(--g-grid);stroke-width:.5}
