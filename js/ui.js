@@ -21,9 +21,17 @@ export function shuffled(a) {
 export function sample(a, n) { return shuffled(a).slice(0, n); }
 
 /* a short buzz on phones — direction changes in the climb quest.
-   navigator.vibrate is missing on desktop and iOS, so always guard. */
+   navigator.vibrate is missing on desktop and iOS, so always guard.
+   Without user activation the browser BLOCKS the call and logs a console
+   error — harness runs drive every mechanic synthetically (hundreds of
+   calls per run), and console noise once buried a real bug (the q5 TDZ
+   story). Skip what could not fire anyway; a real learner has always
+   tapped before anything buzzes. */
 export function buzz(ms = 12) {
-  try { if (navigator.vibrate) navigator.vibrate(ms); } catch { /* ignore */ }
+  try {
+    if (navigator.userActivation && !navigator.userActivation.hasBeenActive) return;
+    if (navigator.vibrate) navigator.vibrate(ms);
+  } catch { /* ignore */ }
 }
 
 let toastTimer = null;

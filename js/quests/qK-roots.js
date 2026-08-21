@@ -7,13 +7,14 @@
    (finding the k that makes a moving line tangent to a moving curve)
    needs the discriminant — that is algebra, Law 1 — and stays out.
 
-   Four round types, all reusing varSlider (no new mechanic):
+   Four round types (varSlider for R1; the keypad — ported from
+   blipwork per her 2026-08-21 ruling — for R2; mc() for the rest):
      R1 discover     iq(). Drag k, y = k rides, live snypunte marked.
                      No-spoilers (Law 7): options unlock only once the
                      WHOLE range has been dragged; the conclusion is
                      never stated before the learner commits.
-     R2 kiss         mc(). The turning point is marked; the answer is
-                     its y, read straight off — never computed.
+     R2 kiss         kp(). The turning point is marked; the answer is
+                     its y, TYPED on the keypad — read, never computed.
      R3 count        mc(). "For which k does y = k cut TWICE?" —
                      k > q / k < q, matching happy/sad.
      R4 other        mc(). Hyperbola: exactly one cut for every k ≠ q,
@@ -144,7 +145,7 @@ function kissRound() {
     const missPX = B("That is the turning point's x — the touch depends on its y, not its x.",
                       "Dit is die draaipunt se x — die net-net-raak hang van sy y af, nie sy x nie.");
     const missGeneric = B("Read the marked point's y straight off the sketch — the touch happens exactly there.",
-                          "Lees die gemerkte punt se y reguit van die sketch af — die net-net-raak gebeur presies daar.");
+                          "Lees die gemerkte punt se y reguit van die skets af — die net-net-raak gebeur presies daar.");
     const built = kp("roots",
       B("For which k does y = k just touch the graph?", "Vir watter k raak y = k die grafiek net-net?"),
       tp.y,
