@@ -54,6 +54,11 @@ import { questEquation } from "./qE-equation.js";
    2026-08-21) — the g + k sliding-tangent variant needs the discriminant,
    which is algebra, Law 1, and stays out. */
 import { questRoots } from "./qK-roots.js";
+/* batch 3, session 3: "Ongelykhede 2" slots in AFTER questRoots and
+   BEFORE quest7 (Eksamenmodus) — exam mode samples everything that
+   exists before it, so it stays last. x·f(x) quadrant signs, f/g with
+   the open circle, and endpoint discipline (which boundaries close). */
+import { questInequal2 } from "./qI-inequal2.js";
 import { quest7, TECHOK, resetExam } from "./q7-exam.js";
 import { CONTENT } from "./_graphs.js";
 import { pick, shuffled } from "../ui.js";
@@ -64,7 +69,8 @@ import { pick, shuffled } from "../ui.js";
    The map unlocks strictly in this array's order, so this array IS the order. */
 export const QUESTS = [
   questDiscover, questDiscover2, questRecognize, quest2,
-  quest3, quest5, quest6, questLengths, questGradient, questTransform, questEquation, questRoots, quest7,
+  quest3, quest5, quest6, questLengths, questGradient, questTransform, questEquation, questRoots,
+  questInequal2, quest7,
 ];
 
 /* flip semicircle content on/off everywhere */
