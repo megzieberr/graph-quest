@@ -1,4 +1,4 @@
-# Project status — updated 2026-08-21 late night (her phone-test caught the missing line → EVERY qK round drags now; kiss-stop dot bug fixed; 2 commits ready to ship as gq-v23)
+# Project status — updated 2026-08-21 late night (line-everywhere + kiss-stop fix SHIPPED on sw gq-v23 — awaiting her phone-test)
 
 **Read this first.** The v2 spec is [RUN-PLAN.md](RUN-PLAN.md); Megan's own class notes
 are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTIONS-NOTES-DIGEST.md).
@@ -493,11 +493,12 @@ are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTI
 
 ## Pending on Megan
 
-- 💻 1 min **[blocking]**: say **"ship it"** for the line build + kiss-stop
-  fix (cache → gq-v23, push) — then 📱 5 min: close + reopen the PWA twice,
-  play **Aard van wortels** (drag the line in every round; land it on the
+- 📱 5 min **[blocking]**: close + reopen the PWA twice, play
+  **Aard van wortels** (drag the line in every round; land it on the
   turning point and see the ONE dot; type on the keypad) and one fresh
   **Vind die vergelyking** play. Session 3 dispatches after your test.
+  (The line build + kiss-stop fix shipped 2026-08-21 late night, sw gq-v23,
+  push `f73ba33`, live-verified byte-fresh.)
 
 ## Next up
 
