@@ -1,4 +1,4 @@
-# Project status — updated 2026-08-21 late night (sw gq-v23 LIVE and Megan's phone-test PASSED — session 2 closed; next: session 3, Ongelykhede 2)
+# Project status — updated 2026-08-21 (build day 2: sw gq-v24 LIVE, session 3 Ongelykhede 2 SHIPPED — her phone-test is the gate; session 4 pre-authorized on a pass)
 
 **Read this first.** The v2 spec is [RUN-PLAN.md](RUN-PLAN.md); Megan's own class notes
 are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTIONS-NOTES-DIGEST.md).
@@ -497,33 +497,81 @@ are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTI
   Session 2 is CLOSED. (Her approval also settles the R3-no-TP-label
   judgment call — flagged, seen, kept.)
 
+- 2026-08-21 (build day 2, morning): **pre-build audit + Afrikaans housekeeping**
+  (her ask before sessions 3–5). Base verified sound: 207/207 ×3 with full cache
+  discipline, console totally clean (buzz guard proven — zero errors where 485
+  once drowned a real bug), live = HEAD, qK smoke-played through the real play
+  wrapper. Housekeeping found + fixed a real hole: **tools/extract_af.py's
+  SECTIONS list stopped at the 11 pre-batch-3 quests**, so AFRIKAANS-TEKS.md
+  had ZERO qE/qK/keypad strings — her wording pass would have silently skipped
+  the two newest quests. Extractor now mirrors index.js (rule already in its
+  header); file went 599 → 738 bullets; the 139 new strings passed a native-eye
+  read (canon held: vlerkies/arms, Trek/Klik op, no banned words).
+
+- 2026-08-21 (build day 2 — batch 3 SESSION 3, Sonnet build under her /go,
+  foreman-reviewed, SHIPPED sw gq-v24, push `26f77f7`, live-verified byte-fresh
+  by SHA-256 against local HEAD):
+  - **Ongelykhede 2 (qI) built** — R1 x·f(x) (quadrant signs), R2 f/g with the
+    open circle, R3 endpoint discipline (single-curve and quotient shapes).
+    First quest to chain her FULL four-step board method in one round:
+    cutSockets → signPaint → sweep → read off. Map: after qK, before
+    Eksamenmodus — 14 quests.
+  - **Build session's design call, flagged for her phone-test: "x" is drawn as
+    the literal line y = x** on the same sketch as f. Why it's good: painting
+    x's row becomes the same f·g mechanic learners know from quest 5, and the
+    required 0-socket IS that line's x-intercept — "a line through every
+    x-intercept" produces the teaching moment with no special rule. The
+    kwadrant 1/3 vs 2/4 wording from her notes stays in hints + solutions
+    (Law 5). HER EYE SETTLES IT.
+  - R2 ships exactly 2 options (spec-literal: they differ ONLY in < vs ≤ at
+    g's root; qE-R4 precedent); R3 ships 2–3. The verbatim nudge canon is in:
+    "Deel deur nul mag nie — daardie x bly oop."
+  - Build session self-caught pre-commit: a ~2% R1 draw where flipStrictString
+    collided with the correct answer (asymptote-forced-open ray) shipped only
+    3 options — reject-and-redraw guard; and the intro's hand-built sign marks
+    drifted above the frame (same clamp q5's intro needed on fix day).
+  - **Foreman review (own eyes, no say-so):** 225/225 ×3 identical, console
+    clean; §28's checks read line by line (independent recompute via
+    signAt/sections on FRESH cuts, negative-tested, non-vacuous); 1000-round
+    stress across all round types — **minimum cut separation 1.0 unit (~45px),
+    zero draws under 0.45** — the x=0 crowding worry is measured away, the
+    generators only make whole-unit boundaries; full round played through the
+    REAL play.js wrapper at 375px (sockets → paint → sweep → wrong-pick nudge
+    → method card), intro's 5 beats free of clipped equations (§25b class).
+  - ⚠ Environment note, NOT an app bug: this session's browser pane stopped
+    registering the localhost SW mid-review ("unknown error fetching the
+    script") — plain fetch of sw.js was 200/correct, the SAME sw.js registers
+    fine on the live site, and the ship commit never touched it. Don't chase
+    it in the app; it's the pane's localhost storage state.
+  - Ship: SHELL + qI-inequal2.js, CACHE gq-v23 → gq-v24; AFRIKAANS-TEKS.md
+    regenerated 738 → 794 bullets (Quest 13 · Ongelykhede 2 in, ready for her
+    wording pass).
+
 ## Pending on Megan
 
-- 💻 [whenever]: open the next Fun Functions session and say **"session 3
-  can go"** — the foreman dispatches Ongelykhede 2 per RUN-PLAN-BATCH3.md.
+- 📱 [blocking] 5 min: fully close + reopen Fun Functions, play **Ongelykhede 2**
+  (14th card) — say pass/fail; on a pass session 4 dispatches (pre-authorized
+  2026-08-21: "If it passes the play test, I want to move forward with session 4").
 
 ## Next up
 
-- **NEXT SESSION = batch 3 session 3: Ongelykhede 2** (qI — x·f(x) with the
-  learner-placed 0-socket, f/g with the open circle, ≤/≥ endpoint
-  discipline; brief in RUN-PLAN-BATCH3.md). Foreman dispatches on her go.
-  Carry into its brief: the line-everywhere ruling (any round that talks
-  about a movable line draws it draggable), the freeDrag/no-gate pattern,
-  and the kiss-stop lesson (a sign-change scanner cannot see a tangency —
-  check any new round that can produce a touch).
+- **NEXT = batch 3 session 4: Soek die fout** (qF — sketch + equation, "Pas
+  hulle?", one injected fault; brief in RUN-PLAN-BATCH3.md; design its
+  mechanic to be SHARED with blipwork's error-checking dice rounds — see
+  DICE-PLAN.md there). Dispatches the moment her qI phone-test passes
+  (pre-authorized). Then session 5: Eksamenmodus rebuild (which removes the
+  sheetHypLine p = 0 exemption from the §22 scan).
+- Carry into session 4's brief: the wrapper blind spot (play in a real tab,
+  read the console), whole-unit boundary habit, banned-word + native-eye
+  Afrikaans pass, and the fault-visibility review focus (a p-flip that lands
+  both curves on the same pixels must redraw).
 - Her two qE design questions are ANSWERED (2026-08-21) and shipped — do not
-  re-flag them.
-- **Batch 3 continues (foreman = Fable; her ruling this batch: the foreman
-  dispatches the build agents itself, reviews, reports back between sessions).**
-  Sessions 1–2 done (1 shipped, 2 awaiting ship). Remaining order per
-  RUN-PLAN-BATCH3.md: Ongelykhede 2 → Soek die fout (design its mechanic to be
-  SHARED with blipwork's error-checking dice rounds — see DICE-PLAN.md there) →
-  Eksamenmodus rebuild (which removes the sheetHypLine p = 0 exemption from the
-  §22 scan). One session at a time, her phone-test between.
-- After session 5: regenerate AFRIKAANS-TEKS.md (`python tools/extract_af.py`)
-  → her wording pass → correction session. ⚠ The file is already stale as of
-  2026-08-21 — the two new rounds, the decoy WHY strings and three rebuilt hint
-  ladders are not in it.
+  re-flag them. qI's y = x design call awaits her phone-test.
+- **Batch 3 (foreman = Fable; the foreman dispatches the build agents itself,
+  reviews, reports back between sessions).** Sessions 1–3 shipped.
+- AFRIKAANS-TEKS.md is CURRENT through qI (794 bullets, regenerated at the
+  session-3 ship). Regenerate again after sessions 4/5, then her wording pass
+  → correction session.
 - Small tidy-ups, any session: q5's retry-by-recursion style could become
   bounded loops like qL/qG · the faint flag doesn't dim a faint curve's
   asymptotes/labels (cosmetic, needs her call). (randParabola moved into
@@ -539,8 +587,8 @@ python -m http.server 5207 --directory "C:\Users\megzi\Desktop\Claude Code Proje
 
 Then <http://localhost:5207/> (`?local=1` forces local save mode). Preview entry
 `graph-quest` (port 5207) in the nested `C:\Users\megzi\.claude\.claude\launch.json`.
-verify.html is the harness — all 180 must pass, same total three runs in a row,
-before any commit.
+verify.html is the harness — ALL must pass at the same total three runs in a row
+(currently 225) before any commit.
 
 ⚠ Cache discipline (it lied to THREE reviews this build): before trusting verify.html
 in a browser, unregister the SW, delete `gq-*` caches, AND force-refetch changed modules
@@ -576,14 +624,17 @@ js/
          qL-lengths.js · qG-gradient.js · qT-transform.js ·
          qE-equation.js (formFill: tap the marked feature, value pours in;
          dealEachKindFirst) · qK-roots.js (Aard van wortels: y = k, varSlider) ·
+         qI-inequal2.js (Ongelykhede 2: x·f(x) with x drawn as the line y = x,
+         f/g open circle, endpoint discipline; four-step flow
+         cutSockets → signPaint → sweep) ·
          q7-exam.js      ← map order; screens.js exports questUnlocked()
 supabase/schema.sql   written, not run
-verify.html           the harness: 203 checks, deterministic count — §4b (shared
+verify.html           the harness: 225 checks, deterministic count — §4b (shared
                       mostlyInFrame) + §22 real-spec off-axis + banned words incl.
                       titles/blurbs/intro caps + groups 14–23's fix-day guards +
                       §25's playtest guards (maths options one per line, no loose
                       formula in a beat, every decoy speaks, no two options that
                       are the same graph) +
-                      §23's paint-box guard + §24 (qE) are never-relax rules
-sw.js                 network-first for code; SHELL precache; CACHE = gq-v21
+                      §23's paint-box guard + §24 (qE) + §28 (qI) are never-relax rules
+sw.js                 network-first for code; SHELL precache; CACHE = gq-v24
 ```
