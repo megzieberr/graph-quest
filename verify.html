@@ -24,7 +24,7 @@ import { QUESTS, buildRound, setSemicircles, getQuest } from "./js/quests/index.
 import { secondChanceAllowed, optionsNeedOneColumn } from "./js/play.js";
 import { questUnlocked, mapScreen, B_INTRO } from "./js/screens.js";
 import { verifyFunction, renderFunction, computeFunction } from "./js/engine/function-graph.js";
-import { axisGate, sweep } from "./js/engine/interactive.js";
+import { axisGate, sweep, trailSweep } from "./js/engine/interactive.js";
 import { mountKeypad } from "./js/engine/keypad.js";
 import { L, UI, setLang } from "./js/i18n.js";
 import { fmtComma, near } from "./js/check.js";
@@ -39,6 +39,7 @@ import {
   windowFor, features, asymOnAxis, randHyperbolaOffAxis, mostlyInFrame,
 } from "./js/quests/_graphs.js";
 import { answerString } from "./js/quests/_intervals.js";
+import { timesFProtoRound } from "./js/quests/qI-inequal2.js";
 
 const out = document.getElementById("out");
 let pass = 0, fail = 0;
@@ -3392,6 +3393,165 @@ for (const lang of ["af", "en"]) {
     const profile = { quests: { q7: { done: true, best: 6, total: 6, plays: 3 } } };
     check(g, "inserting qI does not re-lock Eksamenmodus for a profile that already finished it before qI existed (qI itself never played)",
       questUnlocked(profile, iq7) === true);
+  }
+
+  host.remove();
+}
+
+/* ---------- 29. qI prototype (?proto=xfx) — the live trail (session 3 phone-test) ---------- */
+{
+  const g = group("29. qI prototype (?proto=xfx) — the live trail (RETEACH-XFX-2026-08-21)");
+  const host = document.createElement("div");
+  host.style.position = "absolute"; host.style.left = "-9999px"; host.style.width = "360px";
+  document.body.appendChild(host);
+  const strip = (v) => String(v == null ? "" : v).replace(/<[^>]*>/g, "");
+  const bothLangs = (v) => (v && typeof v === "object" ? Object.values(v) : [v]);
+
+  const REPS = 40;
+  const protoRounds = [];
+  for (let i = 0; i < REPS; i++) protoRounds.push(timesFProtoRound());
+  check(g, `timesFProtoRound() builds across ${REPS} reps`, protoRounds.length === REPS);
+
+  /* 29a. NEVER RELAX — no y = x line, ever. Her whole finding #4 was
+     the shipped R1 drawing "x" as a second curve; the prototype spec
+     must carry f ALONE. */
+  {
+    let bad = 0, why = "";
+    protoRounds.forEach((it) => {
+      if (!it.graph) { bad++; why = "a prototype round exposes no it.graph"; return; }
+      const n = (it.graph.curves || []).length;
+      if (n !== 1) { bad++; why = `a prototype spec draws ${n} curves, not 1 — a second curve would BE the banned y = x line`; }
+    });
+    check(g, `every prototype spec draws f alone — no y = x line, ever (${protoRounds.length} rounds) — NEVER RELAX`, bad === 0, why);
+  }
+
+  /* 29b. NEVER RELAX — the y-axis socket is required in every draw,
+     same shape as §28a for the shipped R1 */
+  {
+    let bad = 0, why = "";
+    protoRounds.forEach((it) => {
+      const dc = it.debugTimesFProto;
+      if (!dc) { bad++; why = "a prototype round exposes no debugTimesFProto"; return; }
+      const yc = dc.cands.find((c) => Math.abs(c.x) < 1e-6);
+      if (!yc || !yc.need || yc.why !== "yaxis") { bad++; why = "a prototype round does not REQUIRE the y-axis socket"; }
+    });
+    check(g, `every prototype round requires the y-axis socket (${protoRounds.length} rounds) — NEVER RELAX`, bad === 0, why);
+  }
+
+  /* 29c. NEVER RELAX — the shipped answer matches an independent
+     recompute via signAt/sections/criticalXs, same discipline as §28b */
+  {
+    let bad = 0, why = "", n = 0;
+    protoRounds.forEach((it) => {
+      const dc = it.debugTimesFProto;
+      if (!dc) return;
+      const freshFCuts = criticalXs([dc.f], dc.win.xmin, dc.win.xmax);
+      const freshCuts = [...freshFCuts, { x: 0, why: "yaxis" }].sort((a, b) => a.x - b.x);
+      const freshSecs = sections(freshCuts, dc.win.xmin, dc.win.xmax);
+      const chosen = freshSecs.filter((s) => {
+        const xs = s.mid < 0 ? -1 : 1;
+        const p = xs * signAt(dc.f, s.mid);
+        return dc.wantNeg ? p < 0 : p > 0;
+      });
+      const expected = strip(answerString(chosen, freshCuts, dc.win, { strict: dc.strict, lang: "af" }));
+      const got = strip(L(it.then.answerLabel || ""));
+      n++;
+      if (expected !== got) { bad++; why = `timesFProto: expected "${expected}" got "${got}"`; }
+    });
+    check(g, `the prototype's answer matches an independent recompute via signAt/sections/criticalXs (${n} rounds) — NEVER RELAX`, bad === 0 && n > 0, why);
+  }
+
+  /* 29d. trailSweep, driven for REAL: a fresh mount never reports
+     complete (no auto-complete — the brief's own negative test), and a
+     genuine full left-to-right drag DOES open the gate. */
+  {
+    let bad = 0, why = "", negTested = 0, sweptTested = 0;
+    protoRounds.slice(0, 12).forEach((it) => {
+      const dc = it.debugTimesFProto;
+      if (!dc) return;
+      const box = document.createElement("div");
+      host.appendChild(box);
+      let completed = false, ctl;
+      try {
+        ctl = trailSweep(box, { spec: it.graph, curve: 0, sections: dc.secs, onComplete: () => { completed = true; } });
+      } catch (e) { bad++; why = `trailSweep threw on mount: ${e.message}`; return; }
+      const svg = box.querySelector("svg");
+      const r = svg.getBoundingClientRect();
+      if (!r.width || !r.height) return;   // no live layout in this environment — skip, don't fail
+      negTested++;
+      if (completed || (ctl.isComplete && ctl.isComplete())) {
+        bad++; why = "trailSweep reports complete on a fresh mount — auto-completed with nothing dragged";
+      }
+      const fire = (type, fracX) => svg.dispatchEvent(new PointerEvent(type, {
+        bubbles: true, cancelable: true, pointerId: 1,
+        clientX: r.left + r.width * fracX, clientY: r.top + r.height * 0.5,
+      }));
+      fire("pointerdown", 0);
+      for (let s = 1; s <= 24; s++) fire("pointermove", s / 24);   // a genuine full left-to-right sweep
+      sweptTested++;
+      if (!completed) { bad++; why = "a full left-to-right sweep never fired onComplete"; return; }
+
+      /* every deposited mark, read straight off the DOM, matches an
+         independent recompute at its OWN rendered x — never the
+         round's stored answer, and never a stored index (the "wrong
+         section" trap the brief warns against) */
+      const g2 = computeFunction(it.graph);
+      let marksSeen = 0;
+      box.querySelectorAll(".iv-sign").forEach((el) => {
+        const px = Number(el.getAttribute("x"));
+        const x = g2.xAt(px);
+        const glyphGot = el.textContent;
+        const fillGot = el.style.fill || "";
+        const isFRow = fillGot.includes("fg-a");
+        const isXRow = fillGot.includes("fg-b");
+        if (!isFRow && !isXRow) { bad++; why = `a deposited mark's fill ("${fillGot}") matches neither row's colour`; return; }
+        marksSeen++;
+        if (isFRow) {
+          const want = signAt(dc.f, x) > 0 ? "+" : "−";
+          if (glyphGot !== want) { bad++; why = `f-row mark at x=${x.toFixed(2)} shows "${glyphGot}", signAt says "${want}"`; }
+        } else {
+          const want = x < 0 ? "−" : "+";
+          if (glyphGot !== want) { bad++; why = `x-row mark at x=${x.toFixed(2)} shows "${glyphGot}", x's own sign says "${want}"`; }
+        }
+      });
+      if (!marksSeen) { bad++; why = "a full sweep deposited zero marks"; }
+    });
+    check(g, `trailSweep never auto-completes on mount (${negTested} probed) — NEVER RELAX`, bad === 0, why);
+    check(g, `a genuine full sweep opens the gate, and every deposited mark (both sides of every cut) matches an independent recompute (${sweptTested} rounds driven for real) — NEVER RELAX`,
+      bad === 0 && sweptTested > 0, why);
+  }
+
+  /* 29e. §25a's option-layout discipline holds for the prototype's own
+     option lists (a maths option never shares a row) */
+  {
+    let bad = 0, why = "", mathLists = 0;
+    protoRounds.forEach((it) => {
+      const asked = it.then;
+      if (!asked || !asked.options) return;
+      const isMath = asked.options.some((o) => bothLangs(o.label).some((v) => {
+        const s = String(v == null ? "" : v);
+        if (/class="(eq|frac)"|<sup/.test(s)) return true;
+        const plain = strip(s);
+        return /[=<>≤≥≠]/.test(plain) && plain.trim().split(/\s+/).length <= 10;
+      }));
+      if (!isMath) return;
+      mathLists++;
+      if (!optionsNeedOneColumn(asked)) {
+        bad++; why = `a prototype maths option list is not one-per-line — ${asked.options.map((o) => strip(L(o.label))).join(" | ")}`;
+      }
+    });
+    check(g, `§25a discipline holds for the prototype: every maths option list is one-per-line (${mathLists} lists)`, bad === 0 && mathLists > 0, why);
+  }
+
+  /* 29f. the whole flag-gated dealer hook: WITHOUT ?proto=xfx, qI's
+     normal buildRound() is untouched (never calls timesFProtoRound,
+     never returns a "timesFProto" skillId) — this is what "absolutely
+     nothing about the app changes" means, made checkable */
+  {
+    const normal = buildRound("qI");
+    const anyProto = normal.some((it) => it.skillId === "timesFProto");
+    check(g, "without ?proto=xfx, qI's normal buildRound() never deals the prototype round",
+      normal.length > 0 && !anyProto);
   }
 
   host.remove();

@@ -58,7 +58,7 @@ import { questRoots } from "./qK-roots.js";
    BEFORE quest7 (Eksamenmodus) — exam mode samples everything that
    exists before it, so it stays last. x·f(x) quadrant signs, f/g with
    the open circle, and endpoint discipline (which boundaries close). */
-import { questInequal2 } from "./qI-inequal2.js";
+import { questInequal2, timesFProtoRound } from "./qI-inequal2.js";
 import { quest7, TECHOK, resetExam } from "./q7-exam.js";
 import { CONTENT } from "./_graphs.js";
 import { pick, shuffled } from "../ui.js";
@@ -132,9 +132,30 @@ function buildCoverageRound(q, usable, bag) {
    other quest ignores the second argument entirely, so its dealing is
    byte-for-byte unchanged. Omitting metState (or passing {}) means
    "nothing met yet" — the safe default for a fresh profile. */
+/* ?proto=xfx — session 3's ONE prototype round only (her ruling,
+   reference/RETEACH-XFX-2026-08-21.md: "before redesigning everything,
+   let's make one round, just one, with this new approach"). Reads
+   location directly, the same pattern app.js's own ?nosemi flag
+   already uses — WITHOUT the flag this branch never runs, so normal
+   qI dealing (questInequal2.skills, below) is byte-for-byte
+   unchanged. */
+function protoXfxOn() {
+  try { return new URL(location.href).searchParams.get("proto") === "xfx"; } catch { return false; }
+}
+
 export function buildRound(questId, metState) {
   const q = getQuest(questId);
   if (!q) return [];
+  if (questId === "qI" && protoXfxOn()) {
+    const out = [];
+    for (let i = 0; i < 6; i++) {
+      const built = timesFProtoRound();
+      built.skillId = "timesFProto";
+      built.concept = built.concept || "inequal2";
+      out.push(built);
+    }
+    return out;
+  }
   if (q.buildAll) {
     const all = q.buildAll();
     all.forEach((it) => { it.concept = it.concept || "exam"; });

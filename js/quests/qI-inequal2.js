@@ -47,7 +47,7 @@
    ============================================================ */
 import { mc, iq, quest } from "./_shared.js";
 import { B, getLang } from "../i18n.js";
-import { cutSockets, signPaint, sweep } from "../engine/interactive.js";
+import { cutSockets, signPaint, sweep, trailSweep } from "../engine/interactive.js";
 import { renderFunction, computeFunction } from "../engine/function-graph.js";
 import {
   specFor, randParabola, randLine, randHyperbolaOffAxis, randExp,
@@ -55,7 +55,7 @@ import {
 } from "./_graphs.js";
 import {
   criticalXs, sections, signAt, xIntercepts, vAsymptotes, lineXInt,
-  paraTP, parabolaFromRoots, eqStr, pick, makeFn,
+  paraTP, parabolaFromRoots, eqStr, pick, makeFn, mergeSections,
 } from "../funclib.js";
 import { answerString, complementString, flipStrictString, asYString } from "./_intervals.js";
 
@@ -607,6 +607,204 @@ const SKILLS = {
    a real asymptote AND a g-root in the same picture. */
 function endpointRound() {
   return pick([SKILLS.singleEndpointRound, SKILLS.quotientEndpointRound])();
+}
+
+/* ============================================================
+   PROTOTYPE — x·f(x), the LIVE TRAIL (?proto=xfx only)
+   ------------------------------------------------------------
+   Her ruling, 2026-08-21 (reference/RETEACH-XFX-2026-08-21.md, HER
+   FINAL CALL): the shipped R1 above drew "x" as the line y = x
+   (finding #4, wrong); the first fix idea (tap-boxes for x's row) was
+   ALSO ruled out once she saw it on screen — "the app is dynamic so
+   this will work better," meaning the DRAG deposits the trail instead
+   of the learner tapping boxes. Process ruling: build ONE round this
+   new way, her phone-test rules on it, only THEN the full qI redesign.
+
+   Two steps only — no signPaint phase at all, that mechanic is not
+   used here:
+     1. cutSockets — f's zeros/asymptotes + the y-axis (x's own sign
+        boundary), unchanged in spirit from the shipped R1 above.
+     2. trailSweep — dragging the scan line deposits the sign trail;
+        the gate is "has the line visited the full range", never a
+        confirm-tap (engine/interactive.js §6.5).
+
+   Lives BESIDE SKILLS.timesFRound — that function, and the shipped
+   questInequal2 registration below, are both untouched. The ONLY
+   thing that ever calls timesFProtoRound() is the flag-gated dealer
+   hook in quests/index.js (?proto=xfx); normal qI play never sees it,
+   never deals it, never imports it. */
+const XTONE = "var(--fg-b)", FTONE = "var(--fg-a)";
+
+const COACH_SOCKETS_PROTO = B(
+  "Step 1: tap on every place that needs a line — every x-intercept and asymptote of f, and the y-axis too.",
+  "Stap 1: klik op elke plek wat 'n lyn nodig het — elke x-afsnit en asimptoot van f, en ook die y-as.");
+const COACH_TRAIL_PROTO = B(
+  "Lines placed! Now drag the scan line across — the options only open once you have swept the whole range.",
+  "Lyne geplaas! Trek nou die skandeerlyn oor — die opsies gaan eers oop as jy die hele reeks deurgeskuif het.");
+
+/* the winning sections, shaded along the x-axis with their numbers
+   circled — her ruling (RETEACH digest item 4): "the answer is read
+   OFF the x-axis", the same `shades` spec mechanism the qI intro
+   already uses (buildIntro()'s beat 5 below), reused exactly as-is.
+   Appended onto the LAST solution line, so it shows in the feedback
+   panel on every outcome — the axis read-off IS how she presents the
+   answer, right or wrong on the first try. */
+function answerShadeHtml(tableSpec, secsAll, chosen, win) {
+  const shades = mergeSections(chosen).map((iv) => ({ x0: iv.x0, x1: iv.x1 }));
+  const marked = { ...tableSpec, shades };
+  const g = computeFunction(marked);
+  const chosenIdx = new Set(chosen.map((s) => s.i));
+  const numFrag = secsAll.map((s, i) => {
+    const cx = g.X((s.x0 + s.x1) / 2).toFixed(1), cy = (g.Y(win.ymax) + 12).toFixed(1);
+    const circleEl = chosenIdx.has(s.i) ? `<circle class="iv-sectcircle" cx="${cx}" cy="${cy}" r="9"/>` : "";
+    return `${circleEl}<text class="iv-sectlab${chosenIdx.has(s.i) ? " won" : ""}" x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="middle">${"①②③④⑤⑥⑦⑧"[i] || String(i + 1)}</text>`;
+  }).join("");
+  const svgHtml = renderFunction(marked).replace("</svg>", numFrag + "</svg>");
+  return `<div class="graphbox" style="margin-top:8px">${svgHtml}</div>`;
+}
+const withAnswerShade = (secsAll, chosen, win, tableSpec) => {
+  const html = answerShadeHtml(tableSpec, secsAll, chosen, win);
+  return (b) => ({ en: b.en + html, af: b.af + html });
+};
+
+/* sockets → trailSweep → unlock. No signPaint step — her ruling. */
+function buildProtoFlow({ spec, cands, secs, tableSpec, missingWhy, missingMsg }) {
+  const requiredIdx = new Set(cands.map((c, i) => (c.need ? i : -1)).filter((i) => i >= 0));
+  return (host, done, nudge) => {
+    const sockets = cutSockets(host, {
+      spec, candidates: cands,
+      onChange: (chosen) => {
+        const same = chosen.size === requiredIdx.size && [...requiredIdx].every((i) => chosen.has(i));
+        if (same) {
+          sockets.reveal(requiredIdx);
+          nudge(COACH_TRAIL_PROTO);
+          setTimeout(() => {
+            trailSweep(host, {
+              spec: tableSpec, curve: 0, sections: secs, xTone: XTONE, fTone: FTONE,
+              onComplete: () => setTimeout(done, 300),
+            });
+          }, 350);
+          return;
+        }
+        const extra = [...chosen].find((i) => !cands[i].need);
+        if (extra != null) { nudge(DECOY_MSG[cands[extra].why] || DECOY_MSG.tp); return; }
+        const missing = missingWhy && cands.some((c, i) => c.need && c.why === missingWhy && !chosen.has(i));
+        if (missing && chosen.size >= requiredIdx.size - 1) nudge(missingMsg);
+        else nudge(B(`Placed ${chosen.size} of ${requiredIdx.size}.`, `${chosen.size} van ${requiredIdx.size} geplaas.`));
+      },
+    });
+    return sockets;
+  };
+}
+
+export function timesFProtoRound() {
+  for (let tries = 0; tries < 60; tries++) {
+    /* brief's pool, verbatim: parabola / hyperbola (off-axis) / exp —
+       NO line (line would make x·f(x) a familiar two-line quadratic
+       picture, not the curve-plus-y-axis picture her reteach spec
+       draws) */
+    const f = pick([randParabola(), randHyperbolaOffAxis(), randExp()]);
+    const win0 = windowFor([f]);
+    if (!win0) continue;
+    const fCuts0 = criticalXs([f], win0.xmin, win0.xmax);
+    if (!fCuts0.length || fCuts0.some((c) => Math.abs(c.x) < 1.0)) continue;   // keep the y-axis cut clean of crowding
+    const secs0 = sections([...fCuts0, { x: 0, why: "yaxis" }].sort((a, b) => a.x - b.x), win0.xmin, win0.xmax);
+    /* every section's midpoint goes into the window's own identity
+       features — "the picture must hold the whole story" (the brief's
+       reject-and-redraw rule), not just f's intercepts/asymptotes */
+    const include = secs0.map((s) => {
+      const y = makeFn(f)(s.mid);
+      return Number.isFinite(y) ? { x: s.mid, y } : { x: s.mid };
+    });
+    const win = windowFor([f], { include });
+    if (!win) continue;
+    if (!mostlyInFrame(f, win)) continue;
+
+    /* re-derive against the FINAL window — it may show more (or less)
+       of f than win0 did */
+    const fCuts = criticalXs([f], win.xmin, win.xmax);
+    if (!fCuts.length || fCuts.some((c) => Math.abs(c.x) < 1.0)) continue;
+    const cuts = [...fCuts, { x: 0, why: "yaxis" }].sort((a, b) => a.x - b.x);
+    const cands = cuts.map((c) => ({ x: c.x, why: c.why, need: true }));
+    addTPDecoy(cands, f, win);
+    cands.sort((a, b) => a.x - b.x);
+    const spec = specFor([f], { win, accent: ACC, ticks: "labels", labels: ["f"], asymLabels: true });
+    const tableSpec = { ...spec, vlines: cuts.map((c) => ({ x: c.x })) };
+    const secs = sections(cuts, win.xmin, win.xmax);
+    if (!paintable([f], secs, win)) continue;
+
+    const wantNeg = pick([true, false]);
+    const strict = pick([true, false]);
+    const lang = getLang();
+    const chosen = secs.filter((s) => {
+      const xs = s.mid < 0 ? -1 : 1;
+      const p = xs * signAt(f, s.mid);
+      return wantNeg ? p < 0 : p > 0;
+    });
+    if (!chosen.length || chosen.length === secs.length) continue;
+
+    const correct = answerString(chosen, cuts, win, { strict, lang });
+    /* same reject-and-redraw guard R1 above needs: a selection bounded
+       only by a boundary that forces open either way must not ship a
+       round one decoy short (flipStrictString would collide) */
+    if (flipStrictString(chosen, cuts, win, { strict, lang }) === correct) continue;
+    const wrongs = [
+      { label: complementString(chosen, secs, cuts, win, { strict, lang }),
+        misc: wantNeg
+          ? B("Those are the sections where x and f(x) share a sign — quadrant 1 or 3, x·f(x) is positive there.",
+              "Daai is die afdelings waar x en f(x) dieselfde teken deel — kwadrant 1 of 3, x·f(x) is positief daar.")
+          : B("Those are the sections where x and f(x) have different signs — quadrant 2 or 4, x·f(x) is negative there.",
+              "Daai is die afdelings waar x en f(x) verskillende tekens het — kwadrant 2 of 4, x·f(x) is negatief daar.") },
+      { label: flipStrictString(chosen, cuts, win, { strict, lang }),
+        misc: strict
+          ? B("A strict inequality never includes the boundaries.", "'n Streng ongelykheid sluit nooit die grense in nie.")
+          : B("≤ and ≥ DO include the x-intercepts — the y-axis boundary closes the same way, it is a real zero, not an asymptote.",
+              "≤ en ≥ sluit WEL die x-afsnitte in — die y-as grens maak net so toe, dis 'n regte nulpunt, nie 'n asimptoot nie.") },
+      { label: asYString(correct),
+        misc: B("The answer must be x-values, not y.", "Die antwoord moet x-waardes wees, nie y nie.") },
+    ];
+    const sym = wantNeg ? (strict ? "&lt; 0" : "≤ 0") : (strict ? "&gt; 0" : "≥ 0");
+    const xSpan = `<span style="color:${XTONE}">x</span>`;
+    const fSpan = `<span style="color:${FTONE}">f(x)</span>`;
+
+    const built = iq({
+      concept: "inequal2", kind: "trailSweep", accent: ACC,
+      prompt: B(`For which values of x is <span class='eq'>${xSpan}·${fSpan} ${sym}</span>?`,
+                `Vir watter waardes van x is <span class='eq'>${xSpan}·${fSpan} ${sym}</span>?`),
+      stem: `<span class="eq">${eqStr(f, "f(x)")}</span>`,
+      coach: COACH_SOCKETS_PROTO,
+      hints: [
+        B("x is negative left of the y-axis and positive right of it — that row needs a line at x = 0 too.",
+          "x is negatief links van die y-as en positief regs daarvan — daai ry het ook 'n lyn nodig by x = 0."),
+        B("Drag the line across and watch both signs — same signs → +, different signs → − (quadrant 1/3 versus 2/4).",
+          "Trek die lyn oor en kyk na albei tekens — dieselfde tekens → +, verskillende tekens → − (kwadrant 1/3 teenoor 2/4)."),
+      ],
+      build: buildProtoFlow({
+        spec, cands, secs, tableSpec, missingWhy: "yaxis", missingMsg: MISSING_MSG.yaxis,
+      }),
+      then: mc("inequal2",
+        B("Read the answer off the trail you just swept.", "Lees die antwoord van die spoor wat jy pas deurgeskuif het."),
+        correct, wrongs,
+        { answerLabel: correct,
+          solution: [
+            B("1. A line at every x-intercept/asymptote of f, AND at the y-axis (where x itself changes sign).",
+              "1. 'n Lyn by elke x-afsnit/asimptoot van f, EN by die y-as (waar x self van teken verander)."),
+            B("2. Dragging the line across showed you both signs at every point — x's row and f's row.",
+              "2. Deur die lyn oor te trek het jy albei tekens by elke punt gesien — x se ry en f se ry."),
+            B("3. Same signs on both rows → +. Different signs → − (quadrant 1/3 versus 2/4).",
+              "3. Dieselfde tekens op albei rye → +. Verskillende tekens → − (kwadrant 1/3 teenoor 2/4)."),
+            withAnswerShade(secs, chosen, win, tableSpec)(
+              B("4. Read the answer off the highlighted sections, left to right.",
+                "4. Lees die antwoord van die uitgeligte afdelings af, links na regs.")),
+          ],
+          hint: B("Compare x's sign with f's sign as the line crosses each cut.",
+                  "Vergelyk x se teken met f se teken soos die lyn elke snylyn kruis.") }),
+    });
+    built.debugTimesFProto = { f, win, cuts, secs, cands, wantNeg, strict };
+    built.graph = tableSpec;
+    return built;
+  }
+  throw new Error("qI timesFProto: no honest window fits any draw");
 }
 
 /* ---------------- the quest + intro ---------------- */

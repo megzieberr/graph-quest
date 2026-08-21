@@ -661,6 +661,160 @@ export function sweep(host, opts) {
 }
 
 /* ============================================================
+   6.5 TRAIL SWEEP — drag deposits the sign trail, live at the line
+   ★ qI prototype (?proto=xfx only — reference/RETEACH-XFX-2026-08-21.md)
+   ------------------------------------------------------------
+   Her board method draws a trail of tiny +/− marks riding a curve,
+   section by section — a PAPER affordance for many hands. Her ruling
+   (same evening, "HER FINAL CALL"): the app is dynamic, so it should
+   reproduce that trail dynamically instead of asking the learner to
+   tap a box per section. Dragging the scan line (both ways — sweep()'s
+   own plumbing, reused via drag()) deposits ONE pair per sampled x it
+   crosses: x's sign in one colour, f's sign in another, both riding
+   just off the curve — and the pair AT the line's own position reads
+   live, flipping the instant it crosses a cut. Nothing is painted BY
+   the learner; the commitment moves to the answer step (quest 5 still
+   teaches painting).
+
+   The gate is Law 7's shape (qK's varSlider no-spoilers gate, ported
+   to a continuous range): a seen-set over discretised stops across the
+   WHOLE window, filled from either direction, open only once every
+   stop has been visited — never a monotonic requirement, never an
+   auto-complete on mount (a single visited stop can never satisfy it).
+
+   Does NOT touch sweep()/signPaint() — a new, independent mechanic;
+   every other quest that uses those two is untouched.
+
+   opts: { spec (with vlines already placed by cutSockets), curve:idx,
+           sections, xTone, fTone, step, onComplete }
+   ============================================================ */
+export function trailSweep(host, opts) {
+  const {
+    spec, curve = 0, sections = [], step = 0.4,
+    xTone = "var(--fg-b)", fTone = "var(--fg-a)", onComplete,
+  } = opts;
+  const { svg, g } = mount(host, spec);
+  const { xmin, xmax, ymin, ymax } = g.win;
+  const cv = spec.curves[curve];
+  const f = makeFn(cv);
+
+  /* orientation only — the same numbered-section row every other
+     cutPaintSweep mechanic in this file already draws */
+  sections.forEach((sec, si) => {
+    const lab = svgEl("text", {
+      class: "iv-sectlab", x: N((g.X(sec.x0) + g.X(sec.x1)) / 2), y: N(g.Y(ymax) + 12),
+      "text-anchor": "middle", "dominant-baseline": "middle",
+    });
+    lab.textContent = "①②③④⑤⑥⑦⑧"[si] || String(si + 1);
+    svg.appendChild(lab);
+  });
+
+  /* the discretised stops a drag must cover before the gate opens */
+  const nSteps = Math.max(4, Math.round((xmax - xmin) / step));
+  const samples = [];
+  for (let i = 0; i <= nSteps; i++) samples.push(xmin + (i / nSteps) * (xmax - xmin));
+  /* a sample landing ON a cut (x itself undefined there, or f blowing
+     up) is still a real stop to VISIT for the gate — it is simply
+     never deposited, there is nothing honest to draw right on top of
+     a boundary */
+  const cutXs = (spec.vlines || []).map((v) => v.x);
+  const tolerance = (xmax - xmin) * 0.02;
+  const nearCut = (x) => cutXs.some((cx) => Math.abs(cx - x) < tolerance);
+  const xSignAt = (x) => (x < -1e-9 ? -1 : x > 1e-9 ? 1 : 0);
+  const glyph = (v) => (v > 0 ? "+" : v < 0 ? "−" : "");
+
+  const seen = new Set();
+  const deposited = new Set();
+  let complete = false;
+
+  const trailG = svgEl("g");
+  svg.appendChild(trailG);
+
+  /* f's mark sits just off the curve (the same 17px offset
+     signPaint/redrawMarks already use); x's mark stacks one step
+     further out in the same direction — both clamped clear of the
+     frame edges AND the ①②③ number row (the same clamp lesson q5's
+     and qI's own intro needed on fix day). */
+  function depositAt(i) {
+    if (deposited.has(i)) return;
+    deposited.add(i);
+    const x = samples[i];
+    if (nearCut(x)) return;
+    const y = f(x);
+    if (!Number.isFinite(y) || y < ymin || y > ymax) return;
+    const dir = y >= 0 ? -1 : 1;
+    const clampPy = (py) => Math.max(g.Y(ymax) + 26, Math.min(g.Y(ymin) - 6, py));
+    const px = N(g.X(x));
+    const fPy = clampPy(g.Y(y) + dir * 17);
+    const xPy = clampPy(g.Y(y) + dir * 32);
+    const fT = svgEl("text", { class: "iv-sign", x: px, y: N(fPy), "text-anchor": "middle", "dominant-baseline": "middle" });
+    fT.style.fill = fTone;
+    fT.textContent = glyph(signAt(cv, x));
+    const xT = svgEl("text", { class: "iv-sign", x: px, y: N(xPy), "text-anchor": "middle", "dominant-baseline": "middle" });
+    xT.style.fill = xTone;
+    xT.textContent = glyph(xSignAt(x));
+    trailG.append(fT, xT);
+  }
+
+  /* the live pair AT the line — recomputed fresh every move from the
+     actual dragged x, never read off a deposited mark (the "wrong
+     section" trap: verify against computed x, not a stored index) */
+  const chip = document.createElement("div");
+  chip.className = "iv-trailchip";
+  host.appendChild(chip);
+  function paintChip(x) {
+    const fs = signAt(cv, x), xs = xSignAt(x);
+    chip.innerHTML =
+      `<span class="tc-k" style="color:${xTone}">x</span><span class="tc-v" style="color:${xTone}">${xs === 0 ? "·" : glyph(xs)}</span>` +
+      `<span class="tc-sep">·</span>` +
+      `<span class="tc-k" style="color:${fTone}">f(x)</span><span class="tc-v" style="color:${fTone}">${fs == null ? "·" : glyph(fs)}</span>`;
+  }
+
+  const scan = svgEl("line", { class: "iv-scan", x1: N(g.X(xmin)), y1: N(g.Y(ymin)), x2: N(g.X(xmin)), y2: N(g.Y(ymax)) });
+  const grip = svgEl("circle", { class: "iv-handle", r: 8, cx: N(g.X(xmin)), cy: N(g.Y(ymax) + 6) });
+  const hit = svgEl("rect", { class: "iv-hit", x: 0, y: 0, width: g.W, height: g.H });
+  svg.append(hit, scan, grip);
+
+  let x = xmin;
+  function moveTo(nx) {
+    const prev = x;
+    x = clamp(nx, xmin, xmax);
+    scan.setAttribute("x1", N(g.X(x))); scan.setAttribute("x2", N(g.X(x)));
+    grip.setAttribute("cx", N(g.X(x)));
+    /* every sample the drag actually crossed, not just the two
+       endpoints — a fast swipe between two pointermove events must
+       still deposit (and count as seen) every stop it passed over */
+    const lo = Math.min(prev, x), hi = Math.max(prev, x);
+    let fresh = false;
+    samples.forEach((sx, i) => {
+      if (sx < lo - 1e-9 || sx > hi + 1e-9) return;
+      if (!seen.has(i)) { seen.add(i); fresh = true; }
+      depositAt(i);
+    });
+    if (fresh) buzz(6);
+    paintChip(x);
+    if (!complete && seen.size >= samples.length) {
+      complete = true;
+      buzz(26);
+      if (onComplete) onComplete();
+    }
+  }
+
+  drag(svg, g, ({ px }) => moveTo(g.xAt(px)));
+
+  /* the line and its live chip exist from the very first paint, same
+     as every other mechanic here — a single stop can never satisfy
+     the full-range gate above, so this never auto-completes */
+  moveTo(xmin);
+
+  return {
+    isComplete: () => complete,
+    seen: () => seen.size,
+    total: () => samples.length,
+  };
+}
+
+/* ============================================================
    7. SIGN TABLE — the exam "tekentabel", in her board ORDER
    ------------------------------------------------------------
    Runs AFTER the learner has placed the cut lines (cutSockets):

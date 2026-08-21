@@ -217,6 +217,17 @@ h2{font-size:20px} h3{font-size:16px}
 .iv-signowner{font-size:10.5px;font-weight:700;font-style:italic;paint-order:stroke;stroke:var(--bg);stroke-width:3px}
 .iv-sign.plus{fill:var(--iv-plus)} .iv-sign.minus{fill:var(--iv-minus)}
 .iv-signslot{fill:rgba(255,255,255,.05);stroke:var(--brd-2);stroke-width:1;rx:3}
+/* qI prototype (?proto=xfx) — trailSweep's live readout + the
+   answer-highlight's circled winning section numbers */
+.iv-trailchip{display:flex;align-items:center;justify-content:center;gap:2px;margin-top:6px;padding:6px 10px;
+  border:1px solid var(--brd-2);border-radius:var(--r-md);background:rgba(4,9,20,.5);
+  font-family:var(--font-num);font-size:15px;font-weight:700}
+.iv-trailchip .tc-k{font-size:12px;font-weight:700;opacity:.8;margin-right:1px}
+.iv-trailchip .tc-v{min-width:14px;display:inline-block;text-align:center;margin-right:8px}
+.iv-trailchip .tc-v:last-child{margin-right:0}
+.iv-trailchip .tc-sep{opacity:.35;margin:0 2px}
+.iv-sectcircle{fill:none;stroke:var(--warn);stroke-width:1.6}
+.iv-sectlab.won{fill:var(--warn);font-weight:800}
 .iv-bar{stroke:var(--g-read);stroke-width:3;stroke-linecap:round}
 .iv-axishit{fill:transparent;stroke:none}
 .iv-axishit.iv-axis-ok{fill:color-mix(in srgb,var(--good) 16%,transparent)}
