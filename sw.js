@@ -4,7 +4,7 @@
    for fonts and images.
 
    ⚠ BUMP THIS VERSION ON EVERY SHIPPABLE CHANGE. */
-const CACHE = "gq-v21";
+const CACHE = "gq-v22";
 
 const SHELL = [
   "./", "./index.html", "./css/styles.css", "./manifest.json",
@@ -12,7 +12,7 @@ const SHELL = [
   "./js/check.js", "./js/i18n.js", "./js/funclib.js", "./js/backend.js",
   "./js/supabase-config.js",
   "./js/engine/function-graph.js", "./js/engine/interactive.js",
-  "./js/engine/slider.js",
+  "./js/engine/slider.js", "./js/engine/keypad.js",
   "./js/quests/index.js", "./js/quests/_shared.js", "./js/quests/_graphs.js",
   "./js/quests/_intervals.js",
   "./js/quests/q1-discover.js", "./js/quests/q1b-discover2.js",
@@ -20,7 +20,8 @@ const SHELL = [
   "./js/quests/q3-region.js", "./js/quests/q5-signs.js",
   "./js/quests/q6-compare.js", "./js/quests/qL-lengths.js",
   "./js/quests/qG-gradient.js", "./js/quests/qT-transform.js",
-  "./js/quests/qE-equation.js", "./js/quests/q7-exam.js",
+  "./js/quests/qE-equation.js", "./js/quests/qK-roots.js",
+  "./js/quests/q7-exam.js",
 ];
 
 self.addEventListener("install", (e) => {
