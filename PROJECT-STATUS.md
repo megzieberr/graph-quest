@@ -1,16 +1,21 @@
-# Project status — updated 2026-08-14 (batch 3 session 1 SHIPPED: Vind die vergelyking live, + a q5 crash fix)
+# Project status — updated 2026-08-21 (her qE playtest shipped: readable options, talking decoys, TWO new rounds)
 
 **Read this first.** The v2 spec is [RUN-PLAN.md](RUN-PLAN.md); Megan's own class notes
 are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTIONS-NOTES-DIGEST.md).
 
 ## Where we are
 
-- **12 quests LIVE on sw `gq-v20`** (shipped 2026-08-14 night), map order: Ontdek ·
+- **12 quests LIVE on sw `gq-v21`** (her playtest fixes shipped 2026-08-21,
+  push `5c5bf57`, live-verified byte-fresh). qE now has FIVE round types:
+  Kies die vorm · Tap die waardes in · Watter vergelyking · **Watter teken
+  het a? (NEW)** · **Watter grondtal? (NEW)**. Harness 180 checks, three
+  identical runs. Map order unchanged: Ontdek ·
   Ontdek 2 · Vinnige Oë · Op die grafiek · Lees die gebied · Plus en minus ·
   Bo of onder · Lengtes · Gemiddelde gradiënt · Transformasies ·
   **Vind die vergelyking (NEW, batch 3 session 1)** · Eksamenmodus.
-  Harness is 171 checks, deterministic, all passing. Megan has NOT yet
-  played the new quest — that gates session 2.
+  Harness is 180 checks, deterministic, all passing. Megan has played qE
+  once (2026-08-21) and her five findings are fixed and live; she has NOT
+  yet played the two NEW rounds — that gates session 2.
 - **2026-08-13 was a FIX DAY (Fable foreman, her /go).** A full code review of the
   batch-2 range found 13 confirmed bugs; four Sonnet build sessions fixed them one
   at a time, each foreman-reviewed and shipped separately so she could phone-test
@@ -301,19 +306,59 @@ are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTI
   (harness now 171). The stray console errors that exposed this dated back to
   harness runs mounting exactly such rounds.
 
+- 2026-08-21 (her playtest of qE, all shipped the same day):
+  - **An option list carrying an equation goes ONE PER LINE at every width.**
+    `.eq` is nowrap, so a squeezed equation does not wrap — it runs off the
+    button's edge — and `.opts` only stacked below 380 px. Her phone is
+    540 px, so "y = 2·2ˣ − 4" shipped cut off mid-equation. Prose options
+    (happy/sad, the corner pairs) still pair up. `optionsNeedOneColumn()` in
+    play.js decides it; harness §25a sweeps EVERY quest. Never relax.
+  - **A formula quoted in a sentence gets its own line** — new `.eq-line`
+    (funclib `EQL()`). Inline it wrapped as "y = a(x −" / "p)² + q". The new
+    §25b sweep then caught the same bug in two lessons she had not reached:
+    qG's "gemiddelde gradiënt = Δy oor Δx" and q6's step-5 interval. One
+    character after an "=" is prose shorthand ("BO die x-as = +") and is
+    exempt; two or more is a formula and must be protected.
+  - **Every extra dot on a formFill sketch names itself when tapped.** They
+    used to buzz in silence, so a learner who tapped the right dot first read
+    the others as dead ("what is the purpose of that second dot?"). She ruled
+    KEEP them — without a decoy the round is "tap the only dot" and teaches no
+    reading. formFill takes an `onMiss` callback; qE's WHY map supplies the
+    words.
+  - **The exp "which equation" round's b-decoy is now the RECIPROCAL base.**
+    It used to be 2 swapped for 3 — both lie flat on the same side and share a
+    y-intercept, so nothing on the sketch separated them. Her words: three of
+    the options carried the right q, so reading the asymptote decided almost
+    nothing. All three R3 families now have a three-rung ladder (q → sign of a
+    → base/p) and a worked solution.
+  - **HER DESIGN CALLS, both answered:** the form-choice round STAYS
+    parabola-only; the tap round's follow-up STAYS a sign question.
+  - **R4 "Watter teken het a?" (new, hers):** two options identical apart from
+    the sign of a, one cue per family — happy/sad · which pair of corners ·
+    above or below the asymptote.
+  - **R5 "Watter grondtal?" (new, hers):** four options sharing a and q, bases
+    written across all three notations (whole number, fraction, negative
+    exponent). ⚖️ **(½)ˣ and 2⁻ˣ are ONE graph**, so options are filtered by
+    VALUE and the two spellings can never both appear — the worked solution
+    says the equality out loud. The x-intercept is MARKED on a whole number,
+    because "which side is it flat on?" only narrows four options to two.
+  - `randExp()` still only makes b = 2 or 3. The new `EXP_BASES` table in
+    qE adds ½ and ⅓, which is what makes "which side does it lie flat?" a
+    real reading instead of a formality.
+
 ## Pending on Megan
 
 - 📱 5 min **[blocking]**: close the PWA fully and reopen it twice, then play
-  **Vind die vergelyking** (quest 11) once through — session 2 waits for this.
-- 💬 2 min **[blocking]**: two qE design calls to answer (details in Decisions,
-  2026-08-14 "flagged for her"): keep the form-choice round parabola-only? ·
-  keep the tap-round's follow-up as a sign-reading question?
+  **Vind die vergelyking** (quest 11) — check the two new rounds (Watter teken
+  het a? · Watter grondtal?) and that no answer is cut off. Session 2 waits.
+- 🌐 2 min **[whenever]**: check the fraction bases render as ½ and ⅓ on your
+  own phone, not as 0,5 — they render correctly in the desktop check.
 
 ## Next up
 
-- **NEXT CATCHUP MUST OPEN WITH (her explicit ask, 2026-08-14):** remind her to
-  play Vind die vergelyking on her phone first, and re-flag the two qE design
-  questions — BEFORE session 2 dispatches.
+- Her two qE design questions are ANSWERED (2026-08-21) and shipped — nothing
+  is waiting on them any more. Session 2 waits only on her playtest of the two
+  NEW rounds.
 - **Batch 3 continues (foreman = Fable; her ruling this batch: the foreman
   dispatches the build agents itself, reviews, reports back between sessions).**
   Session 1 SHIPPED. Remaining order per RUN-PLAN-BATCH3.md: session 2
@@ -321,7 +366,9 @@ are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTI
   Soek die fout → Eksamenmodus rebuild (which removes the sheetHypLine p = 0
   exemption from the §22 scan). One session at a time, her phone-test between.
 - After session 5: regenerate AFRIKAANS-TEKS.md (`python tools/extract_af.py`)
-  → her wording pass → correction session.
+  → her wording pass → correction session. ⚠ The file is already stale as of
+  2026-08-21 — the two new rounds, the decoy WHY strings and three rebuilt hint
+  ladders are not in it.
 - Small tidy-ups, any session: q5's retry-by-recursion style could become
   bounded loops like qL/qG · the faint flag doesn't dim a faint curve's
   asymptotes/labels (cosmetic, needs her call). (randParabola moved into
@@ -337,7 +384,7 @@ python -m http.server 5207 --directory "C:\Users\megzi\Desktop\Claude Code Proje
 
 Then <http://localhost:5207/> (`?local=1` forces local save mode). Preview entry
 `graph-quest` (port 5207) in the nested `C:\Users\megzi\.claude\.claude\launch.json`.
-verify.html is the harness — all 171 must pass, same total three runs in a row,
+verify.html is the harness — all 180 must pass, same total three runs in a row,
 before any commit.
 
 ⚠ Cache discipline (it lied to THREE reviews this build): before trusting verify.html
@@ -373,9 +420,12 @@ js/
          qE-equation.js (formFill: tap the marked feature, value pours in) ·
          q7-exam.js      ← map order; screens.js exports questUnlocked()
 supabase/schema.sql   written, not run
-verify.html           the harness: 171 checks, deterministic count — §4b (shared
+verify.html           the harness: 180 checks, deterministic count — §4b (shared
                       mostlyInFrame) + §22 real-spec off-axis + banned words incl.
                       titles/blurbs/intro caps + groups 14–23's fix-day guards +
+                      §25's playtest guards (maths options one per line, no loose
+                      formula in a beat, every decoy speaks, no two options that
+                      are the same graph) +
                       §23's paint-box guard + §24 (qE) are never-relax rules
-sw.js                 network-first for code; SHELL precache; CACHE = gq-v20
+sw.js                 network-first for code; SHELL precache; CACHE = gq-v21
 ```
