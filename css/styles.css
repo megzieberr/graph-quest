@@ -116,6 +116,10 @@ h2{font-size:20px} h3{font-size:16px}
 /* .eq is GLOBAL: a maths expression may never break across lines,
    wherever it appears — prompts, captions, options, feedback */
 .eq{font-family:var(--font-num);white-space:nowrap}
+/* .eq-line is .eq on its OWN line: a formula quoted at the end of a
+   sentence wrapped mid-equation on her phone ("y = a(x −" / "p)² + q",
+   playtest 2026-08-21). A quoted formula gets a line of its own. */
+.eq-line{display:block;margin-top:6px;font-family:var(--font-num);white-space:nowrap}
 .stem{background:var(--panel);border:1px solid var(--brd);border-left:2px solid var(--accent);border-radius:var(--r-md);padding:11px 13px;font-size:14.5px;color:var(--ink)}
 
 .opts{display:grid;grid-template-columns:1fr 1fr;gap:9px}

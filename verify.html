@@ -21,7 +21,7 @@
 
 <script type="module">
 import { QUESTS, buildRound, setSemicircles, getQuest } from "./js/quests/index.js";
-import { secondChanceAllowed } from "./js/play.js";
+import { secondChanceAllowed, optionsNeedOneColumn } from "./js/play.js";
 import { questUnlocked, mapScreen, B_INTRO } from "./js/screens.js";
 import { verifyFunction, renderFunction, computeFunction } from "./js/engine/function-graph.js";
 import { axisGate, sweep } from "./js/engine/interactive.js";
@@ -2368,8 +2368,10 @@ for (const lang of ["af", "en"]) {
   const r1 = rounds.filter((it) => it.skillId === "chooseForm");
   const r2 = rounds.filter((it) => it.skillId === "tapValues");
   const r3 = rounds.filter((it) => it.skillId === "whichEquation");
-  check(g, `all three round types appear across ${REPS} reps (R1 ${r1.length}, R2 ${r2.length}, R3 ${r3.length})`,
-    r1.length > 0 && r2.length > 0 && r3.length > 0);
+  const r4 = rounds.filter((it) => it.skillId === "aSign");
+  const r5 = rounds.filter((it) => it.skillId === "whichBase");
+  check(g, `all five round types appear across ${REPS} reps (R1 ${r1.length}, R2 ${r2.length}, R3 ${r3.length}, R4 ${r4.length}, R5 ${r5.length})`,
+    r1.length > 0 && r2.length > 0 && r3.length > 0 && r4.length > 0 && r5.length > 0);
 
   /* R2: every filled slot value equals a FRESH funclib recompute for the
      drawn curve — never the round's own stored value trusted blindly */
@@ -2442,6 +2444,194 @@ for (const lang of ["af", "en"]) {
     if (!doneCalled) { bad++; why = `${dc.mode}: tapping every required feature, in order, never unlocked the form`; }
   }
   check(g, `formFill mounts every tap target and stays locked until every slot is filled (${mountedChecked} rounds mounted)`, bad === 0 && mountedChecked > 0, why);
+
+  host.remove();
+}
+
+/* ---------- 25. Her playtest fixes, 2026-08-21 — NEVER RELAX ---------- */
+{
+  setLang("af");
+  const g = group("25. Her playtest fixes, 2026-08-21 (option layout · talking decoys · a-sign · which base)");
+  const host = document.createElement("div");
+  host.style.position = "absolute"; host.style.left = "-9999px"; host.style.width = "360px";
+  document.body.appendChild(host);
+
+  const strip = (v) => String(v == null ? "" : v).replace(/<[^>]*>/g, "");
+  const bothLangs = (v) => (v && typeof v === "object" ? Object.values(v) : [v]);
+
+  /* 25a — APP-WIDE: an equation option may never share a row with another
+     option. `.eq` is nowrap, so a squeezed equation runs off the button's
+     edge instead of wrapping, and `.opts` only stacked below 380 px — her
+     phone is 540 px, so "y = 2·2ˣ − 4" shipped cut off (playtest
+     2026-08-21). Every quest is swept, not just qE. */
+  let bad = 0, why = "", listsChecked = 0, mathLists = 0;
+  QUESTS.forEach((q) => {
+    let rounds = [];
+    for (let i = 0; i < 6; i++) { try { rounds.push(...buildRound(q.id)); } catch { /* generator refused this draw */ } }
+    rounds.forEach((it) => {
+      const asked = (it.type === "interactive" && it.then) ? it.then : it;
+      if (!asked.options) return;
+      listsChecked++;
+      const isMath = asked.options.some((o) => bothLangs(o.label).some((v) => {
+        const s = String(v == null ? "" : v);
+        if (/class="(eq|frac)"|<sup/.test(s)) return true;
+        const plain = strip(s);
+        return /[=<>≤≥≠]/.test(plain) && plain.trim().split(/\s+/).length <= 10;
+      }));
+      if (!isMath) return;
+      mathLists++;
+      if (!optionsNeedOneColumn(asked)) {
+        bad++; why = `${q.id}: a maths option list is not one-per-line — ${asked.options.map((o) => strip(L(o.label))).join(" | ")}`;
+      }
+    });
+  });
+  check(g, `every option list carrying an equation goes one per line, in every quest (${mathLists} maths lists of ${listsChecked})`,
+    bad === 0 && mathLists > 0, why);
+
+  /* 25b — a formula quoted in a lesson beat sits inside .eq or .eq-line, so
+     it can never wrap mid-equation ("y = a(x −" / "p)² + q" on her phone) */
+  bad = 0; why = ""; let capsChecked = 0;
+  QUESTS.forEach((q) => {
+    const beats = (q.intro && q.intro.beats) || [];
+    beats.forEach((b, i) => {
+      bothLangs(b.cap).forEach((raw) => {
+        const s = String(raw == null ? "" : raw);
+        capsChecked++;
+        /* strip what IS protected, then look for a leftover bare formula */
+        const unprotected = s.replace(/<span class="(eq|eq-line)">[\s\S]*?<\/span>/g, "");
+        /* "BO die x-as = +" is prose shorthand, not a formula — one
+           character after the "=" can never break badly. Two or more is a
+           real expression and must be protected. */
+        const loose = [...strip(unprotected).matchAll(/=\s*(\S+)/g)]
+          .some((mm) => mm[1].replace(/[.,;:!?)]+$/, "").length >= 2);
+        if (loose) {
+          bad++; why = `${q.id} beat ${i + 1}: a formula sits loose in the sentence — ${strip(s).slice(0, 90)}`;
+        }
+      });
+    });
+  });
+  check(g, `no lesson beat quotes a formula outside .eq / .eq-line (${capsChecked} captions swept)`, bad === 0, why);
+
+  /* 25c — every formFill decoy names itself. A wrong tap used to buzz in
+     silence, which read as a dead dot ("what is the purpose of that second
+     dot?"). Every tap that fills no slot carries a `why`, and tapping it
+     must actually speak. */
+  bad = 0; why = ""; let decoysSeen = 0, spoke = 0;
+  const qeRounds = [];
+  for (let i = 0; i < 25; i++) qeRounds.push(...buildRound("qE"));
+  const taps = qeRounds.filter((it) => it.skillId === "tapValues");
+  taps.slice(0, 20).forEach((it) => {
+    const dc = it.debugFormFill;
+    const required = new Set(dc.slots.map((s) => s.tapId));
+    const decoyIds = dc.tapIds.filter((id) => !required.has(id));
+    if (!decoyIds.length) { bad++; why = `${dc.mode}: the sketch marks nothing but the answer — no reading left to do`; return; }
+    const box = document.createElement("div");
+    host.appendChild(box);
+    let said = "";
+    it.build(box, () => {}, (msg) => { said = L(msg); });
+    const hits = [...box.querySelectorAll("circle.iv-hit")];
+    decoyIds.forEach((id) => {
+      decoysSeen++;
+      said = "";
+      hits[dc.tapIds.indexOf(id)].dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, cancelable: true }));
+      if (said && said.trim().length > 12) spoke++;
+      else { bad++; why = `${dc.mode}: tapping the decoy "${id}" said nothing`; }
+    });
+  });
+  check(g, `every extra dot on an R2 sketch says what it is when tapped (${spoke}/${decoysSeen} decoy taps spoke)`,
+    bad === 0 && decoysSeen > 0, why);
+
+  /* 25d — R4 aSign: exactly two options, differing ONLY in the sign of a,
+     and the correct one is the drawn curve */
+  bad = 0; why = ""; let aSignChecked = 0;
+  const aSigns = qeRounds.filter((it) => it.skillId === "aSign");
+  aSigns.forEach((it) => {
+    const d = it.debugASign;
+    if (!d) { bad++; why = "an aSign round exposes no debugASign"; return; }
+    aSignChecked++;
+    if (it.options.length !== 2) { bad++; why = `${d.family}: ${it.options.length} options, wanted 2`; }
+    if ((d.cv.a > 0) !== d.aPositive) { bad++; why = `${d.family}: the round disagrees with its own curve about the sign of a`; }
+    const labels = it.options.map((o) => strip(L(o.label)));
+    if (new Set(labels).size !== labels.length) { bad++; why = `${d.family}: the two options read the same — ${labels.join(" | ")}`; }
+  });
+  check(g, `R4 asks the sign of a with two options, one drawn curve, across all three families (${aSignChecked} rounds)`,
+    bad === 0 && aSignChecked > 0, why);
+  const fams = new Set(aSigns.map((it) => it.debugASign.family));
+  check(g, `R4 covers parabola, hyperbola AND exp (saw ${[...fams].sort().join(", ") || "none"})`, fams.size === 3);
+
+  /* 25e — R5 whichBase: four options, NO TWO of them the same graph.
+     (½)ˣ and 2⁻ˣ are one curve written two ways, so a list holding both
+     would have two right answers. Compared by VALUE, never by spelling. */
+  bad = 0; why = ""; let baseRounds = 0, pairsChecked = 0;
+  const bases = qeRounds.filter((it) => it.skillId === "whichBase");
+  bases.forEach((it) => {
+    const d = it.debugWhichBase;
+    if (!d) { bad++; why = "a whichBase round exposes no debugWhichBase"; return; }
+    baseRounds++;
+    if (it.options.length !== 4) { bad++; why = `${it.options.length} options, wanted 4`; }
+    const all = [d.correctB, ...d.decoyBs];
+    const fns = all.map((b) => mf({ kind: "exp", a: d.cv.a, b, p: 0, q: d.cv.q }));
+    for (let x = 0; x < all.length; x++) {
+      for (let y = x + 1; y < all.length; y++) {
+        pairsChecked++;
+        let differs = false;
+        for (let t = 0; t <= 40; t++) {
+          const X = d.win.xmin + ((d.win.xmax - d.win.xmin) * t) / 40;
+          if (Math.abs(fns[x](X) - fns[y](X)) > 1e-6) { differs = true; break; }
+        }
+        if (!differs) { bad++; why = `two options are the SAME graph written two ways (b = ${all[x]} and b = ${all[y]})`; }
+      }
+    }
+  });
+  check(g, `R5's four options are four DIFFERENT graphs — (½)ˣ and 2⁻ˣ never both appear (${baseRounds} rounds, ${pairsChecked} pairs by value)`,
+    bad === 0 && baseRounds > 0, why);
+
+  /* 25f — R5 marks the x-intercept, and only the right base passes through
+     it: "which side is it flat on?" narrows four options to two, so without
+     a marked point the last step would be a guess */
+  bad = 0; why = ""; let marked = 0;
+  bases.forEach((it) => {
+    const d = it.debugWhichBase;
+    const pts = (it.graph && it.graph.points) || [];
+    if (pts.length !== 1) { bad++; why = "no marked point on a whichBase sketch"; return; }
+    const px = pts[0].x;
+    marked++;
+    if (!Number.isInteger(px)) { bad++; why = `the marked x-intercept is not a whole number (${px})`; }
+    if (px < d.win.xmin || px > d.win.xmax) { bad++; why = `the marked x-intercept sits outside the window (${px})`; }
+    if (Math.abs(d.cv.a * Math.pow(d.cv.b, px) + d.cv.q) > 1e-6) { bad++; why = "the marked point is not ON the drawn curve"; }
+    d.decoyBs.forEach((b) => {
+      if (Math.abs(d.cv.a * Math.pow(b, px) + d.cv.q) < 1e-6) { bad++; why = `a decoy base also passes through the marked point (b = ${b})`; }
+    });
+  });
+  check(g, `R5 marks a whole-number x-intercept that ONLY the correct base passes through (${marked} rounds)`,
+    bad === 0 && marked > 0, why);
+
+  /* 25g — the exp R3 round's b-decoy is the RECIPROCAL base, not another
+     base climbing the same way: two options that both lie flat on the same
+     side cannot be told apart by reading. Her playtest 2026-08-21. */
+  bad = 0; why = ""; let expR3 = 0;
+  qeRounds.filter((it) => it.skillId === "whichEquation")
+    .map((it) => it.debugEquation)
+    .filter((d) => d && d.family === "exp")
+    .forEach((d) => {
+      expR3++;
+      const sameSide = d.decoyCvs.filter((c) => c.b !== d.drawnCv.b && (c.b > 1) === (d.drawnCv.b > 1));
+      if (sameSide.length) { bad++; why = `a b-decoy lies flat on the same side as the answer (b = ${sameSide[0].b} vs ${d.drawnCv.b})`; }
+      const recip = d.decoyCvs.some((c) => Math.abs(c.b - 1 / d.drawnCv.b) < 1e-9);
+      if (!recip) { bad++; why = "the exp R3 round has no reciprocal-base decoy"; }
+    });
+  check(g, `the exp "which equation" round separates its bases by which side they lie flat (${expR3} rounds)`, bad === 0 && expR3 > 0, why);
+
+  /* 25h — three of four options can carry the right q, so one hint rung
+     never finishes an R3 round: each family's ladder reads q, then a,
+     then the base/p */
+  bad = 0; why = ""; let laddersChecked = 0;
+  qeRounds.filter((it) => it.skillId === "whichEquation").forEach((it) => {
+    laddersChecked++;
+    if (!it.hints || it.hints.length < 3) { bad++; why = `${it.debugEquation.family}: ${(it.hints || []).length} hint rungs, wanted 3`; }
+    if (!it.solution || it.solution.length < 2) { bad++; why = `${it.debugEquation.family}: the worked solution has fewer than 2 lines`; }
+  });
+  check(g, `every "which equation" round has a three-rung ladder and a worked solution (${laddersChecked} rounds)`, bad === 0 && laddersChecked > 0, why);
 
   host.remove();
 }

@@ -111,6 +111,11 @@ export const semiYInt = (cv) => (cv.up === false ? -cv.r : cv.r);
    ============================================================ */
 /* wrapped in .eq: a domain/range never breaks across lines mid-expression */
 const EQ = (s) => `<span class="eq">${s}</span>`;
+/* EQL is EQ on its own LINE — for a formula quoted at the end of a
+   sentence in a caption or a lesson beat. Inline, such a formula wraps
+   mid-equation on a phone; .eq alone cannot help, because the break
+   happens before the span, not inside it. (Her playtest 2026-08-21.) */
+const EQL = (s) => `<span class="eq-line">${s}</span>`;
 
 export function domainStr(cv) {
   if (cv.kind === "hyperbola") return EQ(`x ∈ ℝ, x ≠ ${C(cv.p)}`);
@@ -127,7 +132,7 @@ export function rangeStr(cv) {
   if (cv.kind === "semicircle") return EQ(cv.up === false ? `${C(-cv.r)} ≤ y ≤ 0` : `0 ≤ y ≤ ${C(cv.r)}`);
   return EQ("y ∈ ℝ");
 }
-export { EQ };
+export { EQ, EQL };
 
 /* ============================================================
    INTERSECTIONS — numeric sign-change scan, robust for any pair

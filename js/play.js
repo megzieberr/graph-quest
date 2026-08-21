@@ -34,6 +34,31 @@ const XP_FULL = 10, XP_HINTED = 5, XP_HALF = 5, COMEBACK = 40, PASS = 0.7, BOOST
 
 let S = null;   // the running session
 
+/* ---------------- option layout ----------------
+   A maths option may never share a row. `.eq` is white-space:nowrap, so a
+   squeezed equation does not wrap — it runs straight off the button's edge,
+   and `.opts` only stacked below 380 px. Her phone is 540 px wide, so
+   "y = 2·2ˣ − 4" shipped cut off mid-equation (playtest 2026-08-21).
+   Any option list carrying an equation now goes one per line at EVERY
+   width; prose options (happy/sad, the corner pairs) still pair up.
+   Exported so verify.html can test the rule itself, not a screenshot. */
+const MATH_MARKUP = /class="(eq|frac)"|<sup/;
+const MATH_SIGN = /[=<>≤≥≠]/;
+export function isMathOption(label) {
+  const parts = (label && typeof label === "object") ? Object.values(label) : [label];
+  return parts.some((v) => {
+    const s = String(v == null ? "" : v);
+    if (MATH_MARKUP.test(s)) return true;
+    /* prose that merely mentions a symbol is still prose — the same
+       eight-word test mc()'s eqWrap() uses, so the two agree */
+    const plain = s.replace(/<[^>]*>/g, "");
+    return MATH_SIGN.test(plain) && plain.trim().split(/\s+/).length <= 10;
+  });
+}
+export function optionsNeedOneColumn(q) {
+  return !!(q && q.options && q.options.some((o) => isMathOption(o.label)));
+}
+
 const introKey = (id) => "gq.intro." + id;
 const introSeen = (id) => { try { return localStorage.getItem(introKey(id)) === "1"; } catch { return true; } };
 const markIntroSeen = (id) => { try { localStorage.setItem(introKey(id), "1"); } catch { /* ignore */ } };
@@ -179,7 +204,9 @@ function render() {
   const coach = el("div", "ivnote");
   const meter = el("div", "ivmeter");
   const askslot = el("div", "stack");
-  const optbox = el("div", "opts" + (item.wide || (item.then && item.then.wide) ? " one" : ""));
+  const asked = (item.type === "interactive" && item.then) ? item.then : item;
+  const optbox = el("div", "opts"
+    + (item.wide || asked.wide || optionsNeedOneColumn(asked) ? " one" : ""));
   const fbslot = el("div", "stack");
 
   let ladder = null;

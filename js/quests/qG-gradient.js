@@ -22,7 +22,7 @@ import { mc, iq, quest } from "./_shared.js";
 import { B } from "../i18n.js";
 import { chordReveal } from "../engine/interactive.js";
 import { specFor, randParabola, randHyperbolaOffAxis, randExp, windowFor, mostlyInFrame } from "./_graphs.js";
-import { makeFn, eqStr, C, pick, isInt, shuffled, gradientStr, avgGradient } from "../funclib.js";
+import { makeFn, eqStr, EQL, C, pick, isInt, shuffled, gradientStr, avgGradient } from "../funclib.js";
 
 const ACC = "#f472b6";
 
@@ -290,7 +290,9 @@ export const questGradient = quest("qG",
                          "Die gemiddelde gradiënt tussen twee punte op 'n kurwe is die gradiënt van die reguit LYN wat hulle verbind — die koord.") },
     { spec: base, cap: B("Tap the sketch to draw the chord — nothing is computed for you, you only see the line.",
                          "Klik op die skets om die koord te teken — niks word vir jou uitgewerk nie, jy sien net die lyn.") },
-    { spec: base, cap: B("Then read each point's height off the grid: gemiddelde gradiënt = Δy oor Δx.",
-                         "Lees dan elke punt se hoogte van die rooster af: gemiddelde gradiënt = Δy oor Δx.") },
+    /* the formula gets its own line — inline at the end of the sentence it
+       wraps mid-equation on a phone (harness §25b, her playtest 2026-08-21) */
+    { spec: base, cap: B(`Then read each point's height off the grid:${EQL("gemiddelde gradiënt = Δy oor Δx")}`,
+                         `Lees dan elke punt se hoogte van die rooster af:${EQL("gemiddelde gradiënt = Δy oor Δx")}`) },
   ] };
 }

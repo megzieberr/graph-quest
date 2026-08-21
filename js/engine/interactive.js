@@ -1080,7 +1080,7 @@ export function chordReveal(host, opts) {
    }
    ============================================================ */
 export function formFill(host, opts) {
-  const { spec, taps, slots, renderForm, onDone } = opts;
+  const { spec, taps, slots, renderForm, onDone, onMiss } = opts;
   const { svg, g } = mount(host, spec);
   const filled = {};
   let cursor = 0;
@@ -1117,7 +1117,12 @@ export function formFill(host, opts) {
       ev.preventDefault(); ev.stopPropagation();
       const grp = activeGroup();
       if (!grp.length) return;                          // already fully filled
-      if (grp[0].tapId !== t.id) { buzz(6); bounce(dot); return; }
+      /* A decoy tap used to buzz and bounce in silence, so a learner who
+         happened to tap the right dot first read the others as dead
+         ("what is the purpose of that second dot?" — her playtest
+         2026-08-21). Every decoy now says what it IS and why it is not
+         the one, so the wrong tap teaches instead of just refusing. */
+      if (grp[0].tapId !== t.id) { buzz(6); bounce(dot); if (onMiss) onMiss(t); return; }
       grp.forEach((s) => { filled[s.id] = t.values[s.id]; });
       dot.setAttribute("class", "iv-taphint on");
       cursor += grp.length;

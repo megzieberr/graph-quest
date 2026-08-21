@@ -348,8 +348,10 @@ function buildIntro() {
       cap: B("Step 4: drag a scan line left to right across the picture, to check the stamps with your own eyes.",
              "Stap 4: skuif 'n skandeerlyn links na regs oor die prent, om die stempels met jou eie oë te toets.") },
     { spec: { ...lined, shades: [{ x0: win.xmin, x1: -2 }, { x0: 0, x1: 4 }] }, frag: numFrag + stampFrag,
-      cap: B("Step 5: write the + sections, left to right: <b>x &lt; −2 or 0 &lt; x &lt; 4</b>. The asymptote's x = 0 is NEVER included.",
-             "Stap 5: skryf die + afdelings, links na regs: <b>x &lt; −2 of 0 &lt; x &lt; 4</b>. Die asimptoot se x = 0 word NOOIT ingesluit nie.") },
+      /* both maths runs are wrapped: an interval or an equation that wraps
+         mid-expression is unreadable on a phone (harness §25b) */
+      cap: B("Step 5: write the + sections, left to right: <b><span class=\"eq\">x &lt; −2 or 0 &lt; x &lt; 4</span></b>. The asymptote's <span class=\"eq\">x = 0</span> is NEVER included.",
+             "Stap 5: skryf die + afdelings, links na regs: <b><span class=\"eq\">x &lt; −2 of 0 &lt; x &lt; 4</span></b>. Die asimptoot se <span class=\"eq\">x = 0</span> word NOOIT ingesluit nie.") },
   ] };
 }
 buildIntro();
