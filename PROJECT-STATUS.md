@@ -598,9 +598,6 @@ OUTRANKS the design docs** — her own board pages plus every ruling from the re
 
 - 💻 [whenever] 1 min: open tomorrow's Fun Functions session and say
   **"session 4 can go"** — the foreman dispatches Soek die fout.
-- 💻 [whenever] 1 min: say whether your board-pages PDF
-  (funksies-grafieklees…, repo root) may be committed — the repo is PUBLIC,
-  so it stays untracked until you say yes.
 
 ## Next up
 
