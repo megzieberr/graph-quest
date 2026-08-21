@@ -1,4 +1,4 @@
-# Project status — updated 2026-08-21 late night (line-everywhere + kiss-stop fix SHIPPED on sw gq-v23 — awaiting her phone-test)
+# Project status — updated 2026-08-21 late night (sw gq-v23 LIVE and Megan's phone-test PASSED — session 2 closed; next: session 3, Ongelykhede 2)
 
 **Read this first.** The v2 spec is [RUN-PLAN.md](RUN-PLAN.md); Megan's own class notes
 are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTIONS-NOTES-DIGEST.md).
@@ -491,23 +491,26 @@ are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTI
   - Harness 203 → 207, three identical runs post-fix; console clean (the
     buzz guard now proven — a full synthetic-drag session logs zero errors).
 
+- 2026-08-21 (close of the day): **her phone-test of gq-v23 PASSED** — "Much
+  much better, it looks great!" The line-everywhere build, the keypad, the
+  kiss-stop dot and the qE one-of-each dealing are all approved as shipped.
+  Session 2 is CLOSED. (Her approval also settles the R3-no-TP-label
+  judgment call — flagged, seen, kept.)
+
 ## Pending on Megan
 
-- 📱 5 min **[blocking]**: close + reopen the PWA twice, play
-  **Aard van wortels** (drag the line in every round; land it on the
-  turning point and see the ONE dot; type on the keypad) and one fresh
-  **Vind die vergelyking** play. Session 3 dispatches after your test.
-  (The line build + kiss-stop fix shipped 2026-08-21 late night, sw gq-v23,
-  push `f73ba33`, live-verified byte-fresh.)
+- 💻 [whenever]: open the next Fun Functions session and say **"session 3
+  can go"** — the foreman dispatches Ongelykhede 2 per RUN-PLAN-BATCH3.md.
 
 ## Next up
 
-- **NEXT = the session-2 ship** (foreman, on her "ship it"): SHELL entries for
-  `js/quests/qK-roots.js` AND `js/engine/keypad.js`, CACHE gq-v21 → gq-v22,
-  push, live check, her phone reopen. Then her phone-test (the Pending item
-  above), then session 3. (Session 2's three build jobs — the qE dealing
-  ruling, Aard van wortels, and the keypad — are DONE and locally committed;
-  see Decisions.)
+- **NEXT SESSION = batch 3 session 3: Ongelykhede 2** (qI — x·f(x) with the
+  learner-placed 0-socket, f/g with the open circle, ≤/≥ endpoint
+  discipline; brief in RUN-PLAN-BATCH3.md). Foreman dispatches on her go.
+  Carry into its brief: the line-everywhere ruling (any round that talks
+  about a movable line draws it draggable), the freeDrag/no-gate pattern,
+  and the kiss-stop lesson (a sign-change scanner cannot see a tangency —
+  check any new round that can produce a touch).
 - Her two qE design questions are ANSWERED (2026-08-21) and shipped — do not
   re-flag them.
 - **Batch 3 continues (foreman = Fable; her ruling this batch: the foreman
