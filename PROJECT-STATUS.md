@@ -1,4 +1,4 @@
-# Project status — updated 2026-08-21 (her qE playtest shipped: readable options, talking decoys, TWO new rounds)
+# Project status — updated 2026-08-21 evening (playtest fixes LIVE; her qE dealing ruling logged; blipwork DICE-PLAN written)
 
 **Read this first.** The v2 spec is [RUN-PLAN.md](RUN-PLAN.md); Megan's own class notes
 are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTIONS-NOTES-DIGEST.md).
@@ -346,25 +346,46 @@ are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTI
     qE adds ½ and ⅓, which is what makes "which side does it lie flat?" a
     real reading instead of a formality.
 
+- 2026-08-21 (evening, same session — her rulings after the ship):
+  - **qE dealing CHANGES (queued for session 2's dispatch, not yet built):** deal
+    one round of each kind per play until a learner has met every kind, THEN fully
+    random. Reason: 6 rounds drawn at random from 5 kinds skip at least one kind in
+    ~5 plays out of 6 — she hit this herself and read it as missing rounds.
+  - She discovered the app generates questions fresh each play only NOW — the run
+    plans said "generators" and nobody ever said it in plain words. Standing note:
+    design-level facts a teacher would notice get one plain sentence at kickoff.
+  - She loves the generative design and wants it in blipwork too — as an ADDITIVE
+    dice per chapter, not a conversion. Full plan written this session:
+    `C:\Users\megzi\Desktop\Claude Code Projects\maths-homework-quest\DICE-PLAN.md`
+    (uncommitted in that repo). All her rulings live in it — read it there.
+  - Cross-project tie: **Soek die fout (session 4 here) shares its mechanic with
+    blipwork's error-checking dice rounds** — build once, both apps use it. Land
+    it here first.
+
 ## Pending on Megan
 
-- 📱 5 min **[blocking]**: close the PWA fully and reopen it twice, then play
-  **Vind die vergelyking** (quest 11) — check the two new rounds (Watter teken
-  het a? · Watter grondtal?) and that no answer is cut off. Session 2 waits.
-- 🌐 2 min **[whenever]**: check the fraction bases render as ½ and ⅓ on your
-  own phone, not as 0,5 — they render correctly in the desktop check.
+- 📱 5 min **[blocking]**: play **Vind die vergelyking** until you've met both NEW
+  rounds (Watter teken het a? · Watter grondtal?) — say "new rounds look right" and
+  session 2 dispatches. (Glance too: fraction bases show as ½/⅓, nothing cut off.)
 
 ## Next up
 
-- Her two qE design questions are ANSWERED (2026-08-21) and shipped — nothing
-  is waiting on them any more. Session 2 waits only on her playtest of the two
-  NEW rounds.
+- **NEXT SESSION = Fun Functions batch 3 continues.** Open by checking the one
+  Pending item above, then:
+  1. **First change in session 2's dispatch:** the qE dealing ruling (one of each
+     kind per play, fully random once a learner has met every kind). Small; do it
+     before or with Aard van wortels.
+  2. Session 2 proper: **Aard van wortels** (y = k only, kickoff b confirmed).
+- Her two qE design questions are ANSWERED (2026-08-21) and shipped — do not
+  re-flag them.
 - **Batch 3 continues (foreman = Fable; her ruling this batch: the foreman
   dispatches the build agents itself, reviews, reports back between sessions).**
   Session 1 SHIPPED. Remaining order per RUN-PLAN-BATCH3.md: session 2
   Aard van wortels (y = k only, kickoff b confirmed) → Ongelykhede 2 →
-  Soek die fout → Eksamenmodus rebuild (which removes the sheetHypLine p = 0
-  exemption from the §22 scan). One session at a time, her phone-test between.
+  Soek die fout (design its mechanic to be SHARED with blipwork's error-checking
+  dice rounds — see DICE-PLAN.md there) → Eksamenmodus rebuild (which removes the
+  sheetHypLine p = 0 exemption from the §22 scan). One session at a time, her
+  phone-test between.
 - After session 5: regenerate AFRIKAANS-TEKS.md (`python tools/extract_af.py`)
   → her wording pass → correction session. ⚠ The file is already stale as of
   2026-08-21 — the two new rounds, the decoy WHY strings and three rebuilt hint
