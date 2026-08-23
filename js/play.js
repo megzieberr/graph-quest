@@ -30,7 +30,7 @@
    as a number (near(), the same tolerance the rest of the app uses),
    never as matched text.
    ============================================================ */
-import { el, $, toast } from "./ui.js";
+import { el, $, toast, scrollToTop } from "./ui.js";
 import { L, UI, getLang } from "./i18n.js";
 import { near } from "./check.js";
 import { staticGraph } from "./engine/interactive.js";
@@ -39,6 +39,10 @@ import { mountKeypad } from "./engine/keypad.js";
 import { buildRound, getQuest } from "./quests/index.js";
 
 const XP_FULL = 10, XP_HINTED = 5, XP_HALF = 5, COMEBACK = 40, PASS = 0.7, BOOST_AFTER = 2;
+/* the host that mounts this app recomputes XP on its own server from the
+   per-item record below ("the client never names an amount"), so it needs
+   the same rates by name, not copied numbers */
+export { XP_FULL, XP_HINTED, XP_HALF, COMEBACK, PASS, BOOST_AFTER };
 
 let S = null;   // the running session
 
@@ -74,12 +78,16 @@ const markIntroSeen = (id) => { try { localStorage.setItem(introKey(id), "1"); }
 export function startQuest(questId, onFinish, onQuit, opts = {}) {
   const q = getQuest(questId);
   const items = buildRound(questId, opts.met);
-  const forceBoost = (() => { try { return new URL(location.href).searchParams.get("boost") === "1"; } catch { return false; } })();
-  const boost = forceBoost || (opts.fails || 0) >= BOOST_AFTER;
+  /* ?boost=1 is a STANDALONE url flag — the shell reads it and passes it
+     in, because a mounted copy has no url of its own to read. verify.html
+     §32b scans this file for any reach at the page address at all. */
+  const boost = !!opts.forceBoost || (opts.fails || 0) >= BOOST_AFTER;
   S = {
     q, items, i: 0, score: 0, xp: 0, onFinish, onQuit,
     answered: false, usedHint: false, ctl: null,
     boost, fails: opts.fails || 0,
+    /* one entry per item, in play order — see recordAnswer() */
+    record: [],
     /* the qE dealing ruling's "met" hook — fired once per skillId, the
        moment a round is actually PRESENTED (below in render()), never
        for a round merely dealt into S.items that the learner may quit
@@ -98,6 +106,35 @@ export function startQuest(questId, onFinish, onQuit, opts = {}) {
    the rule itself rather than re-implementing it. */
 export const secondChanceAllowed = (q, boost) => !!boost || !!(q && q.alwaysSecondChance);
 
+/* ---------------- the per-item record ----------------
+   Every item that resolves writes exactly ONE row here:
+
+     { i, skillId, outcome: "full"|"hinted"|"half"|"wrong"|"skipped", xp }
+
+   `skillId` is the same id markMet() receives (buildRound() stamps it on
+   every item; q7's sheets stamp "examSheet"), so a host can read the two
+   together. `xp` is the amount this item really added — the sum of these
+   plus the comeback bonus IS res.xp, and verify.html §32c checks that
+   identity on every quest. It exists because the host that mounts this
+   app recomputes the payout server-side from what was answered and never
+   trusts a number the client names.
+
+   Called from the four places an item can end: the no-follow-up
+   interactive unlock, an option tap, a keypad submit, and the skip link.
+   The S.i guard makes a second call for the same item a no-op — a
+   language re-render repaints the SAME item without advancing i. */
+function recordAnswer(outcome, xp) {
+  if (!S) return;
+  if (S.record.length && S.record[S.record.length - 1].i === S.i) return;
+  const item = S.items[S.i] || {};
+  S.record.push({
+    i: S.i,
+    skillId: item.skillId ?? item.kind ?? null,
+    outcome,
+    xp,
+  });
+}
+
 export function rerender() { if (S) render(); }
 export const isPlaying = () => !!S;
 export function quitQuest() { S = null; }
@@ -107,7 +144,7 @@ export function quitQuest() { S = null; }
    Each beat re-renders the graph spec (so lines/shades/points can
    appear step by step) and may add an SVG frag (sign marks, ①②③). */
 function renderIntro(q) {
-  const app = $("#app");
+  const app = $(".ff-app");
   const beats = q.intro.beats;
   let i = 0;
 
@@ -119,7 +156,7 @@ function renderIntro(q) {
   const cap = el("div", "intro-cap");
   const next = el("button", "btn primary big", L(UI.next));
   next.type = "button";
-  const skip = el("button", "link-btn", L(UI.skip));
+  const skip = el("button", "link-btn skip-btn", L(UI.skip));
   skip.type = "button";
   const foot = el("div", "stack");
   const skipRow = el("div", "center");
@@ -148,7 +185,7 @@ function renderIntro(q) {
   app.textContent = "";
   app.appendChild(view);
   paint();
-  window.scrollTo(0, 0);
+  scrollToTop();
 }
 
 /* ---------------- the hint ladder ---------------- */
@@ -181,7 +218,7 @@ function buildHintLadder(item, host) {
 
 /* ---------------- rendering ---------------- */
 function render() {
-  const app = $("#app");
+  const app = $(".ff-app");
   const item = S.items[S.i];
   if (!item) return finish();
 
@@ -197,7 +234,7 @@ function render() {
   const bar = el("div", "qbar");
   bar.innerHTML = `<div class="qprog"><i style="width:${(S.i / S.items.length) * 100}%"></i></div>
     <div class="qcount">${S.i + 1} ${L(UI.roundOf)} ${S.items.length}</div>`;
-  const backBtn = el("button", "link-btn", "‹ " + L(UI.mapShort));
+  const backBtn = el("button", "link-btn back-btn", "‹ " + L(UI.mapShort));
   backBtn.type = "button";
   backBtn.style.padding = "2px 6px";
   backBtn.addEventListener("click", () => {
@@ -243,12 +280,13 @@ function render() {
     coach.textContent = L(item.coach || "");
     optbox.style.display = "none";
     ladder = buildHintLadder(item, wrap);
-    const skipBtn = el("button", "link-btn", L(UI.skip));
+    const skipBtn = el("button", "link-btn skip-btn", L(UI.skip));
     skipBtn.type = "button";
     skipBtn.addEventListener("click", () => {
       if (S.answered) return;
       S.answered = true;
       skipBtn.disabled = true;
+      recordAnswer("skipped", 0);
       showFeedback(item.then || item, "wrong", fbslot, ladder, null);
     });
     const skipRow = el("div", "center");
@@ -271,7 +309,7 @@ function render() {
 
   app.textContent = "";
   app.appendChild(view);
-  window.scrollTo(0, 0);
+  scrollToTop();
 }
 
 /* ---------------- interactive gate ---------------- */
@@ -294,7 +332,11 @@ function mountInteractive(item, gbox, coach, meter, askslot, optbox, fbslot, lad
       coach.textContent = L(item.unlockMsg || UI.unlocked);
       coach.style.color = "var(--good)";
     }
-    if (!item.then) { S.score++; S.xp += XP_FULL; showFeedback(item, "full", fbslot, ladder, null); return; }
+    if (!item.then) {
+      S.score++; S.xp += XP_FULL;
+      recordAnswer("full", XP_FULL);
+      showFeedback(item, "full", fbslot, ladder, null); return;
+    }
     optbox.style.display = "";
     const q = item.then;
     if (q.prompt) {
@@ -386,8 +428,13 @@ function paintOptions(q, optbox, fbslot, ladder) {
       });
       if (!o.correct) b.classList.add("bad");
       let outcome = "wrong";
-      if (o.correct && chanceUsed) { outcome = "half"; S.score += 0.5; S.xp += XP_HALF; }
-      else if (o.correct) { outcome = "full"; S.score += 1; S.xp += S.usedHint ? XP_HINTED : XP_FULL; }
+      let gained = 0;
+      if (o.correct && chanceUsed) { outcome = "half"; S.score += 0.5; gained = XP_HALF; S.xp += gained; }
+      else if (o.correct) { outcome = "full"; S.score += 1; gained = S.usedHint ? XP_HINTED : XP_FULL; S.xp += gained; }
+      /* the record names the HINTED case separately — the feedback card
+         still says plain "Korrek", because a learner who used a hint got
+         it right and is not told off for it (her teach-layer ruling) */
+      recordAnswer(outcome === "full" && gained === XP_HINTED ? "hinted" : outcome, gained);
       showFeedback(q, outcome, fbslot, ladder, o.correct ? null : o);
     });
     optbox.appendChild(b);
@@ -429,8 +476,10 @@ function paintKeypad(q, optbox, fbslot, ladder) {
       nudgeEl.hidden = true;
       kpad.disable();                                   // final — no double submits
       let outcome = "wrong";
-      if (correct && chanceUsed) { outcome = "half"; S.score += 0.5; S.xp += XP_HALF; }
-      else if (correct) { outcome = "full"; S.score += 1; S.xp += S.usedHint ? XP_HINTED : XP_FULL; }
+      let gained = 0;
+      if (correct && chanceUsed) { outcome = "half"; S.score += 0.5; gained = XP_HALF; S.xp += gained; }
+      else if (correct) { outcome = "full"; S.score += 1; gained = S.usedHint ? XP_HINTED : XP_FULL; S.xp += gained; }
+      recordAnswer(outcome === "full" && gained === XP_HINTED ? "hinted" : outcome, gained);
       showFeedback(q, outcome, fbslot, ladder, correct ? null : { misc });
     },
   });
@@ -453,6 +502,12 @@ function showFeedback(q, outcome, fbslot, ladder, chosen) {
   const next = el("button", "btn primary big", S.i === S.items.length - 1 ? L(UI.finish) : L(UI.next));
   next.type = "button";
   next.addEventListener("click", () => {
+    /* disable BEFORE advancing (her double-submit rule): a second tap on
+       the final "Klaar" used to land after finish() had set S = null and
+       throw on S.i++ — the results screen was already up, so the learner
+       saw nothing, but the error was real (foreman review fix 2026-08-23) */
+    if (next.disabled || !S) return;
+    next.disabled = true;
     S.i++; S.answered = false; S.usedHint = false; S.ctl = null;
     render();
   });
@@ -461,7 +516,7 @@ function showFeedback(q, outcome, fbslot, ladder, chosen) {
 }
 
 function finish() {
-  const { q, score, items, fails, onFinish } = S;
+  const { q, score, items, fails, onFinish, boost, record } = S;
   let { xp } = S;
   const frac = items.length ? score / items.length : 0;
   /* Comeback: finally passing on the 3rd+ attempt earns a bonus — persistence
@@ -469,5 +524,11 @@ function finish() {
   const comeback = fails >= BOOST_AFTER && frac >= PASS;
   if (comeback) xp += COMEBACK;
   S = null;
-  onFinish({ questId: q.id, score, total: items.length, xp, comeback, passed: frac >= PASS });
+  onFinish({
+    questId: q.id, score, total: items.length, xp, comeback, boost,
+    passed: frac >= PASS,
+    /* per-item outcomes, in play order — the mount's host recomputes its
+       own payout from these instead of trusting `xp`. */
+    answered: record,
+  });
 }

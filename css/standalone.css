@@ -1,0 +1,35 @@
+/* ============================================================
+   STANDALONE-ONLY PAGE CHROME
+   ------------------------------------------------------------
+   css/styles.css is scoped under .ff-root, because Fun Functions is
+   mounted inside blipwork and its selectors may not touch anything of
+   the host's (see js/mount.js). html and body sit OUTSIDE that scope, so
+   the three page-owning rules live here instead and index.html loads
+   both files. A mounted copy loads styles.css only.
+
+   The standalone puts .ff-root on <body> itself, so every token in
+   styles.css resolves here — except on <html>, which is above the root
+   and therefore cannot read a single custom property.
+   ============================================================ */
+
+/* --bg, written out: <html> is outside .ff-root and cannot read the token.
+   Keep this in step with --bg in css/styles.css. */
+html{box-sizing:border-box;height:100%;background:#070b16}
+
+body{
+  margin:0; padding:0; height:100%;
+  background:
+    radial-gradient(1000px 620px at 82% -8%, color-mix(in srgb,var(--chapter) 12%,transparent), transparent 60%),
+    radial-gradient(820px 560px at -10% 108%, color-mix(in srgb,var(--accent) 10%,transparent), transparent 55%),
+    linear-gradient(180deg,var(--bg),var(--bg2));
+  background-attachment:fixed; min-height:100vh;
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  /* the drag mechanics own the gestures inside a graph; stop the page
+     from scroll-hijacking a slow vertical drag on a phone */
+  overscroll-behavior-y:contain;
+}
+body::before{
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background-image:linear-gradient(rgba(58,160,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(58,160,255,.045) 1px,transparent 1px);
+  background-size:36px 36px; mask-image:radial-gradient(circle at 50% 22%,#000,transparent 88%);
+}

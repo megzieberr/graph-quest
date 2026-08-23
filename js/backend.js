@@ -101,6 +101,45 @@ function cloudBackend() {
   };
 }
 
+/* ---------------- host backend (the mount) ----------------
+   The third backend: no storage of its own at all. When Fun Functions is
+   MOUNTED inside another app (blipwork — see js/mount.js), that app is
+   already the learner's roster, XP and results screen, so all four calls
+   just hand over to the host object it passed in.
+
+   Two shape notes:
+   · saveResult() forwards `answered` — the per-item record play.js now
+     builds — because the host recomputes the payout on its own server
+     from what was answered and never trusts an XP number from here.
+   · markMet() is optional: a host that does not track which round kinds
+     a learner has met simply omits it, and the qE dealing ruling then
+     behaves the way a fresh device does.
+   · reset() is a no-op that returns the host's profile unchanged —
+     wiping progress belongs to the app that owns the account, and the
+     mount never draws a reset link anyway. */
+export function HostBackend(host) {
+  const h = host || {};
+  const blankProfile = () => ({ xp: 0, quests: {}, met: {} });
+  return {
+    kind: "host",
+    async profile() {
+      return (h.profile ? await h.profile() : null) || blankProfile();
+    },
+    async saveResult(questId, score, total, xp, answered) {
+      if (!h.saveResult) return blankProfile();
+      return (await h.saveResult(questId, score, total, xp, answered)) || blankProfile();
+    },
+    /* present only when the host offers it, so `if (backend.markMet)`
+       upstream stays a real question */
+    markMet: h.markMet
+      ? async (questId, skillId) => (await h.markMet(questId, skillId)) || blankProfile()
+      : undefined,
+    async reset() {
+      return (h.profile ? await h.profile() : null) || blankProfile();
+    },
+  };
+}
+
 /* ---------------- pick one ---------------- */
 export function chooseBackend() {
   const url = new URL(location.href);

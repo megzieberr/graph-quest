@@ -12,10 +12,15 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Sora:wght@400;500;600&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="./css/styles.css">
+<link rel="stylesheet" href="./css/standalone.css">
 </head>
-<body>
+<!-- css/styles.css is scoped under .ff-root so the app can be mounted
+     inside another page; the standalone simply makes its own <body> that
+     root. css/standalone.css adds the page chrome (html/body background,
+     the grid overlay, full height) that only a page-owning copy wants. -->
+<body class="ff-root">
   <div id="chrome" class="chrome"></div>
-  <div id="app"><div class="view"><div class="muted">Laai…</div></div></div>
+  <div id="app" class="ff-app"><div class="view"><div class="muted">Laai…</div></div></div>
   <script type="module" src="./js/app.js"></script>
 </body>
 </html>

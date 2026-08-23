@@ -18,8 +18,14 @@ let LANG = (() => {
 })();
 
 export const getLang = () => LANG;
-export function setLang(l) {
+/* setLang(l)                  → remembers the choice (the standalone toggle)
+   setLang(l, {persist:false}) → sets it for this run only.
+   The mount uses the second form: blipwork picks the language for its
+   learners and never shows our toggle, so writing gq.lang there would
+   quietly park a value in a shared origin that nobody can see or change. */
+export function setLang(l, opts = {}) {
   LANG = l === "en" ? "en" : "af";
+  if (opts.persist === false) return;
   try { localStorage.setItem(KEY, LANG); } catch { /* private mode */ }
 }
 

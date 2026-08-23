@@ -1,7 +1,29 @@
 /* Tiny DOM + random helpers (same names/idiom as blipwork's js/ui.js). */
 
-export const $ = (sel, root = document) => root.querySelector(sel);
-export const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+/* ---------- the render root ----------
+   The app used to reach straight for document / document.body / #app.
+   That is fine while it owns the whole page, and wrong the moment it is
+   MOUNTED inside another app (blipwork) — see js/mount.js. So there is
+   now exactly one module-level root: the standalone points it at its own
+   .ff-root wrapper at boot, the mount points it at the host's element,
+   and every $ / $$ / toast() below scopes to it. Nothing else in the app
+   is allowed to name document.body or #app again (verify.html §32b). */
+let ROOT = null;
+export function setRoot(node) { ROOT = node || null; }
+export function getRoot() { return ROOT; }
+const scope = () => ROOT || document;
+
+export const $ = (sel, root) => (root || scope()).querySelector(sel);
+export const $$ = (sel, root) => [...(root || scope()).querySelectorAll(sel)];
+
+/* ---------- scrolling to the top of a new screen ----------
+   Standalone: the page itself scrolls (window.scrollTo). Mounted: the app
+   owns a box inside somebody else's page, so yanking THEIR window to the
+   top would be rude and usually wrong — the host passes onScrollTop if it
+   wants a scroll, otherwise nothing moves. */
+let SCROLLER = null;
+export function setScroller(fn) { SCROLLER = typeof fn === "function" ? fn : null; }
+export function scrollToTop() { if (SCROLLER) SCROLLER(); }
 
 export function el(tag, cls, html) {
   const n = document.createElement(tag);
@@ -39,6 +61,10 @@ export function toast(msg, bad = false) {
   const old = $(".toast"); if (old) old.remove();
   clearTimeout(toastTimer);
   const t = el("div", "toast" + (bad ? " bad" : ""), msg);
-  document.body.appendChild(t);
+  /* into the root, so a mounted app never leaves a toast behind in the
+     host's page after destroy(). The document.body fallback only ever
+     fires if something toasts before a root is set — neither entry point
+     can (app.js and mount.js both call setRoot() first). */
+  (ROOT || document.body).appendChild(t);
   toastTimer = setTimeout(() => t.remove(), bad ? 5200 : 2600);
 }

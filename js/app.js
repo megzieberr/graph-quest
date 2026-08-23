@@ -1,28 +1,50 @@
 /* ============================================================
-   BOOT
+   BOOT — the STANDALONE shell only
+   ------------------------------------------------------------
+   Everything a mounted copy shares with this one lives in
+   js/mount.js. What is left here is exactly what belongs to the
+   standalone at megzieberr.github.io/graph-quest and to nothing
+   else: the header chrome, the quest map, the results card, the
+   reset link, the ?url flags, and the service worker.
    ============================================================ */
-import { $, el, toast } from "./ui.js";
-import { L, UI } from "./i18n.js";
+import { $, toast, setRoot, setScroller } from "./ui.js";
+import { L } from "./i18n.js";
 import { chooseBackend } from "./backend.js";
 import { paintChrome, mapScreen, resultScreen } from "./screens.js";
-import { startQuest, rerender, isPlaying } from "./play.js";
+import { rerender, isPlaying } from "./play.js";
 import { getQuest, setSemicircles } from "./quests/index.js";
+import { runQuest } from "./mount.js";
+
+/* the standalone IS the page: its root is the .ff-root wrapper in
+   index.html, and the page's own window does the scrolling */
+setRoot(document.querySelector(".ff-root") || document.body);
+setScroller(() => window.scrollTo(0, 0));
 
 const backend = chooseBackend();
 let profile = { xp: 0, quests: {} };
 let screen = { name: "map" };
 
-/* Semicircles are ON for the standalone (Grade 12 Technical Maths)
-   build. ?nosemi=1 previews the blipwork content set, where the
-   IEB Grade 11s never meet them. */
-setSemicircles(new URL(location.href).searchParams.get("nosemi") !== "1");
+/* ---------- url flags: STANDALONE ONLY ----------
+   A mounted copy has no url of its own, so every flag is read here and
+   passed inward. Semicircles are ON for the standalone (Grade 12
+   Technical Maths) build; ?nosemi=1 previews the blipwork content set,
+   where the IEB Grade 11s never meet them. ?boost=1 forces help mode. */
+const FLAGS = new URL(location.href).searchParams;
+setSemicircles(FLAGS.get("nosemi") !== "1");
+const FORCE_BOOST = FLAGS.get("boost") === "1";
 
 async function boot() {
   try { profile = await backend.profile(); }
   catch (e) { console.warn("profile load failed, using a blank one", e); }
+  normalise();
+  paint();
+}
+
+function normalise(p) {
+  if (p) profile = p;
   profile.quests = profile.quests || {};
   profile.met = profile.met || {};
-  paint();
+  return profile;
 }
 
 function paint() {
@@ -41,56 +63,31 @@ function paint() {
 }
 
 function show(view) {
-  const app = $("#app");
+  const app = $(".ff-app");
   app.textContent = "";
   app.appendChild(view);
   window.scrollTo(0, 0);
 }
 
 function play(questId, opts = {}) {
-  const p = (profile.quests || {})[questId];
-  const fails = p && !p.done ? (p.plays || 0) : 0;   // failed attempts → Boost mode after 2
   screen = { name: "play", questId };
-  const q = getQuest(questId);
-  /* only a quest that opted into dealEachKindFirst (qE) needs its met
-     record threaded through — every other quest ignores both fields */
-  const dealsByKind = !!(q && q.dealEachKindFirst);
-  startQuest(questId, finished, () => { screen = { name: "map" }; paint(); },
-    {
-      fails, forceIntro: opts.forceIntro,
-      met: dealsByKind ? ((profile.met || {})[questId] || {}) : undefined,
-      onRoundShown: dealsByKind ? (skillId) => recordMet(questId, skillId) : null,
-    });
-}
-
-/* persists that `skillId` in `questId` was actually shown to the learner
-   — see play.js's render() for the "presented, not merely dealt" hook.
-   A fresh device (no localStorage) starts the one-of-each deals again,
-   her known and accepted consequence. */
-async function recordMet(questId, skillId) {
-  try {
-    if (backend.markMet) profile = await backend.markMet(questId, skillId);
-  } catch (e) { console.warn("markMet failed", e); }
-  profile.quests = profile.quests || {};
-  profile.met = profile.met || {};
-}
-
-async function finished(res) {
-  try { profile = await backend.saveResult(res.questId, res.score, res.total, res.xp); }
-  catch (e) {
-    console.error("save failed", e);
-    toast(L({ en: "Could not save — your progress may be lost", af: "Kon nie stoor nie — jou vordering kan verlore gaan" }), true);
-  }
-  profile.quests = profile.quests || {};
-  profile.met = profile.met || {};
-  screen = { name: "result", res };
-  paint();
+  runQuest(questId, {
+    profile: () => profile,
+    backend,
+    onProfile: normalise,
+    onSaveError: (e) => {
+      console.error("save failed", e);
+      toast(L({ en: "Could not save — your progress may be lost", af: "Kon nie stoor nie — jou vordering kan verlore gaan" }), true);
+    },
+    onFinished: (res) => { screen = { name: "result", res }; paint(); },
+    onExit: () => { screen = { name: "map" }; paint(); },
+    opts: { forceIntro: opts.forceIntro, forceBoost: FORCE_BOOST },
+  });
 }
 
 async function resetAll() {
   try { profile = await backend.reset(); } catch { /* ignore */ }
-  profile.quests = profile.quests || {};
-  profile.met = profile.met || {};
+  normalise();
   screen = { name: "map" };
   paint();
 }

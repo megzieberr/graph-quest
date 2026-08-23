@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fun Functions — mount test</title>
+<!-- ONLY css/styles.css. No standalone.css, and <body> is deliberately NOT
+     .ff-root: this page pretends to be a foreign host app, so anything the
+     app paints outside its own root will show up as an ugly clash. -->
+<link rel="stylesheet" href="./css/styles.css">
+<style>
+  /* the fake host's own look — loud on purpose, and nothing here shares a
+     class name with the app, so a leak is visible instead of subtle */
+  :root{ --host-ink:#2b1a00; --host-paper:#ffe9b0; }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Georgia,"Times New Roman",serif;background:var(--host-paper);color:var(--host-ink)}
+  .hosthead{position:sticky;top:0;z-index:5;background:#ff7a18;color:#2b1a00;padding:12px 16px;
+    font-weight:700;font-size:18px;letter-spacing:.4px;border-bottom:4px double #2b1a00}
+  .hostwrap{max-width:900px;margin:0 auto;padding:16px}
+  .hostcard{background:#fff6d8;border:3px dashed #c96a00;border-radius:14px;padding:12px;margin-bottom:16px}
+  .hostcard h2{font-size:17px;margin:0 0 8px}
+  #slot{min-height:60px}
+  pre{white-space:pre-wrap;word-break:break-word;font-family:ui-monospace,Consolas,monospace;font-size:12px;
+    background:#fff;border:1px solid #c96a00;border-radius:8px;padding:10px;margin:0}
+  table{border-collapse:collapse;width:100%;font-size:12.5px;font-family:ui-monospace,Consolas,monospace}
+  th,td{border:1px solid #c96a00;padding:3px 6px;text-align:left}
+  th{background:#ffd98a}
+  .ok{color:#0a6b2e;font-weight:700} .no{color:#a10021;font-weight:700}
+  #sum{font-size:17px;font-weight:700;padding:8px 0}
+</style>
+</head>
+<body>
+  <div class="hosthead">🏠 FAKE HOST APP — this orange chrome is NOT Fun Functions</div>
+  <div class="hostwrap">
+    <div class="hostcard">
+      <h2>The host's play screen (mount target)</h2>
+      <div id="slot"></div>
+    </div>
+    <div class="hostcard">
+      <h2>Results the host was handed</h2>
+      <div id="sum">running…</div>
+      <div id="table"></div>
+    </div>
+    <div class="hostcard">
+      <h2>q1 finish payload, verbatim</h2>
+      <pre id="q1res">…</pre>
+    </div>
+  </div>
+
+<script type="module">
+import { QUESTS } from "./js/quests/index.js";
+import { spyHost, playMounted } from "./mount-driver.js";
+
+const slot = document.getElementById("slot");
+const rows = [];
+let bad = 0;
+const tally = { full: 0, hinted: 0, half: 0, wrong: 0, skipped: 0 };
+
+const cell = (ok, txt) => `<span class="${ok ? "ok" : "no"}">${txt}</span>`;
+
+/* the mount is told a language and must NOT remember it: blipwork's
+   learners never see our toggle, and gq.lang lives in a shared origin */
+localStorage.removeItem("gq.lang");
+let langLeak = false;
+
+/* every quest twice: a clean profile, then one that has already failed
+   twice (Boost on — auto-hints and second chances), so the record's five
+   outcomes all get walked instead of just "wrong" and "skipped" */
+const PLAYS = [];
+QUESTS.forEach((q) => {
+  PLAYS.push({ q, mode: "fresh", startProfile: { xp: 0, quests: {}, met: {} } });
+  PLAYS.push({ q, mode: "boost", startProfile: { xp: 0, met: {},
+    quests: { [q.id]: { best: 0, total: 0, plays: 2, done: false } } } });
+});
+
+for (const play of PLAYS) {
+  const q = play.q;
+  const host = spyHost({ questId: q.id, lang: "en", semicircles: false, startProfile: play.startProfile });
+  const { res, calls, handle, stuck } = await playMounted(slot, host);
+  if (localStorage.getItem("gq.lang") !== null) langLeak = true;
+
+  const row = { id: q.id, mode: play.mode, res, calls, stuck };
+  if (!res) { bad++; rows.push(row); continue; }
+  res.answered.forEach((a) => { tally[a.outcome] = (tally[a.outcome] || 0) + 1; });
+
+  const sumXp = res.answered.reduce((a, r) => a + r.xp, 0);
+  const identity = sumXp + (res.comeback ? 40 : 0) === res.xp;
+  const lenOK = res.answered.length === res.total;
+  const saveOnce = calls.saveResult.length === 1;
+  const sameArr = saveOnce && calls.saveResult[0].answered === res.answered;
+
+  /* the mount must not have leaked into the host page */
+  const strayRoot = document.querySelectorAll(".ff-root").length;
+  handle.destroy();
+  const emptied = slot.children.length === 0 && slot.innerHTML === "";
+  const noRootLeft = document.querySelectorAll(".ff-root").length === 0;
+  /* the host's own chrome is still exactly what it was */
+  const hostIntact = getComputedStyle(document.body).fontFamily.includes("Georgia");
+
+  Object.assign(row, {
+    sumXp, identity, lenOK, saveOnce, sameArr, emptied, noRootLeft, hostIntact,
+    strayRoot,
+  });
+  if (!(identity && lenOK && saveOnce && sameArr && emptied && noRootLeft && hostIntact
+        && strayRoot === 1 && !stuck)) bad++;
+  rows.push(row);
+
+  if (q.id === "q1" && play.mode === "boost") {
+    document.getElementById("q1res").textContent = JSON.stringify(res, null, 2);
+  }
+}
+
+if (langLeak) bad++;
+
+document.getElementById("table").innerHTML =
+  `<table><tr><th>quest</th><th>mode</th><th>score</th><th>total</th><th>xp</th>
+   <th>answered.length</th><th>Σxp+bonus</th><th>saveResult ×</th><th>same array</th>
+   <th>destroy: empty</th><th>no .ff-root</th><th>host intact</th></tr>` +
+  rows.map((r) => r.res
+    ? `<tr><td>${r.id}</td><td>${r.mode}</td><td>${r.res.score}</td><td>${r.res.total}</td><td>${r.res.xp}</td>
+        <td>${cell(r.lenOK, r.res.answered.length)}</td>
+        <td>${cell(r.identity, r.sumXp + (r.res.comeback ? 40 : 0))}</td>
+        <td>${cell(r.saveOnce, r.calls.saveResult.length)}</td>
+        <td>${cell(r.sameArr, r.sameArr ? "yes" : "NO")}</td>
+        <td>${cell(r.emptied, r.emptied ? "yes" : "NO")}</td>
+        <td>${cell(r.noRootLeft, r.noRootLeft ? "yes" : "NO")}</td>
+        <td>${cell(r.hostIntact, r.hostIntact ? "yes" : "NO")}</td></tr>`
+    : `<tr><td>${r.id}</td><td>${r.mode}</td><td colspan="10" class="no">never finished (stuck=${r.stuck})</td></tr>`)
+    .join("") + `</table>`
+  + `<div style="margin-top:8px">outcomes recorded: `
+  + Object.entries(tally).map(([k, v]) => `${k}=${v}`).join(" · ")
+  + ` &nbsp;|&nbsp; gq.lang after ${rows.length} mounts: `
+  + cell(!langLeak, langLeak ? "WRITTEN (leak)" : "still unset") + `</div>`;
+
+document.getElementById("sum").innerHTML = bad === 0
+  ? `<span class="ok">ALL 15/15 QUESTS MOUNTED, PLAYED AND DESTROYED CLEANLY (${rows.length} plays)</span>`
+  : `<span class="no">${bad} of ${rows.length} plays failed</span>`;
+/* the richest payload seen — the one worth reading when the record is
+   the thing under review */
+const rich = rows.filter((r) => r.res)
+  .sort((a, b) => new Set(b.res.answered.map((x) => x.outcome)).size
+                - new Set(a.res.answered.map((x) => x.outcome)).size)[0];
+if (rich) {
+  const pre = document.createElement("pre");
+  pre.style.marginTop = "10px";
+  pre.textContent = `most varied record — ${rich.id} (${rich.mode}):\n`
+    + JSON.stringify(rich.res, null, 2);
+  document.getElementById("q1res").after(pre);
+}
+
+window.__mountTest = {
+  plays: rows.length, quests: new Set(rows.map((r) => r.id)).size, bad, tally, langLeak,
+  rich: rich ? { id: rich.id, mode: rich.mode, res: rich.res } : null,
+};
+</script>
+</body>
+</html>

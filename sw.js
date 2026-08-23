@@ -4,11 +4,11 @@
    for fonts and images.
 
    ⚠ BUMP THIS VERSION ON EVERY SHIPPABLE CHANGE. */
-const CACHE = "gq-v30";
+const CACHE = "gq-v31";
 
 const SHELL = [
-  "./", "./index.html", "./css/styles.css", "./manifest.json",
-  "./js/app.js", "./js/play.js", "./js/screens.js", "./js/ui.js",
+  "./", "./index.html", "./css/styles.css", "./css/standalone.css", "./manifest.json",
+  "./js/app.js", "./js/mount.js", "./js/play.js", "./js/screens.js", "./js/ui.js",
   "./js/check.js", "./js/i18n.js", "./js/funclib.js", "./js/backend.js",
   "./js/supabase-config.js",
   "./js/engine/function-graph.js", "./js/engine/interactive.js",

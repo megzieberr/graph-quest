@@ -5,8 +5,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Graph Quest — verify</title>
 <link rel="stylesheet" href="./css/styles.css">
+<link rel="stylesheet" href="./css/standalone.css">
 <style>
-  body{padding:18px}
+  /* css/styles.css is scoped under .ff-root now (§32a), so the harness
+     page makes its own <body> that root — same as index.html does — and
+     everything below keeps the tokens it always had. */
+  body.ff-root{padding:18px}
   .grp{border:1px solid var(--brd);border-radius:4px;padding:12px;margin-bottom:12px;background:var(--panel)}
   .ok{color:var(--good)} .no{color:var(--bad)}
   .line{font-family:var(--font-num);font-size:12.5px;padding:2px 0}
@@ -14,14 +18,17 @@
   #sum{position:sticky;top:0;background:var(--bg);padding:10px 0;font-size:17px;font-family:var(--font-display);z-index:2}
 </style>
 </head>
-<body>
+<body class="ff-root">
 <h1>Graph Quest — verify</h1>
 <div id="sum">running…</div>
 <div id="out"></div>
 
 <script type="module">
 import { QUESTS, buildRound, setSemicircles, getQuest } from "./js/quests/index.js";
-import { secondChanceAllowed, optionsNeedOneColumn } from "./js/play.js";
+import { secondChanceAllowed, optionsNeedOneColumn, COMEBACK as XP_COMEBACK } from "./js/play.js";
+/* §32 — the mount seam (Part 1 of the blipwork migration) */
+import { chooseBackend, LocalBackend, HostBackend } from "./js/backend.js";
+import { spyHost, playMounted } from "./mount-driver.js";
 import { questUnlocked, mapScreen, B_INTRO } from "./js/screens.js";
 import {
   verifyFunction, renderFunction, computeFunction,
@@ -4416,10 +4423,15 @@ for (const lang of ["af", "en"]) {
     const y0 = Math.round(gg.Y(0));
     const cssText = await (await fetch("./css/styles.css", { cache: "reload" })).text();
     await document.fonts.ready;
-    /* the stylesheet travels INSIDE the standalone SVG — its :root block
-       lands on the <svg> itself, so the very same tokens resolve */
+    /* the stylesheet travels INSIDE the standalone SVG. Since the mount
+       seam (§32a) every rule is scoped under .ff-root, so the <svg> takes
+       that class too — it is then both the token block's element AND the
+       ancestor every .fg-* rule looks for, exactly as the app's wrapper
+       is on the page. Same stylesheet, same cascade, no test-only copy. */
     const standalone = renderFunction(spec1).replace(/<svg([^>]*)>/,
-      `<svg$1 xmlns="http://www.w3.org/2000/svg" width="360" height="300"><style>${cssText.replace(/[<>&]/g, "")}</style>`);
+      (m, attrs) => `<svg${attrs.replace(/class="/, 'class="ff-root ')}`
+        + ` xmlns="http://www.w3.org/2000/svg" width="360" height="300">`
+        + `<style>${cssText.replace(/[<>&]/g, "")}</style>`);
     const url = URL.createObjectURL(new Blob([standalone], { type: "image/svg+xml" }));
     const img = new Image();
     let drawn = true;
@@ -4597,6 +4609,189 @@ for (const lang of ["af", "en"]) {
   }
 
   stage.remove();
+}
+
+/* ---------- 32. the mount seam — Part 1 of the blipwork migration
+   (2026-08-23). Fun Functions has to be mountable inside another app
+   through ONE exported function with nothing visible changing in the
+   standalone. These checks are the fence around that: the stylesheet may
+   not touch anything outside .ff-root, the portable modules may not reach
+   for the page, and every quest must hand its host a per-item record that
+   adds up to the XP it claims. NEVER RELAX. ---------- */
+{
+  const g = group("32. The mount seam — scoped CSS, a portable engine, an honest per-item record");
+
+  /* ---- 32a. every selector in css/styles.css starts with .ff-root ---- */
+  {
+    const css = await (await fetch("./css/styles.css", { cache: "reload" })).text();
+    const sheet = new CSSStyleSheet();
+    sheet.replaceSync(css);
+    const sels = [];
+    const walk = (rules) => {
+      for (const r of rules) {
+        const kind = r.constructor.name;
+        /* @keyframes and @font-face bodies are NAMES, not selectors —
+           their "0%" / "100%" steps are not page selectors at all */
+        if (kind === "CSSKeyframesRule" || kind === "CSSFontFaceRule") continue;
+        if (r.selectorText) sels.push(...r.selectorText.split(",").map((s) => s.trim()).filter(Boolean));
+        else if (r.cssRules) walk(r.cssRules);   // @media, @supports
+      }
+    };
+    walk(sheet.cssRules);
+    const loose = sels.filter((s) => !s.startsWith(".ff-root"));
+    check(g, `every selector in css/styles.css is scoped under .ff-root (${sels.length} selectors) — NEVER RELAX`,
+      sels.length > 100 && loose.length === 0, loose.slice(0, 4).join(" · "));
+
+    /* the page-owning selectors moved out to css/standalone.css */
+    const owns = sels.filter((s) => /(^|[\s>+~])(html|body)\b/.test(s) || s.includes(":root") || s.includes("#app"));
+    check(g, "css/styles.css names no html, body, :root or #app selector — those live in css/standalone.css",
+      owns.length === 0, owns.slice(0, 4).join(" · "));
+
+    const alone = await (await fetch("./css/standalone.css", { cache: "reload" })).text();
+    check(g, "css/standalone.css carries the page chrome the standalone still needs",
+      /\bhtml\s*\{/.test(alone) && /\bbody\s*\{/.test(alone) && /body::before/.test(alone)
+      && alone.includes("min-height:100vh"));
+  }
+
+  /* ---- 32b. the portable modules never reach for the page ---- */
+  {
+    const PORTABLE = [
+      "./js/play.js", "./js/screens.js",
+      "./js/engine/function-graph.js", "./js/engine/interactive.js",
+      "./js/engine/keypad.js", "./js/engine/slider.js",
+      "./js/quests/index.js", "./js/quests/_shared.js", "./js/quests/_graphs.js",
+      "./js/quests/_intervals.js", "./js/quests/_fault.js",
+      "./js/quests/q1-discover.js", "./js/quests/q1b-discover2.js",
+      "./js/quests/qB-recognize.js", "./js/quests/q2-point.js",
+      "./js/quests/q3-region.js", "./js/quests/q5-signs.js",
+      "./js/quests/q6-compare.js", "./js/quests/qL-lengths.js",
+      "./js/quests/qG-gradient.js", "./js/quests/qT-transform.js",
+      "./js/quests/qE-equation.js", "./js/quests/qK-roots.js",
+      "./js/quests/qI-inequal2.js", "./js/quests/qF-fault.js",
+      "./js/quests/q7-exam.js",
+    ];
+    const src = {};
+    for (const p of PORTABLE) src[p] = await (await fetch(p, { cache: "reload" })).text();
+    const offenders = (re) => PORTABLE.filter((p) => re.test(src[p]));
+
+    const bodies = offenders(/document\.body/);
+    check(g, `no portable module renders into document.body (${PORTABLE.length} files scanned) — NEVER RELAX`,
+      bodies.length === 0, bodies.join(" · "));
+    const apps = offenders(/#app\b|getElementById\(\s*["']app["']\s*\)/);
+    check(g, "no portable module reaches for #app — the render root is set once, in js/ui.js",
+      apps.length === 0, apps.join(" · "));
+    const locs = offenders(/\blocation\b|\bserviceWorker\b/);
+    check(g, "no portable module reads the page address or the service worker — only js/app.js and js/mount.js may",
+      locs.length === 0, locs.join(" · "));
+
+    /* and the two that ARE allowed really are the shell and the seam */
+    const shell = await (await fetch("./js/app.js", { cache: "reload" })).text();
+    const seam = await (await fetch("./js/mount.js", { cache: "reload" })).text();
+    check(g, "js/app.js is the standalone shell: it owns the url flags and the service worker",
+      /searchParams/.test(shell) && /serviceWorker/.test(shell) && /nosemi/.test(shell) && /boost/.test(shell));
+    check(g, "js/mount.js exports mountFunFunctions() and the one shared runQuest() path",
+      /export function mountFunFunctions/.test(seam) && /export function runQuest/.test(seam)
+      && !/\blocation\b/.test(seam) && !/serviceWorker/.test(seam));
+  }
+
+  /* ---- 32c/d. every quest, mounted and played headlessly ---- */
+  {
+    const slot = document.createElement("div");
+    slot.style.cssText = "position:fixed;left:-9999px;top:0;width:360px";
+    document.body.appendChild(slot);
+
+    /* the mount sets the language for this run only — nothing may be
+       written into a shared origin */
+    const langBefore = localStorage.getItem("gq.lang");
+    localStorage.removeItem("gq.lang");
+
+    const tally = { full: 0, hinted: 0, half: 0, wrong: 0, skipped: 0 };
+    let saveBad = "", destroyBad = "", langLeak = false;
+    let saveOnceAll = true, sameArrayAll = true, destroyedClean = true;
+
+    for (const q of QUESTS) {
+      /* twice: a clean profile, then one that already failed twice, so
+         Boost's auto-hint and second chance are walked as well */
+      const modes = [
+        { xp: 0, quests: {}, met: {} },
+        { xp: 0, met: {}, quests: { [q.id]: { best: 0, total: 0, plays: 2, done: false } } },
+      ];
+      let lenOK = true, xpOK = true, why = "";
+      for (const startProfile of modes) {
+        const host = spyHost({ questId: q.id, lang: "en", semicircles: false, startProfile });
+        const { res, calls, handle, stuck } = await playMounted(slot, host);
+        if (!res) { lenOK = false; xpOK = false; why = `never finished (stuck=${stuck})`; continue; }
+
+        res.answered.forEach((a) => { tally[a.outcome] = (tally[a.outcome] || 0) + 1; });
+        if (res.answered.length !== res.total) {
+          lenOK = false; why = `answered ${res.answered.length} of ${res.total}`;
+        }
+        const sum = res.answered.reduce((a, r) => a + r.xp, 0) + (res.comeback ? XP_COMEBACK : 0);
+        if (sum !== res.xp) { xpOK = false; why = `Σ answered.xp ${sum} ≠ res.xp ${res.xp}`; }
+
+        /* 32d — the host saw exactly one save, carrying THAT array */
+        if (calls.saveResult.length !== 1) {
+          saveOnceAll = false; saveBad = `${q.id}: saveResult called ${calls.saveResult.length}×`;
+        } else if (calls.saveResult[0].answered !== res.answered) {
+          sameArrayAll = false; saveBad = `${q.id}: the saved record is not the one in res.answered`;
+        }
+
+        handle.destroy();
+        if (slot.innerHTML !== "" || slot.querySelector(".ff-root") || slot.classList.contains("ff-root")) {
+          destroyedClean = false; destroyBad = `${q.id}: destroy() left something behind`;
+        }
+        if (localStorage.getItem("gq.lang") !== null) langLeak = true;
+      }
+      check(g, `${q.id}: mounted, played to the end — one record per item and Σ answered.xp + comeback = res.xp`,
+        lenOK && xpOK, why);
+    }
+
+    check(g, "the host is handed exactly ONE saveResult per play", saveOnceAll, saveBad);
+    check(g, "the saved record IS res.answered — the host never gets a different array", sameArrayAll, saveBad);
+    check(g, "destroy() empties the root and takes the .ff-root class off it", destroyedClean, destroyBad);
+    check(g, "a mounted run never writes gq.lang — the host picks the language, we do not remember it", !langLeak);
+    check(g, `all five outcomes are really reachable (full ${tally.full} · hinted ${tally.hinted} · half ${tally.half} · wrong ${tally.wrong} · skipped ${tally.skipped})`,
+      tally.full > 0 && tally.hinted > 0 && tally.half > 0 && tally.wrong > 0 && tally.skipped > 0);
+
+    if (langBefore != null) localStorage.setItem("gq.lang", langBefore);
+    slot.remove();
+  }
+
+  /* ---- 32d(ii). HostBackend really delegates, and never stores ---- */
+  {
+    const seen = [];
+    const fake = {
+      async profile() { seen.push("profile"); return { xp: 7, quests: { q1: { best: 3 } }, met: {} }; },
+      async saveResult(id, s, t, xp, ans) { seen.push(["save", id, s, t, xp, ans]); return { xp: 99, quests: {}, met: {} }; },
+      async markMet(id, skill) { seen.push(["met", id, skill]); return { xp: 7, quests: {}, met: { [id]: { [skill]: true } } }; },
+    };
+    const b = HostBackend(fake);
+    const p = await b.profile();
+    const s = await b.saveResult("q1", 2, 5, 20, [{ i: 0 }]);
+    const m = await b.markMet("q1", "aSign");
+    const r = await b.reset();
+    check(g, "HostBackend delegates profile / saveResult / markMet straight to the host, and reset() only re-reads it",
+      b.kind === "host" && p.xp === 7 && s.xp === 99 && m.met.q1.aSign === true && r.xp === 7
+      && seen.length === 4 && seen[1][5][0].i === 0);
+    check(g, "HostBackend leaves markMet undefined when the host does not offer one (the qE dealing ruling then behaves like a fresh device)",
+      HostBackend({ async profile() { return null; } }).markMet === undefined);
+  }
+
+  /* ---- 32e. the standalone's own backend choice is untouched ---- */
+  {
+    const url = location.href;
+    const flagBefore = localStorage.getItem("gq.forceLocal");
+    history.replaceState(null, "", location.pathname + "?local=1");
+    const picked = chooseBackend();
+    history.replaceState(null, "", url);
+    if (flagBefore == null) localStorage.removeItem("gq.forceLocal");
+    else localStorage.setItem("gq.forceLocal", flagBefore);
+    check(g, "standalone chooseBackend() still returns LocalBackend under ?local=1", picked === LocalBackend);
+  }
+
+  /* put the app back the way the standalone runs it */
+  setSemicircles(true);
+  setLang("af");
 }
 
 document.getElementById("sum").innerHTML = fail === 0
