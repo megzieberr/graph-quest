@@ -1,4 +1,4 @@
-# Project status — updated 2026-08-23 (BATCH 3 COMPLETE — sessions 4+5 shipped + phone-approved, 15 quests LIVE on sw gq-v29; NEXT: login + Supabase, then the blipwork mount)
+# Project status — updated 2026-08-23 night (BATCH 3 COMPLETE + engine label pass; 15 quests LIVE on sw gq-v30, harness 288; NEXT: the blipwork MOUNT per MIGRATION-PLAN.md — Part 1 the adapter seam)
 
 **Read this first.** The v2 spec is [RUN-PLAN.md](RUN-PLAN.md); Megan's own class notes
 are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTIONS-NOTES-DIGEST.md).
@@ -7,7 +7,19 @@ OUTRANKS the design docs** — her own board pages plus every ruling from the re
 
 ## Where we are
 
-- **15 quests LIVE on sw `gq-v29`, harness 275 checks, all phone-approved.**
+- **15 quests LIVE on sw `gq-v30`, harness 288 checks, all phone-approved.**
+- **Engine label pass SHIPPED 2026-08-23 night (session 6, Opus, push `7ca549c`):**
+  tick numbers + curve names get a background halo and paint after the curves;
+  curve-name placement avoids clashes engine-wide (322 real two-curve specs,
+  zero); q5 retries are bounded loops; faint "before" curves dim their
+  asymptotes and label (relative fade). Her "labelling issues" complaint is
+  addressed at the engine level, every quest.
+- **MIGRATION-PLAN.md is the blueprint for the blipwork MOUNT** — her ruling
+  2026-08-23 evening: Fun Functions becomes rounds INSIDE Blipwork's Functions
+  chapter (not a tab + bridge; that draft was withdrawn). All four of her calls
+  are decided in the file: strip = "📈 Fun Functions", XP = a static Functions
+  round, dashboard = minimal like dice, standalone keeps on-device saves
+  (supabase/schema.sql parked for good).
   Map order: Ontdek · Ontdek 2 · Vinnige Oë · Op die grafiek · Lees die
   gebied · Plus en minus · Bo of onder · Lengtes · Gemiddelde gradiënt ·
   Transformasies · Vind die vergelyking · Aard van wortels · Ongelykhede 2 ·
@@ -635,6 +647,15 @@ OUTRANKS the design docs** — her own board pages plus every ruling from the re
     quest); labelSpot can stack "f" on "g" in ~1 % of two-curve draws (exam
     redraws, other quests don't).
   - .gitignore now covers `.claude/` (preview launch.json) and `scratch/`.
+- 2026-08-23 (night — SESSION 6 engine label pass, Opus, push `7ca549c`, sw
+  gq-v30): halo on .fg-axlab/.fg-flab (paint-order stroke in --bg) with axis
+  text and curve names emitted AFTER curves; labelSpots()/placeCurveLabels()
+  + exported curveLabelsClash() (q7's local copy deleted); curve 0 also goes
+  through the chooser (its old spot is candidate 1, moves only when fouled);
+  the other-curve hit test uses the drawn polyline, not samples; q5 bounded
+  loops; faint asymptote lines at .7 × .42 (foreman fix). Harness §31 +13 →
+  288. MIGRATION-PLAN.md rewritten for the MOUNT after her "that's
+  disappointing — the whole idea was to put it as a round in blipwork".
 
 ## Pending on Megan
 
@@ -642,19 +663,15 @@ OUTRANKS the design docs** — her own board pages plus every ruling from the re
 
 ## Next up
 
-- **The blipwork migration — plan first (Opus planning pass per her model
-  roles, then build):** (1) login screen + Supabase (schema written in the
-  repo, NOT run — needs the migration handshake + grants check), (2) the
-  blipwork mount: Fun Functions as a section inside blipwork with
-  `setSemicircles(false)` for the IEB Gr11s, (3) blipwork's dice
-  error-checking rounds import `js/quests/_fault.js` (built for the lift).
-  Open question for the kickoff: does Fun Functions stay a standalone app
-  for her Tech Maths learner AND mount inside blipwork (the 2026-08-07
-  ruling says yes — two targets), or move entirely?
-- Engine label pass (her go): tick numbers that a curve runs through;
-  labelSpot f/g stacking in two-curve quests.
-- Small tidy-ups, any session: q5's retry-by-recursion → bounded loops; the
-  faint flag doesn't dim a faint curve's asymptotes/labels (cosmetic).
+- **The blipwork MOUNT — read MIGRATION-PLAN.md, all calls decided.** Part 1
+  = the adapter seam in THIS repo (HostBackend, mountFunFunctions(), CSS
+  scoped under .ff-root, mount-test.html) — Opus build, Fable review, ship
+  (nothing visible changes). Part 2 = blipwork: 📈 Fun Functions strip in the
+  Functions chapter, funfun_progress + mhq_submit_funfun migration, play
+  screen, results payout — Opus planning pass first (live Supabase). Part 3 =
+  tools/sync-to-blipwork.py + ship + her phone-test.
+- Later, not blocking: unify the two function-graph engines (blipwork has its
+  own for Exam Focus cards).
 
 ## How to run it
 
