@@ -687,16 +687,14 @@ OUTRANKS the design docs** — her own board pages plus every ruling from the re
 
 ## Next up
 
-- **Part 2 — blipwork (next session, Opus planning pass first: live Supabase).**
-  Per MIGRATION-PLAN.md: `supabase/migration-funfun.sql` (funfun_progress +
-  `mhq_submit_funfun` recomputing XP from `answered` at the static-Functions-round
-  rate + `mhq_funfun_state`), the 📈 Fun Functions strip (15 tiles, questUnlocked
-  ported), a play screen calling `mountFunFunctions()`, results payout like
-  finishDice, minimal dashboard chips. Part 2's brief MUST carry three seam facts
-  found in Part 1 review: (a) `.view{min-height:100vh}` stretches the mounted box to
-  full phone height — host overrides or it moves to standalone.css; (b) mounted mode
-  still writes `gq.intro.<questId>` to localStorage — decide per-learner vs off;
-  (c) host must pass `onScrollTop` if it wants scroll-to-top on each new item.
+- ~~Part 2 — blipwork~~ **DONE + SHIPPED 2026-08-23 night** (blipwork sw v65,
+  commit `f0768f8`, migration applied to live — full record in blipwork's
+  PROJECT-STATUS.md). The three seam facts were handled host-side: (a) `.view`
+  min-height overridden in the shadow root; (b) `gq.intro.*` left as-is (one intro
+  per quest per device — decided); (c) host passes `onScrollTop`. Blipwork also
+  hides the mount's `‹ Map` link host-side (no map there). THIS repo stays the one
+  source: fix here → run `tools/sync-to-blipwork.py` (NEW, committed) → re-ship
+  blipwork. Blipwork mounts in a SHADOW ROOT, so no new CSS scoping duty appeared.
 - Small, hers to call: flipping AF/EN while a feedback card shows strands the
   round in the standalone (only ‹ Kaart gets out) — pre-existing, not fixed.
 
