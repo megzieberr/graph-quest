@@ -1,4 +1,4 @@
-# Project status — updated 2026-08-23 night (BATCH 3 COMPLETE + engine label pass; 15 quests LIVE on sw gq-v30, harness 288; NEXT: the blipwork MOUNT per MIGRATION-PLAN.md — Part 1 the adapter seam)
+# Project status — updated 2026-08-23 late (MOUNT PART 1 SHIPPED: the adapter seam is LIVE on sw gq-v31, harness 319; NEXT: Part 2 in blipwork)
 
 **Read this first.** The v2 spec is [RUN-PLAN.md](RUN-PLAN.md); Megan's own class notes
 are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTIONS-NOTES-DIGEST.md).
@@ -6,6 +6,22 @@ are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTI
 OUTRANKS the design docs** — her own board pages plus every ruling from the redesign night.
 
 ## Where we are
+
+- **MOUNT PART 1 SHIPPED 2026-08-23 late (Opus build 0.27M under her /go, Fable
+  review, push `2194946`, sw `gq-v31`, live-verified: v31 served, map 15 cards at
+  375 px, `js/mount.js` + `css/standalone.css` 200).** Nothing a learner sees
+  changed. What exists now: `js/mount.js` exports `mountFunFunctions(rootEl, host)`
+  → `{ready, destroy()}` (plays ONE quest inside a host's element, no map/chrome,
+  host supplies lang/semicircles/profile/saveResult/markMet/onFinished/onExit) and
+  `runQuest()` — the single play path both homes share; `HostBackend` in backend.js;
+  play.js builds an `answered` record per item `{i, skillId, outcome, xp}` and puts
+  it in the finish payload (Σ xp + comeback === res.xp, harness-checked) — blipwork's
+  RPC recomputes XP from it; every CSS selector is scoped under `.ff-root`
+  (page-owning html/body rules moved to `css/standalone.css`); `ui.js` owns the
+  render root + scroller. `mount-test.html` (+ `mount-driver.js`, shared with the
+  harness) mounts all 15 quests into a fake orange host, plays, destroys.
+  verify.html 288 → **319** (§32 = the seam, never-relax). Review fix: the final
+  Klaar disables before advancing (double-tap threw). Brief: MIGRATION-PART1-BRIEF.md.
 
 - **15 quests LIVE on sw `gq-v30`, harness 288 checks, all phone-approved.**
 - **Engine label pass SHIPPED 2026-08-23 night (session 6, Opus, push `7ca549c`):**
@@ -79,6 +95,13 @@ OUTRANKS the design docs** — her own board pages plus every ruling from the re
   screen). Nobody but Megan has the app yet.
 
 ## Decisions
+
+- **2026-08-23 late — Part 1 seam rulings (foreman):** mounted mode plays ONE quest
+  (no map — blipwork draws tiles); `setLang(l,{persist:false})` so a mount never
+  writes `gq.lang`; `?boost=1` is a standalone-only flag passed in as `opts.forceBoost`;
+  `"hinted"` is a record-only outcome — the feedback card still says plain Korrek;
+  `HostBackend.reset()` is a no-op (the host owns resets); `destroy()` must leave the
+  host element empty with no `.ff-root`.
 
 (append-only; see git history of this file for the v1-era list)
 
@@ -659,9 +682,23 @@ OUTRANKS the design docs** — her own board pages plus every ruling from the re
 
 ## Pending on Megan
 
-- Nothing blocking. Batch 3 is closed and live.
+- 📱 2 min: open Fun Functions on the phone (fully close + reopen the PWA), play one
+  round of Ontdek — it should look exactly as before **[whenever]**
 
 ## Next up
+
+- **Part 2 — blipwork (next session, Opus planning pass first: live Supabase).**
+  Per MIGRATION-PLAN.md: `supabase/migration-funfun.sql` (funfun_progress +
+  `mhq_submit_funfun` recomputing XP from `answered` at the static-Functions-round
+  rate + `mhq_funfun_state`), the 📈 Fun Functions strip (15 tiles, questUnlocked
+  ported), a play screen calling `mountFunFunctions()`, results payout like
+  finishDice, minimal dashboard chips. Part 2's brief MUST carry three seam facts
+  found in Part 1 review: (a) `.view{min-height:100vh}` stretches the mounted box to
+  full phone height — host overrides or it moves to standalone.css; (b) mounted mode
+  still writes `gq.intro.<questId>` to localStorage — decide per-learner vs off;
+  (c) host must pass `onScrollTop` if it wants scroll-to-top on each new item.
+- Small, hers to call: flipping AF/EN while a feedback card shows strands the
+  round in the standalone (only ‹ Kaart gets out) — pre-existing, not fixed.
 
 - **The blipwork MOUNT — read MIGRATION-PLAN.md, all calls decided.** Part 1
   = the adapter seam in THIS repo (HostBackend, mountFunFunctions(), CSS
@@ -682,7 +719,7 @@ python -m http.server 5207 --directory "C:\Users\megzi\Desktop\Claude Code Proje
 Then <http://localhost:5207/> (`?local=1` forces local save mode). Preview entry
 `graph-quest` (port 5207) in the nested `C:\Users\megzi\.claude\.claude\launch.json`.
 verify.html is the harness — ALL must pass at the same total three runs in a row
-(currently 235) before any commit.
+(currently 319) before any commit.
 
 ⚠ Cache discipline (it lied to THREE reviews this build): before trusting verify.html
 in a browser, unregister the SW, delete `gq-*` caches, AND force-refetch changed modules
