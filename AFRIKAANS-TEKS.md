@@ -729,36 +729,189 @@ Reël vir regmaak: **verander net die Afrikaanse sin self** — moenie die etike
 - **[intro-les]** Stap 4: trek die lyn weer oor — x se teken lê onder neer. x is negatief links van 0, positief regs daarvan.
 - **[intro-les]** Stap 5: dieselfde tekens op albei rye → +. Lees dit af: −3 < x < 0 of x > 1.
 
-## Quest 14 · Eksamenmodus
-- **[byskrif]** Die skets toon die halfsirkel h met middelpunt by die oorsprong, en die eksponensiële funksie g gegee deur ⟨…⟩.
-- Skryf die vergelyking van die asimptoot van g neer.
-- Bereken die x-afsnit van g.
-- Skryf die waardeversameling van g neer.
-- Skryf die definisieversameling van h neer.
-- Is g stygend of dalend? Gee 'n rede.
-- Stygend — a is positief en b = ⟨…⟩ is groter as 1
-- Dalend — a is negatief, dus is die grafiek omgekeer
-- Dalend — a is negatief
-- Stygend — a is positief
-- Stygend, dan dalend
-- Dalend — q is negatief (⟨…⟩)
-- Vir watter waardes van x is h(x)·g(x) ≤ 0?
-- **[byskrif]** Die skets toon die hiperbool f gegee deur ⟨…⟩ en die reguitlyn g gegee deur ⟨…⟩. Hulle sny mekaar by A en B.
-- Skryf die vergelykings van die asimptote van f neer.
-- Bereken die x-afsnit van f.
-- Skryf die koördinate van A en B neer.
-- Skryf die waardeversameling van f neer.
-- Is elke vlerkie van f stygend of dalend?
+## Quest 14 · Soek die fout
+- Ja of nee:
+- Ja, hulle pas
+- Nee, hulle pas nie
+- Gaan elke kenmerk teen die skets na en besluit dan.
+- Noem dit nou.
+- Begin by die teken van a — maak die skets oop soos die vergelyking belowe?
+- Lees nou die draaipunt van die skets af en hou dit teen die hakie en die getal daaragter.
+- Lees nou die asimptoot-kruis van die skets af: watter getal is die x-een en watter is die y-een?
+- Lees nou die asimptoot van die skets af en kyk dan watter kant toe die kurwe opstyg.
+- Lees nou waar die halwe sirkel die x-as ontmoet — dis die radius.
+- Lees nou waar die lyn die y-as sny en hou dit teen die getal in die vergelyking.
+- Die hakie draai die teken om: (x − p) met die draaipunt LINKS van die y-as gee 'n PLUS binne-in.
+- Die noemer draai die teken ook om: (x − p) met die kruis LINKS van die y-as gee 'n PLUS onder.
+- Wees versigtig met die grondtal: (½)ˣ en 2⁻ˣ is dieselfde grafiek, so kyk na die rigting, nie na die skryfwyse nie.
+- **[byskrif]** Die vergelyking sê:⟨…⟩
+- **[vraag]** Pas hulle?
+- **[vraag]** Wat is verkeerd — of pas alles?
+- Soek die fout
+- Pas hierdie skets by hierdie vergelyking?
+- **[intro-les]** Elke rondte wys 'n skets en 'n vergelyking langs mekaar. Die skets is altyd eerlik geteken — dis die VERGELYKING wat dalk lieg.
+- **[intro-les]** Hier pas hulle. Die draaipunt lê by (2 ; −4), en die vergelyking sê presies dit:⟨…⟩
+- **[intro-les]** En hier lieg dit:⟨…⟩Die hakie se teken sit die draaipunt aan die ander kant — die stippellyn-kurwe. Jy merk die vergelyking teen die skets, net soos wanneer 'n vraestel nagesien word.
+- **[afleier]** Die teken van a — happy of sad
+- **[nudge (na verkeerde keuse)]** Die arms wys in albei dieselfde kant toe — daardie deel pas.
+- **[afleier]** Die teken van a — in watter hoeke die vlerkies lê
+- **[nudge (na verkeerde keuse)]** Die vlerkies lê in die hoeke wat die teken van a belowe — daardie deel pas.
+- **[afleier]** Die teken van a — bo of onder die asimptoot
+- **[nudge (na verkeerde keuse)]** Die kurwe lê aan die kant van die asimptoot wat die teken van a belowe — daardie deel pas.
+- **[afleier]** Bo of onder die x-as
+- **[nudge (na verkeerde keuse)]** Die halwe sirkel lê aan die kant wat die vergelyking se teken belowe — daardie deel pas.
+- **[afleier]** Watter kant toe die lyn hel
+- **[nudge (na verkeerde keuse)]** Die lyn klim of daal presies soos die helling sê — daardie deel pas.
+- **[afleier]** Die hakie se teken — waar die draaipunt lê
+- **[nudge (na verkeerde keuse)]** Die draaipunt se x lê presies waar die hakie sê. Onthou (x − p) draai die teken om van wat jy aflees.
+- **[afleier]** Die op-en-af skuif — die draaipunt se y
+- **[nudge (na verkeerde keuse)]** Die getal agter die hakie is die draaipunt se y, en dit pas by die skets.
+- **[afleier]** Die y-afsnit
+- **[nudge (na verkeerde keuse)]** Die lyn sny die y-as presies by die getal in die vergelyking — daardie deel pas.
+- **[afleier]** Die vertikale asimptoot — die hakie se teken
+- **[nudge (na verkeerde keuse)]** Die vertikale stippellyn staan presies waar die noemer sê — daardie deel pas.
+- **[afleier]** Die horisontale asimptoot — die op-en-af skuif
+- **[nudge (na verkeerde keuse)]** Die horisontale stippellyn lê presies by die getal agteraan — daardie deel pas.
+- **[afleier]** Die asimptoot — die op-en-af skuif
+- **[nudge (na verkeerde keuse)]** Die stippellyn lê presies by die getal agteraan — daardie deel pas.
+- **[afleier]** Die grondtal — opstyg of land
+- **[nudge (na verkeerde keuse)]** Die kurwe styg op of land presies soos die grondtal sê — daardie deel pas.
+- **[afleier]** Die radius — hoe wyd die halwe sirkel is
+- **[nudge (na verkeerde keuse)]** Die halwe sirkel ontmoet die x-as presies waar die radius sê — daardie deel pas.
+- **[afleier]** Die twee asimptote is omgeruil
+- **[nudge (na verkeerde keuse)]** Albei stippellyne staan waar die vergelyking sê — nie een van hulle staan op die ander se getal nie.
+- **[afleier]** Niks nie — elke kenmerk pas
+- **[nudge (na verkeerde keuse)]** Kyk weer, een kenmerk op 'n slag, en hou elkeen teen die skets.
+- die gradiënt en die y-afsnit
+- die teken van a en die draaipunt
+- die teken van a en albei asimptote
+- die grondtal, die teken van a en die asimptoot
+- die radius en watter helfte dit is
+- Elke kenmerk pas: ⟨…⟩ stem met die skets ooreen.
+- Die skets se draaipunt lê by x = ⟨…⟩, maar die vergelyking sê x = ⟨…⟩.
+- Die hakie is (x − p), so 'n draaipunt links van die y-as gee 'n PLUS binne-in.
+- Die vertikale asimptoot staan by x = ⟨…⟩, maar die vergelyking sê x = ⟨…⟩.
+- Die noemer is (x − p), so 'n kruis links van die y-as gee 'n PLUS onder.
+- Die getal agter die hakie is die draaipunt se y: ⟨…⟩, nie ⟨…⟩ nie.
+- ⟨…⟩ is waar die kurwe die y-as sny — 'n heel ander aflesing.
+- Die asimptoot lê by y = ⟨…⟩, maar die vergelyking sê y = ⟨…⟩.
+- ⟨…⟩ is waar die kurwe die y-as sny — die skuif en die y-afsnit is twee verskillende aflesings.
+- Die vertikale asimptoot staan by x = ⟨…⟩ en die horisontale een lê by y = ⟨…⟩.
+- Die vergelyking het hulle andersom — die x-een en die y-een is omgeruil.
+- Die arms wys ⟨…⟩, dus is a ⟨…⟩ — die vergelyking sê die teenoorgestelde.
+- Die vlerkies lê regs-bo en links-onder, dus is a positief — die vergelyking sê die teenoorgestelde.
+- Die vlerkies lê links-bo en regs-onder, dus is a negatief — die vergelyking sê die teenoorgestelde.
+- Die halwe sirkel lê ⟨…⟩ die x-as, dus ⟨…⟩ — die vergelyking sê die teenoorgestelde.
+- Die kurwe lê ⟨…⟩ sy asimptoot, dus is a ⟨…⟩ — die vergelyking sê die teenoorgestelde.
+- Die kurwe ⟨…⟩, dus is die grondtal ⟨…⟩ as 1 — die vergelyking sê die ander een.
+- Wees versigtig met die skryfwyse: (½)ˣ en 2⁻ˣ is DIESELFDE grafiek. Dis die rigting wat moet verander, nie die skryfwyse nie.
+- Die stippellyn-kurwe is wat die vergelyking werklik teken. Kyk waar dit van die skets af wegbreek.
+- Hulle pas werklik — die stippellyn-kurwe lê heelpad op die skets.
+
+## Quest 15 · Eksamenmodus
+- **[nudge (na verkeerde keuse)]** Die twee asimptote is omgeruil — die vertikale een is die x-een.
+- **[nudge (na verkeerde keuse)]** Die horisontale asimptoot is nie hier die x-as nie — kyk waar die vlerkies plat uitloop.
+- **[vraag]** Skryf die vergelykings van die asimptote van ⟨…⟩ neer.
+- **[nudge (na verkeerde keuse)]** Dis 'n vertikale lyn — 'n eksponensiële grafiek loop plat teen 'n HORISONTALE een.
+- **[vraag]** Skryf die vergelyking van die asimptoot van ⟨…⟩ neer.
+- **[nudge (na verkeerde keuse)]** Dit is andersom geskryf — 'n x-afsnit het y = 0.
+- **[vraag]** Skryf die x-afsnitte van ⟨…⟩ neer.
+- **[vraag]** Bereken die x-afsnit van ⟨…⟩.
+- **[nudge (na verkeerde keuse)]** Die x en die y is omgeruil — lees eers oor, dan op.
+- Hulle sny mekaar by ⟨…⟩.
+- Hulle sny mekaar by ⟨…⟩ en ⟨…⟩.
+- **[vraag]** Skryf die koördinate van ⟨…⟩ neer.
+- **[vraag]** Skryf die koördinate van ⟨…⟩ en ⟨…⟩ neer.
+- ⟨…⟩ is die draaipunt van ⟨…⟩.
+- ⟨…⟩ lê op ⟨…⟩.
+- **[nudge (na verkeerde keuse)]** Kyk na die vertikale stippellyn — die grafiek het glad nie 'n waarde daar nie.
+- **[nudge (na verkeerde keuse)]** Die halwe sirkel bereik wel albei rande — daardie twee x-waardes lê op die grafiek.
+- **[vraag]** Skryf die definisieversameling van ⟨…⟩ neer.
+- **[nudge (na verkeerde keuse)]** Die ongelykheid wys die verkeerde kant toe — kyk aan watter kant van die draaipunt die arms oopmaak.
+- **[nudge (na verkeerde keuse)]** 'n Hiperbool bereik elke hoogte behalwe een — die een waar sy horisontale asimptoot lê.
+- **[nudge (na verkeerde keuse)]** Die grafiek bereik nooit werklik sy asimptoot nie, so daardie hoogte kan nooit toemaak nie.
+- **[vraag]** Skryf die waardeversameling van ⟨…⟩ neer.
+- **[nudge (na verkeerde keuse)]** Dis die kant waar dit daal — volg die kurwe met jou oog, links na regs.
+- **[vraag]** Vir watter waardes van x is ⟨…⟩ stygend?
 - Dalend — a is positief
 - Stygend — a is negatief
+- **[afleier]** Stygend — a is positief
+- **[afleier]** Dalend — a is negatief
+- **[nudge (na verkeerde keuse)]** Volg een vlerkie met jou oog, links na regs — watter kant toe gaan dit?
 - Een styg, een daal
 - Dit draai by die asimptoot
-- Vir watter waardes van x is f(x) > g(x)?
-- **[byskrif]** Die skets toon die parabool f met draaipunt ⟨…⟩.
-- Skryf die vergelyking van die simmetrie-as neer.
-- Skryf die x-afsnitte neer.
-- Vir watter waardes van x is f stygend?
-- Vir watter waardes van x is f(x) < 0?
+- **[vraag]** Is elke vlerkie van ⟨…⟩ stygend of dalend?
+- Stygend — a is positief en b = ⟨…⟩ is groter as 1
+- Dalend — a is negatief, dus is die grafiek omgekeer
+- **[nudge (na verkeerde keuse)]** Volg die kurwe met jou oog, links na regs — watter kant toe gaan dit?
+- Stygend, dan dalend
+- Dalend — q is negatief (⟨…⟩)
+- **[vraag]** Is ⟨…⟩ stygend of dalend? Gee 'n rede.
+- **[nudge (na verkeerde keuse)]** Daai is die afdelings waar die grafiek BO die x-as lê.
+- **[nudge (na verkeerde keuse)]** Daai is die afdelings waar die grafiek ONDER die x-as lê.
+- **[nudge (na verkeerde keuse)]** Die antwoord moet x-waardes wees, nie y nie.
+- **[vraag]** Vir watter waardes van x is ⟨…⟩(x) ⟨…⟩?
+- **[nudge (na verkeerde keuse)]** Dis andersom — kyk watter grafiek BO lê daar.
+- **[vraag]** Vir watter waardes van x is ⟨…⟩(x) ⟨…⟩(x)?
+- **[nudge (na verkeerde keuse)]** Daai is die afdelings waar x en f(x) dieselfde teken deel — kwadrant 1 of 3.
+- **[nudge (na verkeerde keuse)]** Daai is die afdelings waar x en f(x) verskillende tekens het — kwadrant 2 of 4.
+- **[nudge (na verkeerde keuse)]** 'n Streng ongelykheid sluit nooit die grense in nie.
+- **[nudge (na verkeerde keuse)]** ≤ en ≥ sluit WEL die x-afsnitte in, en die y-as grens maak net so toe.
+- **[vraag]** Vir watter waardes van x is x·⟨…⟩(x) ⟨…⟩?
+- **[nudge (na verkeerde keuse)]** Deel deur nul mag nie — daardie x bly oop.
+- **[nudge (na verkeerde keuse)]** Dis andersom — vergelyk dit presies soos f·g, afdeling vir afdeling.
+- **[vraag]** Vir watter waardes van x is ⟨…⟩?
+- **[nudge (na verkeerde keuse)]** Dis net die helfte — die koord loop die hele ent oor.
+- **[nudge (na verkeerde keuse)]** Dis net die regterkantste x-koördinaat — die lengte is die GAPING tussen die twee.
+- ⟨…⟩ en ⟨…⟩ lê altwee op ⟨…⟩ by y = ⟨…⟩.
+- **[vraag]** Bepaal die lengte van ⟨…⟩.
+- **[nudge (na verkeerde keuse)]** 'n Lengte kan nooit negatief wees nie — jy het die twee hoogtes andersom afgetrek.
+- **[nudge (na verkeerde keuse)]** Dis net ⟨…⟩ se hoogte — jy moet ⟨…⟩ s'n nog aftrek.
+- **[nudge (na verkeerde keuse)]** Dis die VERSKIL tussen die twee hoogtes, nie hulle som nie.
+- ⟨…⟩ lê op ⟨…⟩ en ⟨…⟩ lê op ⟨…⟩, altwee by x = ⟨…⟩.
+- Dit is dubbel die ware gradiënt — gaan Δy en Δx weer een vir een na.
+- Dit is Δx oor Δy — die gradiënt is andersom: Δy OOR Δx.
+- **[nudge (na verkeerde keuse)]** Die teken het omgeswaai — Δy is ⟨…⟩ se hoogte MINUS ⟨…⟩ s'n, nie andersom nie.
+- **[nudge (na verkeerde keuse)]** Dit gebruik net een punt se eie koördinate — die gradiënt het die VERANDERING tussen hulle nodig.
+- ⟨…⟩ en ⟨…⟩ lê op ⟨…⟩.
+- **[vraag]** Bereken die gemiddelde gradiënt van ⟨…⟩ tussen ⟨…⟩ en ⟨…⟩.
+- **[nudge (na verkeerde keuse)]** Verkeerde kant — kyk aan watter kant van die draaipunt die arms oopmaak.
+- **[nudge (na verkeerde keuse)]** Dit vergelyk k met die draaipunt se x — twee snye hang van sy y af.
+- **[vraag]** Vir watter waardes van k sal die lyn y = k die grafiek van ⟨…⟩ twee keer sny?
+- **[nudge (na verkeerde keuse)]** Dis die vertikale asimptoot se getal — y = k is 'n horisontale lyn.
+- **[nudge (na verkeerde keuse)]** y = 0 is die x-as, en hierdie grafiek sny dit wel.
+- **[vraag]** Vir watter waarde van k sal die lyn y = k die grafiek van ⟨…⟩ glad nie sny nie?
+- **[nudge (na verkeerde keuse)]** Dis die ander kant van die asimptoot — die kurwe kom nooit daar nie.
+- **[nudge (na verkeerde keuse)]** Presies op die asimptoot kom die kurwe nooit — daardie k gee glad nie 'n snypunt nie.
+- **[vraag]** Vir watter waardes van k sal die lyn y = k die grafiek van ⟨…⟩ sny?
+- Regte grootte, verkeerde teken op p — die hakie draai die teken van wat jy afgelees het om.
+- Dis die y-afsnit se waarde, nie die draaipunt se y nie.
+- Verkeerde teken op a — kyk weer: happy of sad?
+- Verkeerde teken op p — die vertikale asimptoot sou aan die ANDER kant staan.
+- Verkeerde teken op q — die horisontale asimptoot sou aan die ANDER kant lê.
+- Verkeerde teken op a — dit sit die vlerkies in die verkeerde paar hoeke.
+- Verkeerde teken op q — die asimptoot sou aan die ANDER kant van die x-as lê.
+- Verkeerde teken op a — dit sit die kurwe aan die verkeerde kant van die asimptoot.
+- Daardie grondtal lê plat teen die asimptoot aan die verkeerde kant — hierdie kurwe lê plat aan die LINKERKANT.
+- Daardie grondtal lê plat teen die asimptoot aan die verkeerde kant — hierdie kurwe lê plat aan die REGTERKANT.
+- **[vraag]** Watter vergelyking stel ⟨…⟩ voor?
+- **[nudge (na verkeerde keuse)]** Verkeerde letter — dis nie die een wat hierdie skuif verander nie.
+- **[nudge (na verkeerde keuse)]** Regte letter, verkeerde teken.
+- **[nudge (na verkeerde keuse)]** Verkeerde letter, en ook die verkeerde teken.
+- op
+- af
+- links
+- regs
+- **[vraag]** Die grafiek van ⟨…⟩ skuif ⟨…⟩. Skryf die vergelyking van die nuwe grafiek neer.
+- Ja, dit pas — elke kenmerk stem met die skets ooreen
+- Nee — ⟨…⟩
+- **[vraag]** Pas die vergelyking hierbo by ⟨…⟩ op die skets?
+- 'n Leerder skryf:⟨…⟩
+- Die skets toon die halfsirkel ⟨…⟩, ⟨…⟩, en die eksponensiële funksie ⟨…⟩.
+- Die skets toon die hiperbool ⟨…⟩ en die reguitlyn ⟨…⟩.
+- Die skets toon die parabool ⟨…⟩.
+- Die skets toon die parabool ⟨…⟩ en die reguitlyn ⟨…⟩.
+- Die skets toon die eksponensiële funksie ⟨…⟩ en die reguitlyn ⟨…⟩.
 - Eksamenmodus
 - Een skets, elke vaardigheid — die regte ding
 
@@ -826,7 +979,7 @@ Reël vir regmaak: **verander net die Afrikaanse sin self** — moenie die etike
 - Dien in ✓
 
 ## Kaart & skerms
-- Veertien soektogte. Elkeen leer jou oë een taak — deur eers jou hand dit te laat doen.
+- Vyftien soektogte. Elkeen leer jou oë een taak — deur eers jou hand dit te laat doen.
 
 ## App-raam
 - Kon nie stoor nie — jou vordering kan verlore gaan

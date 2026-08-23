@@ -1,4 +1,4 @@
-# Project status — updated 2026-08-21 end of night (batch 3 session 3 CLOSED by her phone-test — "Ah, it's perfect"; 14 quests LIVE on sw gq-v27; NEXT: session 4, Soek die fout, tomorrow on her go)
+# Project status — updated 2026-08-23 (BATCH 3 COMPLETE — sessions 4+5 shipped + phone-approved, 15 quests LIVE on sw gq-v29; NEXT: login + Supabase, then the blipwork mount)
 
 **Read this first.** The v2 spec is [RUN-PLAN.md](RUN-PLAN.md); Megan's own class notes
 are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTIONS-NOTES-DIGEST.md).
@@ -7,11 +7,28 @@ OUTRANKS the design docs** — her own board pages plus every ruling from the re
 
 ## Where we are
 
-- **14 quests LIVE on sw `gq-v27`, harness 235 checks, all approved by her.**
+- **15 quests LIVE on sw `gq-v29`, harness 275 checks, all phone-approved.**
   Map order: Ontdek · Ontdek 2 · Vinnige Oë · Op die grafiek · Lees die
   gebied · Plus en minus · Bo of onder · Lengtes · Gemiddelde gradiënt ·
-  Transformasies · Vind die vergelyking · Aard van wortels ·
-  **Ongelykhede 2 (batch 3 session 3)** · Eksamenmodus.
+  Transformasies · Vind die vergelyking · Aard van wortels · Ongelykhede 2 ·
+  **Soek die fout (batch 3 session 4)** · **Eksamenmodus (REBUILT, session 5)**.
+- **BATCH 3 IS COMPLETE (2026-08-23, Fable foreman, Opus builders at her
+  request — "Sonnet hasn't proven itself great with the graphs").** Session 4
+  Soek die fout: the sketch is always honest, the EQUATION lies (one injected
+  fault: p-sign / q↔c / asymptote swap / a-sign / base flip, ~29 % honest
+  rounds); Ja/Nee verdict is the unmarked gate, a wrong verdict draws the
+  equation's real curve dashed over the sketch, then the marked "Wat is
+  verkeerd — of pas alles?" question. Fault machinery is a pure module
+  (`js/quests/_fault.js`, no DOM) built to be lifted into blipwork's dice.
+  Session 5 Eksamenmodus: sheets GENERATED through the quests' own family
+  generators (five shapes), sub-questions sampled from all 16 skills, answers
+  computed never hand-typed, §22's on-axis exemption gone (zero skip cases).
+  Her verdicts: "Very cute!" (qF) · "it looks very cute, the Afrikaans text
+  looks fine as well" (exam). AFRIKAANS-TEKS.md regenerated (946 strings) and
+  she passed it as-is — no wording correction session needed this batch.
+- Her replay note on qI (2026-08-23): "some of the signs get a bit crazy, but
+  I realized it helped my eyes to read the graph better" — an observation,
+  NOT a bug; leave qI alone.
 - **Ongelykhede 2 runs her TWO-PASS LIVE TRAIL** (the night's whole arc:
   shipped-with-boxes → her playtest found it wrong → she retaught with her
   own board pages → one-round prototype → her verdict + amendment → full
@@ -594,36 +611,50 @@ OUTRANKS the design docs** — her own board pages plus every ruling from the re
   perfect." SESSION 3 CLOSED.** Soek die fout deferred to tomorrow's fresh
   session at her call.
 
+- 2026-08-23 (BATCH 3 SESSIONS 4 + 5, Fable foreman, OPUS builders — her
+  ruling that morning: Sonnet kept producing labelling issues on this app,
+  Opus from now on for graph work here):
+  - S4 Soek die fout (qF, push `5f79ef6`, sw gq-v28): equation lies, sketch
+    honest; "Niks nie — elke kenmerk pas" sits in EVERY why-list so an honest
+    round is never given away; the why-question runs on every round (the
+    engine auto-awards full marks with no follow-up, which would have made
+    "Ja" the safe guess) — her call: keep, cheap reword to "Wat is verkeerd —
+    of pas alles?". asymSwap moves TWO named features by nature (documented);
+    pFlip never applies to exp (randExp draws p = 0). Foreman review fix:
+    no-fault solution names only that family's features (a line has no
+    asymptote). Dealing = qE's rule (every kind once, then weighted 5:2).
+  - S5 Eksamenmodus rebuild (q7, push `b9702f2`, sw gq-v29): generated sheets,
+    five shapes, 16 skills ≥3 per 60 sheets, answers recomputed independently
+    in §30; NO asymptote values printed on a shared sketch (a value shown at
+    (a) leaks into (e)); at most one of whichEquation/transform/matchEq per
+    sheet (each answers the others); q7 rejects f/g name-label clashes itself.
+    qT/qL export four helpers (no behaviour change). Foreman review fix:
+    "1 eenheid" singular.
+  - Engine-level label follow-ups surfaced, NOT fixed (her call, queued): a
+    curve crossing the x-axis near a tick runs through the tick number (every
+    quest); labelSpot can stack "f" on "g" in ~1 % of two-curve draws (exam
+    redraws, other quests don't).
+  - .gitignore now covers `.claude/` (preview launch.json) and `scratch/`.
+
 ## Pending on Megan
 
-- 💻 [whenever] 1 min: open tomorrow's Fun Functions session and say
-  **"session 4 can go"** — the foreman dispatches Soek die fout.
+- Nothing blocking. Batch 3 is closed and live.
 
 ## Next up
 
-- **NEXT = batch 3 session 4: Soek die fout** (qF — sketch + equation, "Pas
-  hulle?", one injected fault; brief in RUN-PLAN-BATCH3.md; design its
-  mechanic to be SHARED with blipwork's error-checking dice rounds — see
-  DICE-PLAN.md there). Dispatches on her go in tomorrow's session
-  (pre-authorized tonight). Then session 5: Eksamenmodus rebuild (which
-  removes the sheetHypLine p = 0 exemption from the §22 scan).
-- Carry into session 4's brief: the wrapper blind spot (play in a real tab,
-  read the console), whole-unit boundary habit, include-section-midpoints
-  window rule where sections matter, banned-word + native-eye Afrikaans
-  pass, and the fault-visibility review focus (a p-flip that lands both
-  curves on the same pixels must redraw). Prototype-first is available if a
-  design question feels open — her ruling made it the house rhythm.
-- **Batch 3 (foreman = Fable; the foreman dispatches the build agents itself,
-  reviews, reports back between sessions).** Sessions 1–3 shipped and closed.
-- AFRIKAANS-TEKS.md is CURRENT through the qI redesign (regenerated in
-  `615a1cd`). Regenerate again after sessions 4/5, then her wording pass
-  → correction session.
-- Small tidy-ups, any session: q5's retry-by-recursion style could become
-  bounded loops like qL/qG · the faint flag doesn't dim a faint curve's
-  asymptotes/labels (cosmetic, needs her call). (randParabola moved into
-  batch-3 session 1.)
-- After batch 3: login screen + Supabase (schema written, NOT run), then the
-  blipwork mount (`setSemicircles(false)`).
+- **The blipwork migration — plan first (Opus planning pass per her model
+  roles, then build):** (1) login screen + Supabase (schema written in the
+  repo, NOT run — needs the migration handshake + grants check), (2) the
+  blipwork mount: Fun Functions as a section inside blipwork with
+  `setSemicircles(false)` for the IEB Gr11s, (3) blipwork's dice
+  error-checking rounds import `js/quests/_fault.js` (built for the lift).
+  Open question for the kickoff: does Fun Functions stay a standalone app
+  for her Tech Maths learner AND mount inside blipwork (the 2026-08-07
+  ruling says yes — two targets), or move entirely?
+- Engine label pass (her go): tick numbers that a curve runs through;
+  labelSpot f/g stacking in two-curve quests.
+- Small tidy-ups, any session: q5's retry-by-recursion → bounded loops; the
+  faint flag doesn't dim a faint curve's asymptotes/labels (cosmetic).
 
 ## How to run it
 
