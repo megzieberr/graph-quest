@@ -33,7 +33,11 @@ import {
   makeFn as mf, intervalStr, mergeSections, joinIntervals,
   lengthBetween, avgGradient, gradientStr, eqStr, eqTPStr, EQ, hypXInt,
   xIntercepts, vAsymptotes, lineXInt,
+  aboveAt, C, ptStr, domainStr, rangeStr, expXInt, paraYInt, isInt,
 } from "./js/funclib.js";
+/* batch 3 session 5 (§30) — exam mode's own rebuild checks */
+import { TECHOK, SHAPES as EXAM_SHAPES } from "./js/quests/q7-exam.js";
+import { eqStrFor as tEqStrFor, shifted as tShifted, deltaFor as tDeltaFor } from "./js/quests/qT-transform.js";
 import {
   specFor, randParabola, randHyperbola, randExp, randLine, randSemicircle,
   windowFor, features, asymOnAxis, randHyperbolaOffAxis, mostlyInFrame,
@@ -2079,7 +2083,14 @@ for (const lang of ["af", "en"]) {
 {
   setLang("af");
   const g = group("22. Off-axis asymptote rule — every quest, on the real built specs (fix day)");
-  let bad = 0, why = "", checked = 0, q7Skipped = 0;
+  /* ZERO SKIP CASES. Until batch 3 session 5 this scan carried one
+     exemption: q7's hand-authored sheetHypLine() built its hyperbola with
+     p = 0, so exam mode showed learners an asymptote sitting on an axis
+     and the scan reported it with info() instead of failing. The session-5
+     rebuild draws every exam hyperbola through randHyperbolaOffAxis(), so
+     the exemption is GONE — q7 is scanned exactly like every other quest,
+     and there is no info() escape hatch left anywhere in this group. */
+  let bad = 0, why = "", checked = 0;
   for (const q of QUESTS) {
     for (let rep = 0; rep < 10; rep++) {
       let items = [];
@@ -2091,18 +2102,14 @@ for (const lang of ["af", "en"]) {
             if (!cv || cv.kind !== "hyperbola") return;
             checked++;
             if (!asymOnAxis(cv)) return;
-            if (q.id === "q7") { q7Skipped++; return; }
             bad++; why = `${q.id}/${it.skillId || "?"}: hyperbola a=${cv.a} p=${cv.p} q=${cv.q} sits on an axis`;
           });
         });
       });
     }
   }
-  check(g, `every hyperbola reachable via it.graph/it.then.graph, across every quest, has both asymptotes off-axis (${checked} hyperbola curves checked, q7 excluded)`,
+  check(g, `every hyperbola reachable via it.graph/it.then.graph, across every quest INCLUDING q7, has both asymptotes off-axis (${checked} hyperbola curves checked, ZERO skip cases)`,
     bad === 0 && checked > 0, why);
-  if (q7Skipped) {
-    info(g, `q7 (Eksamenmodus) hand-authored sheetHypLine draws p = 0 by design — ${q7Skipped} on-axis hyperbola(s) skipped, not failed (RUN-PLAN's fixed sheets; q7-exam.js is out of this fix's scope)`);
-  }
 
   /* negative test: prove this exact walk catches a bad curve, on a
      hand-built item shaped like a real one but with an on-axis hyperbola
@@ -3965,6 +3972,388 @@ for (const lang of ["af", "en"]) {
   }
 
   host.remove();
+}
+
+/* ---------- 30. Eksamenmodus rebuild — batch 3, session 5.
+   q7's sheets are GENERATED now: every curve through the family
+   generators the skill quests use, every sub-question sampled from the
+   skills batches 1–3 teach, every answer computed from the curve
+   objects. Every check below recomputes the answer INDEPENDENTLY here,
+   from the sheet's own curves through funclib / _intervals / _fault /
+   qT's move maths — never by calling a helper that lives inside
+   q7-exam.js, which would only prove the quest agrees with itself.
+   NEVER RELAX. ---------- */
+{
+  setLang("af");
+  const g = group("30. Eksamenmodus rebuild — generated sheets, sampled skills (batch 3, session 5)");
+  const bothLangs = (v) => (v && typeof v === "object" ? Object.values(v) : [v]);
+  const shown = (v) => strip(L(v)).replace(/\s+/g, " ").trim();
+  const lang = "af", AND = "en", LT = "&lt;", GT = "&gt;";
+
+  /* ≥ 60 sheets, built through the real dealer */
+  const sheets = [];
+  for (let i = 0; i < 70; i++) {
+    try { sheets.push(buildRound("q7")); } catch { /* a refused draw is a bug the checks below name */ }
+  }
+  const items = sheets.flat();
+  const shapeTally = {};
+  sheets.forEach((s) => { const sh = s[0] && s[0].debugExam.shape; shapeTally[sh] = (shapeTally[sh] || 0) + 1; });
+
+  check(g, `q7 builds ${sheets.length} sheets (${items.length} sub-questions), and every sheet shape appears (${EXAM_SHAPES.map((s) => `${s} ${shapeTally[s] || 0}`).join(" · ")})`,
+    sheets.length >= 60 && EXAM_SHAPES.every((s) => (shapeTally[s] || 0) > 0));
+
+  /* 30b. one sketch, 5–6 sub-questions, never the same skill twice */
+  {
+    let bad = 0, why = "", sameSpec = 0;
+    sheets.forEach((s) => {
+      if (s.length < 5 || s.length > 6) { bad++; why = `a sheet has ${s.length} sub-questions`; }
+      const seen = new Set();
+      s.forEach((it) => {
+        if (seen.has(it.examSkill)) { bad++; why = `a sheet asks "${it.examSkill}" twice`; }
+        seen.add(it.examSkill);
+        if (it.skillId !== "examSheet") { bad++; why = `skillId is "${it.skillId}", not "examSheet"`; }
+      });
+      /* oneSketch: every sub-question draws the SAME window */
+      const w0 = JSON.stringify(s[0].graph.win);
+      if (s.every((it) => JSON.stringify(it.graph.win) === w0)) sameSpec++;
+    });
+    check(g, `every sheet is one sketch with 5–6 sub-questions, no skill asked twice, skill id still "examSheet" (${sheets.length} sheets)`,
+      bad === 0 && sheets.length > 0, why);
+    check(g, `every sub-question of a sheet draws the SAME window — oneSketch really is one sketch (${sameSpec}/${sheets.length})`,
+      sameSpec === sheets.length);
+  }
+
+  /* 30c. NEVER RELAX — every sub-answer, recomputed here from the curves */
+  const recompute = (d) => {
+    const cv = d.curves[d.main], win = d.win;
+    switch (d.skill) {
+      case "asymptotes":
+        return cv.kind === "hyperbola" ? `x = ${C(cv.p)} ${AND} y = ${C(cv.q)}` : `y = ${C(cv.q)}`;
+      case "intercepts": {
+        if (cv.kind === "parabola") {
+          const r = paraRoots(cv);
+          return `${ptStr(r[0], 0)} ${AND} ${ptStr(r[1], 0)}`;
+        }
+        const xi = cv.kind === "hyperbola" ? hypXInt(cv) : cv.kind === "exp" ? expXInt(cv) : lineXInt(cv);
+        return ptStr(Math.round(xi), 0);
+      }
+      case "pointCoords":
+        return d.pts.map((p, i) => `${d.pts.length === 1 ? "" : d.letters[i]}${ptStr(p.x, p.y)}`)
+          .join(d.pts.length === 1 ? "" : ", ");
+      case "domain": return domainStr(d.curves[d.on]);
+      case "range": return rangeStr(cv);
+      case "increasing": {
+        if (cv.kind !== "parabola") return null;              // prose — checked by 30d instead
+        const tp = paraTP(cv), up = paraStd(cv).a > 0;
+        return up ? `x ${GT} ${C(tp.x)}` : `x ${LT} ${C(tp.x)}`;
+      }
+      case "signOfF": {
+        const cuts = criticalXs([cv], win.xmin, win.xmax);
+        const secs = sections(cuts, win.xmin, win.xmax);
+        const ch = secs.filter((s) => { const sg = signAt(cv, s.mid); return sg != null && (d.wantNeg ? sg < 0 : sg > 0); });
+        return answerString(ch, cuts, win, { strict: true, lang });
+      }
+      case "fgCompare": {
+        const f = d.curves[d.main], gg = d.curves[d.other];
+        const cuts = criticalXs([f, gg], win.xmin, win.xmax, { zeros: false, withIntersections: true });
+        const secs = sections(cuts, win.xmin, win.xmax);
+        const ch = secs.filter((s) => { const a = aboveAt(f, gg, s.mid); return a != null && (d.wantAbove ? a > 0 : a < 0); });
+        return answerString(ch, cuts, win, { strict: true, lang });
+      }
+      case "xTimesF": {
+        const cuts = [...criticalXs([cv], win.xmin, win.xmax), { x: 0, why: "zero" }].sort((a, b) => a.x - b.x);
+        const secs = sections(cuts, win.xmin, win.xmax);
+        const ch = secs.filter((s) => {
+          const sg = signAt(cv, s.mid);
+          if (sg == null) return false;
+          const p = (s.mid < 0 ? -1 : 1) * sg;
+          return d.wantNeg ? p < 0 : p > 0;
+        });
+        return answerString(ch, cuts, win, { strict: d.strict, lang });
+      }
+      case "fOverG": {
+        const f = d.curves[d.main], gg = d.curves[d.other];
+        const cuts = [...criticalXs([f], win.xmin, win.xmax), { x: lineXInt(gg), why: "asym" }].sort((a, b) => a.x - b.x);
+        const secs = sections(cuts, win.xmin, win.xmax);
+        const ch = secs.filter((s) => {
+          const a = signAt(f, s.mid), b = signAt(gg, s.mid);
+          if (a == null || b == null) return false;
+          return d.wantNeg ? a * b < 0 : a * b > 0;
+        });
+        return answerString(ch, cuts, win, { strict: false, lang });
+      }
+      case "length":
+        return d.mode === "h" ? C(lengthBetween(d.pts[0].x, d.pts[1].x)) : C(lengthBetween(d.yF, d.yG));
+      case "avgGradient":
+        return gradientStr(d.p2.y - d.p1.y, d.p2.x - d.p1.x);
+      case "kCuts": {
+        if (cv.kind === "parabola") {
+          const tp = paraTP(cv), up = paraStd(cv).a > 0;
+          return up ? `k ${GT} ${C(tp.y)}` : `k ${LT} ${C(tp.y)}`;
+        }
+        if (cv.kind === "hyperbola") return `k = ${C(cv.q)}`;
+        return cv.a > 0 ? `k ${GT} ${C(cv.q)}` : `k ${LT} ${C(cv.q)}`;
+      }
+      case "whichEquation": return tEqStrFor(d.family, d.base, "y");
+      case "transform": {
+        const { dp, dq } = tDeltaFor(d.dir, d.k);
+        return tEqStrFor(d.family, tShifted(d.base, dp, dq), "y");
+      }
+      default: return null;                                    // matchEq — checked by 30g
+    }
+  };
+  {
+    let bad = 0, why = "", checked = 0;
+    items.forEach((it) => {
+      const d = it.debugExam, want = recompute(d);
+      if (want == null) return;
+      checked++;
+      const got = shown(it.options.find((o) => o.correct).label);
+      if (strip(want).replace(/\s+/g, " ").trim() !== got) {
+        bad++; why = `${d.skill}/${d.shape}: harness says "${strip(want)}", the sheet ships "${got}"`;
+      }
+    });
+    check(g, `every sub-answer recomputed INDEPENDENTLY from the sheet's curves equals the stored correct option (${checked} sub-questions) — NEVER RELAX`,
+      bad === 0 && checked > 0, why);
+  }
+
+  /* 30d. the prose increasing/decreasing rounds: the word shipped must
+     agree with the drawn curve's own sign (a hyperbola with a > 0 falls;
+     an exponential rises when a and b − 1 share a sign) */
+  {
+    let bad = 0, why = "", checked = 0;
+    items.filter((it) => it.examSkill === "increasing").forEach((it) => {
+      const d = it.debugExam, cv = d.curves[d.main];
+      if (cv.kind === "parabola") return;
+      checked++;
+      const lab = shown(it.options.find((o) => o.correct).label);
+      const rises = cv.kind === "hyperbola" ? cv.a < 0 : (cv.a > 0) === (cv.b > 1);
+      const saysRise = /Stygend|Increasing/i.test(lab);
+      if (saysRise !== rises) { bad++; why = `${cv.kind}: ships "${lab}" for a=${cv.a}`; }
+      if (cv.kind === "hyperbola" && !/vlerkie/i.test(shown(it.prompt))) {
+        bad++; why = "a hyperbola increasing round does not say vlerkie";
+      }
+    });
+    check(g, `every prose increasing/decreasing answer agrees with the drawn curve's own sign, and a hyperbola is asked about its vlerkie (${checked} rounds)`,
+      bad === 0 && checked > 0, why);
+  }
+
+  /* 30e. option discipline: at most four, exactly one true, every label
+     distinct from the correct one AND from each other */
+  {
+    let bad = 0, why = "";
+    items.forEach((it) => {
+      if (it.options.length > 4 || it.options.length < 3) { bad++; why = `${it.examSkill}: ${it.options.length} options`; }
+      if (it.options.filter((o) => o.correct).length !== 1) { bad++; why = `${it.examSkill}: not exactly one correct option`; }
+      const labs = it.options.map((o) => bothLangs(o.label).map((v) => strip(v)).join("|"));
+      if (new Set(labs).size !== labs.length) { bad++; why = `${it.examSkill}: two options render the same`; }
+    });
+    check(g, `every sub-question ships at most 4 options, exactly one true, all distinct (${items.length} sub-questions)`,
+      bad === 0 && items.length > 0, why);
+  }
+
+  /* 30f. the equation rounds: no decoy is the SAME GRAPH as the drawn
+     curve (faultGap measures the daylight between them, the one owner) */
+  {
+    let bad = 0, why = "", checked = 0;
+    items.filter((it) => it.examSkill === "whichEquation").forEach((it) => {
+      const d = it.debugExam;
+      checked++;
+      d.decoys.forEach((dec) => {
+        if (faultGap(d.base, dec, d.win) < 0.6) { bad++; why = `${d.family}: a decoy is the same graph as the drawn curve`; }
+      });
+      const correct = strip(tEqStrFor(d.family, d.base, "y"));
+      if (shown(it.options.find((o) => o.correct).label) !== correct.replace(/\s+/g, " ").trim()) {
+        bad++; why = `${d.family}: the correct option is not the drawn curve's own equation`;
+      }
+    });
+    check(g, `every "which equation" decoy is a visibly different graph, and the correct option re-renders to the drawn curve (${checked} rounds)`,
+      bad === 0 && checked > 0, why);
+  }
+
+  /* 30g. matchEq: the unique-mismatch law of _fault.js, recomputed here
+     from the stored curves (§29c's discipline, on exam mode's own draws) */
+  {
+    let bad = 0, why = "", checked = 0, ja = 0;
+    items.filter((it) => it.examSkill === "matchEq").forEach((it) => {
+      const d = it.debugExam;
+      checked++;
+      const diff = featureDiff(d.trueCv, d.stated);
+      const want = d.claims.slice().sort().join("+");
+      if (diff.slice().sort().join("+") !== want) { bad++; why = `${d.kind}/${d.family}: moved ${diff.join("+") || "nothing"}, claims ${want}`; }
+      if (d.isMatch !== (diff.length === 0)) { bad++; why = `${d.kind}: isMatch disagrees with featureDiff`; }
+      if (d.isMatch) ja++;
+      d.decoyKeys.forEach((k) => {
+        if (k !== "none" && diff.includes(k)) { bad++; why = `${d.kind}: a decoy names "${k}", which this fault DID move`; }
+      });
+    });
+    check(g, `every "does the equation match?" round moves exactly the named features it claims, and no decoy names a moved one (${checked} rounds, ${ja} of them honest pairs)`,
+      bad === 0 && checked > 0, why);
+  }
+
+  /* 30h. the picture: every marked point really lies on its curve and
+     inside the frame, and every curve is mostly in frame */
+  {
+    let bad = 0, why = "", pts = 0;
+    items.forEach((it) => {
+      const d = it.debugExam;
+      (d.marks || []).forEach((m) => {
+        pts++;
+        const y = makeFn(d.curves[m.on])(m.x);
+        if (!Number.isFinite(y) || Math.abs(y - m.y) > 1e-6) { bad++; why = `${d.skill}: mark ${m.label} is not on curve ${m.on}`; }
+        if (!(m.x > d.win.xmin && m.x < d.win.xmax && m.y > d.win.ymin && m.y < d.win.ymax)) {
+          bad++; why = `${d.skill}: mark ${m.label} is cropped by the frame`;
+        }
+      });
+      (d.crossings || []).forEach((p) => {
+        if (!isInt(p.x) || !isInt(p.y)) { bad++; why = `${d.shape}: an intersection is not on a grid point`; }
+      });
+      (it.graph.curves || []).forEach((cv) => {
+        if (!mostlyInFrame(cv, it.graph.win)) { bad++; why = `${d.shape}: a ${cv.kind} is mostly outside its own frame`; }
+      });
+    });
+    check(g, `every marked point lies ON its curve and inside the frame, every intersection is a grid point, every curve is mostly in frame (${pts} marks)`,
+      bad === 0 && pts > 0, why);
+  }
+
+  /* 30i. labels: the point letters, the curve names and the asymptote
+     labels are re-read off the RENDERED svg and may not overlap each
+     other or leave the frame (box maths read off function-graph.js) */
+  {
+    const CW = 6.5, CH = 17;
+    const boxesOf = (svg, cls) => {
+      const re = new RegExp('<text class="' + cls + '" x="([^"]+)" y="([^"]+)" text-anchor="([^"]+)"[^>]*>([^<]*)</text>', "g");
+      const out = []; let m;
+      while ((m = re.exec(svg))) {
+        const x = +m[1], y = +m[2], a = m[3], w = m[4].length * CW;
+        const bx = a === "middle" ? x - w / 2 : a === "start" ? x : x - w;
+        out.push({ box: [bx, y - CH / 2, bx + w, y + CH / 2], label: m[4] });
+      }
+      return out;
+    };
+    const hit = (b, q) => !(b[2] <= q[0] || b[0] >= q[2] || b[3] <= q[1] || b[1] >= q[3]);
+    let bad = 0, why = "", labels = 0;
+    sheets.forEach((s) => {
+      const spec = s[0].graph, svg = renderFunction(spec);
+      const W = spec.w || 360, H = spec.h || 300;
+      const plabs = boxesOf(svg, "fg-plab");
+      const all = [...plabs, ...boxesOf(svg, "fg-flab"), ...boxesOf(svg, "fg-asymlab")];
+      labels += all.length;
+      const wanted = (spec.points || []).filter((p) => p.label != null).length;
+      if (plabs.length !== wanted) { bad++; why = `a sheet asked for ${wanted} point labels and drew ${plabs.length}`; }
+      for (let a = 0; a < all.length; a++) {
+        for (let b = a + 1; b < all.length; b++) {
+          if (hit(all[a].box, all[b].box)) { bad++; why = `"${all[a].label}" overlaps "${all[b].label}"`; }
+        }
+      }
+      plabs.forEach((p) => {
+        if (p.box[0] < 0 || p.box[2] > W || p.box[1] < 0 || p.box[3] > H) { bad++; why = `label "${p.label}" leaves the frame`; }
+      });
+    });
+    check(g, `every label on an exam sketch is drawn, stays in frame, and touches no other label (${labels} labels over ${sheets.length} sheets)`,
+      bad === 0 && labels > 0, why);
+  }
+
+  /* 30j. the sketch never prints a VALUE a sub-question asks for: an exam
+     sheet serves five or six questions from one picture, so no asymptote
+     label may carry an equation and no point label may carry coordinates */
+  {
+    let bad = 0, why = "", specs = 0;
+    sheets.forEach((s) => {
+      const spec = s[0].graph;
+      specs++;
+      (spec.asymptotes || []).forEach((a) => { if (a.label) { bad++; why = `a sheet prints the asymptote label "${strip(a.label)}"`; } });
+      (spec.points || []).forEach((p) => {
+        if (p.label != null && !/^[A-Z]$/.test(String(p.label))) { bad++; why = `a marked point is labelled "${p.label}" instead of a single letter`; }
+      });
+    });
+    check(g, `no exam sketch prints an asymptote's equation, and every marked point wears a LETTER, never its coordinates (${specs} sheets)`,
+      bad === 0 && specs > 0, why);
+  }
+
+  /* 30k. §25a's option-layout discipline holds for exam mode too */
+  {
+    let bad = 0, why = "", mathLists = 0;
+    items.forEach((it) => {
+      const isMath = it.options.some((o) => bothLangs(o.label).some((v) => {
+        const s = String(v == null ? "" : v);
+        if (/class="(eq|frac)"|<sup/.test(s)) return true;
+        const plain = strip(s);
+        return /[=<>≤≥≠]/.test(plain) && plain.trim().split(/\s+/).length <= 10;
+      }));
+      if (!isMath) return;
+      mathLists++;
+      if (!optionsNeedOneColumn(it)) { bad++; why = `${it.examSkill}: a maths option list is not one-per-line`; }
+    });
+    check(g, `§25a discipline holds for q7: every maths option list goes one per line (${mathLists} maths lists)`,
+      bad === 0 && mathLists > 0, why);
+  }
+
+  /* 30l. her banned words, across every string an exam sheet can show */
+  {
+    const BANNED = [
+      [/\bsleep\b/i, "sleep"], [/\bfrase\b/i, "frase"], [/\bsywaarts\b/i, "sywaarts"],
+      [/\bhoegenaamd\b/i, "hoegenaamd"], [/\btak(ke)?\b/i, "tak/takke"],
+      [/spie[eë]l/i, "spieël-family"], [/\bomgeflip\b/i, "omgeflip"],
+      [/\bvol (lyn|grafiek)\b/i, "vol lyn"], [/\bronde\b/i, "ronde"],
+    ];
+    const strings = [];
+    const collect = (v) => { if (v != null) bothLangs(v).forEach((x) => strings.push(strip(x))); };
+    items.forEach((it) => {
+      collect(it.prompt); collect(it.stem); collect(it.answerLabel);
+      (it.options || []).forEach((o) => { collect(o.label); collect(o.misc); });
+      (it.solution || []).forEach(collect);
+    });
+    let bad = 0, why = "";
+    strings.forEach((s) => {
+      BANNED.forEach(([re, name]) => { if (re.test(s)) { bad++; why = `"${name}" in "${s.slice(0, 60)}"`; } });
+      if (BAD.test(s)) { bad++; why = `a NaN/undefined leak in "${s.slice(0, 60)}"`; }
+    });
+    check(g, `her banned words (and NaN/undefined leaks) stay out of every exam-mode string (${strings.length} checked)`,
+      bad === 0 && strings.length > 0, why);
+  }
+
+  /* 30m. skill coverage — every skill batches 1–3 teach really turns up */
+  {
+    const tally = {};
+    items.forEach((it) => { tally[it.examSkill] = (tally[it.examSkill] || 0) + 1; });
+    const ids = Object.keys(tally).sort();
+    const per60 = (k) => (tally[k] / sheets.length) * 60;
+    const WANT = ["asymptotes", "intercepts", "pointCoords", "domain", "range", "increasing",
+      "signOfF", "fgCompare", "xTimesF", "fOverG", "length", "avgGradient", "kCuts",
+      "whichEquation", "transform", "matchEq"];
+    const missing = WANT.filter((k) => !tally[k] || per60(k) < 3);
+    check(g, `every skill batches 1–3 teach appears at least 3 times per 60 sheets — per-skill counts per 60: ${ids.map((k) => `${k} ${per60(k).toFixed(1)}`).join(" · ")}`,
+      missing.length === 0, missing.join(", "));
+    info(g, `${ids.length} distinct skills sampled over ${sheets.length} sheets / ${items.length} sub-questions`);
+  }
+
+  /* 30n. semicircle sheets are Tech-Maths only: with TECHOK off, not one
+     semicircle sheet and not one semicircle curve may be dealt */
+  {
+    const was = TECHOK.on;
+    TECHOK.on = false;
+    let semiSheets = 0, semiCurves = 0, dealt = 0;
+    for (let i = 0; i < 40; i++) {
+      const s = buildRound("q7");
+      dealt++;
+      if (s[0].debugExam.shape === "semiExp") semiSheets++;
+      s.forEach((it) => { if ((it.graph.curves || []).some((c) => c.kind === "semicircle")) semiCurves++; });
+    }
+    TECHOK.on = was;
+    check(g, `TECHOK.on = false deals zero semicircle sheets and zero semicircle curves (${dealt} sheets dealt)`,
+      semiSheets === 0 && semiCurves === 0 && dealt === 40, `${semiSheets} sheets · ${semiCurves} curves`);
+  }
+
+  /* 30o. the rebuild must not re-lock Eksamenmodus for a profile that
+     finished it BEFORE the rebuild — the grandfather rule (mirrors §28i) */
+  {
+    const ids = QUESTS.map((q) => q.id);
+    const iq7 = ids.indexOf("q7");
+    const profile = { quests: { q7: { done: true, best: 6, total: 6, plays: 3 } } };
+    check(g, "a profile that finished Eksamenmodus before the rebuild stays unlocked, with its best score untouched (quest id is still \"q7\")",
+      questUnlocked(profile, iq7) === true && iq7 === QUESTS.length - 1);
+  }
 }
 
 document.getElementById("sum").innerHTML = fail === 0

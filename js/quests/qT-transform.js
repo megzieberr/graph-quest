@@ -77,7 +77,10 @@ function baseLineOffAxis() {
 }
 const FAMILY_BUILD = { parabola: baseParabola, hyperbola: baseHyperbola, exp: baseExp };
 
-function eqStrFor(family, cv, name) {
+/* exported for q7-exam.js's transformation sub-question (batch 3 session 5):
+   exam mode reuses this quest's own move maths rather than re-deriving it.
+   Adding the `export` keyword changes nothing about this quest's behaviour. */
+export function eqStrFor(family, cv, name) {
   return family === "parabola" ? eqTPStr(cv, name) : eqStr(cv, name);
 }
 
@@ -86,16 +89,16 @@ function eqStrFor(family, cv, name) {
    quest ever does, and it is exactly what the learner is asked
    to read off the picture, never asked to produce themselves.
    ------------------------------------------------------------ */
-function shifted(cv, dp, dq) {
+export function shifted(cv, dp, dq) {
   return { ...cv, p: (cv.p || 0) + dp, q: (cv.q || 0) + dq };
 }
-function deltaFor(dir, k) {
+export function deltaFor(dir, k) {
   if (dir === "up") return { dp: 0, dq: k };
   if (dir === "down") return { dp: 0, dq: -k };
   if (dir === "right") return { dp: k, dq: 0 };
   return { dp: -k, dq: 0 };                         // left
 }
-const axisWord = (dir) => ((dir === "up" || dir === "down") ? "q" : "p");
+export const axisWord = (dir) => ((dir === "up" || dir === "down") ? "q" : "p");
 function moveLabel(dir, k) {
   const n = C(k);
   return {

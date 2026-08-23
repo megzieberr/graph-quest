@@ -40,7 +40,7 @@ const ACC = "#facc15";
    a spoiler even though −4 ≠ 4 as numbers (Law 7: a prompt never
    contains its own answer). Guards every stated-value/answer pair in
    this quest's generators. */
-function noNumeralOverlap(a, b) {
+export function noNumeralOverlap(a, b) {
   const sa = C(a), sb = C(b);
   return !sa.includes(sb) && !sb.includes(sa);
 }
