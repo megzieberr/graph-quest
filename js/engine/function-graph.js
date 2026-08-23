@@ -33,8 +33,26 @@ const TONES = { a: "var(--fg-a)", b: "var(--fg-b)", c: "var(--fg-c)" };
    from the 360×300 default. */
 export const PAD = { L: 16, R: 16, T: 14, B: 16 };
 
+/* the one opacity a "faint" thing wears — the curve, its name label and
+   its asymptotes all read off this, so they can never drift apart */
+export const FAINT = ".42";
+
+/* how far below the x-axis a tick NUMBER's centre sits. UNCHANGED by the
+   halo — no lowering was needed. Proved by rasterising a real sketch at
+   360×300 (verify §31a): the topmost halo pixel lands 5 px below the
+   axis, so it clears both the axis stroke (1,2 px wide, ±0,6) and the
+   3 px tick marks, and the axis row comes back with zero pixels painted
+   over and zero gaps. */
+const TICK_LAB_DY = 11;
+
 const text = (x, y, s, cls, anchor = "middle") =>
   `<text class="${cls}" x="${N(x)}" y="${N(y)}" text-anchor="${anchor}" dominant-baseline="middle">${s}</text>`;
+
+/* a centred obstacle box: [x0,y0,x1,y1] in pixels */
+const box = (cx, cy, w, h) => [cx - w / 2, cy - h / 2, cx + w / 2, cy + h / 2];
+/* two boxes touch (exported: _graphs.js's label chooser and
+   curveLabelsClash() must ask the question exactly this way) */
+export const boxesHit = (b, q) => !(b[2] <= q[0] || b[0] >= q[2] || b[3] <= q[1] || b[1] >= q[3]);
 
 /* ---- the one transform, plus its inverse (for pointer input) ---- */
 export function computeFunction(spec) {
@@ -144,6 +162,87 @@ export function curveExitArrows(cv, g) {
   return arrows;
 }
 
+/* ---- label geometry, in ONE place ----------------------------------
+   renderFunction() draws the axis letters and the curve-name labels
+   straight off these three helpers, and _graphs.js's specFor() tests
+   candidate label positions against the very same boxes. There is no
+   second copy of this geometry anywhere: if the drawing moves, the test
+   moves with it. (Batch 3 session 6 — q7-exam.js used to carry a private
+   replica of the curve-label box maths; it now imports curveLabelsClash()
+   from _graphs.js, which is built on curveLabelBox() below.) */
+
+/* where the x / y / O letters are drawn, and the box each one owns */
+export function axisLetters(spec) {
+  const g = computeFunction(spec);
+  const { W, H, X, Y, win } = g;
+  const { xmin, xmax, ymin, ymax } = win;
+  const x0px = X(0), y0px = Y(0);
+  const showY = xmin <= 0 && xmax >= 0, showX = ymin <= 0 && ymax >= 0;
+  const out = [];
+  if (showX) {
+    const xlY = y0px - 9 < 9 ? y0px + 13 : y0px - 9;
+    out.push({ s: "x", x: X(xmax) - 4, y: xlY, box: box(X(xmax) - 4, xlY, 15, 17) });
+  }
+  if (showY) {
+    const ylX = x0px + 9 > W - 6 ? x0px - 9 : x0px + 9;
+    out.push({ s: "y", x: ylX, y: Y(ymax) + 4, box: box(ylX, Y(ymax) + 4, 15, 17) });
+  }
+  if (showX && showY) {
+    const oY = y0px + 10 > H - 5 ? y0px - 9 : y0px + 10;
+    out.push({ s: "O", x: x0px - 8, y: oY, box: box(x0px - 8, oY, 15, 17) });
+  }
+  return out;
+}
+
+/* the box a curve's NAME label ("f", "g") occupies — null when the label
+   is not drawn at all (no label, no labelAt, or a y outside the window).
+   Pass an explicit `at` to ask "where WOULD it sit at this x?". */
+export function curveLabelBox(cv, g, at) {
+  if (!cv || !cv.label) return null;
+  const lx = at === undefined ? cv.labelAt : at;
+  if (lx === undefined) return null;
+  const ly = makeFn(cv)(lx);
+  if (!Number.isFinite(ly) || ly < g.win.ymin || ly > g.win.ymax) return null;
+  return box(g.X(lx) + 10, g.Y(ly) - 6, String(cv.label).length * 10 + 8, 19);
+}
+
+/* does the straight bit of path between two samples cut this box?
+   (Liang–Barsky clip — true when any part of the segment is inside.) */
+function segHitsBox(p0, p1, b) {
+  let t0 = 0, t1 = 1;
+  const dx = p1[0] - p0[0], dy = p1[1] - p0[1];
+  const tests = [[-dx, p0[0] - b[0]], [dx, b[2] - p0[0]], [-dy, p0[1] - b[1]], [dy, b[3] - p0[1]]];
+  for (const [p, q] of tests) {
+    if (p === 0) { if (q < 0) return false; continue; }
+    const r = q / p;
+    if (p < 0) { if (r > t1) return false; if (r > t0) t0 = r; }
+    else { if (r < t0) return false; if (r < t1) t1 = r; }
+  }
+  return true;
+}
+
+/* does another curve's drawn path run through this label box? A "g"
+   sitting on f's line is the same fault as "g" sitting on "f".
+   It asks clippedSegments() — the very polyline curvePaths() draws — and
+   walks its SEGMENTS, not a re-sampled dot cloud. Two earlier attempts
+   were both resolution-dependent and lied: a 40-point dot test missed
+   5,2% of real hits (a steep arm crosses a 19 px-tall box entirely
+   between two samples) and a 120-point segment test still disagreed with
+   a 400-point one near the frame edges. Testing what is actually drawn
+   has no resolution to get wrong. */
+export function labelBoxHitsCurve(cv, b, g) {
+  return clippedSegments(cv, g).some((s) => {
+    let prev = null;
+    for (const [wx, wy] of s.pts) {
+      const p = [g.X(wx), g.Y(wy)];
+      if (p[0] >= b[0] && p[0] <= b[2] && p[1] >= b[1] && p[1] <= b[3]) return true;
+      if (prev && segHitsBox(prev, p, b)) return true;
+      prev = p;
+    }
+    return false;
+  });
+}
+
 export function renderFunction(spec) {
   const g = computeFunction(spec);
   const { W, H, X, Y, win } = g;
@@ -163,18 +262,39 @@ export function renderFunction(spec) {
     out += `<rect class="fg-shade" x="${N(X(x0))}" y="${N(Y(ymax))}" width="${N(X(x1) - X(x0))}" height="${N(Y(ymin) - Y(ymax))}"/>`;
   });
 
+  /* a.faint: this asymptote belongs to a FAINT curve (specFor() sets it
+     from the source curve; qF's scaffoldOf() sets it on the liar's extra
+     lines). It fades by exactly the same .42 the curve itself uses, so a
+     faint "before" curve stops shouting its asymptotes at full strength.
+     An asymptote of a solid curve is untouched. */
   (spec.asymptotes || []).forEach((a) => {
-    if (a.x !== undefined) out += `<line class="fg-asym" x1="${N(X(a.x))}" y1="${N(Y(ymin))}" x2="${N(X(a.x))}" y2="${N(Y(ymax))}"/>`;
-    if (a.y !== undefined) out += `<line class="fg-asym" x1="${N(X(xmin))}" y1="${N(Y(a.y))}" x2="${N(X(xmax))}" y2="${N(Y(a.y))}"/>`;
+    /* foreman review fix: .fg-asym already sits at opacity .7 in the
+       stylesheet, so an inline .42 would fade the line only to 60 % of its
+       solid partner while the curve fades to 42 %. Multiply, so the faint
+       "before" picture dims as ONE thing: .7 × .42 ≈ .29. The label has no
+       base opacity, so it keeps the plain FAINT value. */
+    const ao = a.faint ? ` style="opacity:${(0.7 * Number(FAINT)).toFixed(2)}"` : "";
+    if (a.x !== undefined) out += `<line class="fg-asym" x1="${N(X(a.x))}" y1="${N(Y(ymin))}" x2="${N(X(a.x))}" y2="${N(Y(ymax))}"${ao}/>`;
+    if (a.y !== undefined) out += `<line class="fg-asym" x1="${N(X(xmin))}" y1="${N(Y(a.y))}" x2="${N(X(xmax))}" y2="${N(Y(a.y))}"${ao}/>`;
     if (a.label) {
       const lx = a.x !== undefined ? X(a.x) + 4 : X(xmax) - 4;
       const ly = a.y !== undefined ? Y(a.y) - 8 : Y(ymax) + 10;
-      out += text(lx, ly, a.label, "fg-asymlab", a.x !== undefined ? "start" : "end");
+      /* the style goes AFTER the anchor, never before the class — §30i
+         reads these labels back off the SVG with a positional regex */
+      const t = text(lx, ly, a.label, "fg-asymlab", a.x !== undefined ? "start" : "end");
+      out += a.faint ? t.replace('dominant-baseline="middle"', `dominant-baseline="middle" style="opacity:${FAINT}"`) : t;
     }
   });
 
   const obstacles = [];
-  const box = (cx, cy, w, h) => [cx - w / 2, cy - h / 2, cx + w / 2, cy + h / 2];
+  /* every .fg-axlab (the x / y / O letters AND the tick numbers) is
+     collected here and emitted AFTER the curves. Their halo (css
+     .fg-axlab) only reads as "the curve passes behind the number" if the
+     number is painted last — drawn before the curve, the halo would sit
+     under it and do nothing. Positions are unchanged; only paint order
+     moved. Tick MARKS and the axis lines themselves stay where they were,
+     under the curve. */
+  let axisText = "";
 
   /* ---- axes ---- */
   const x0px = X(0), y0px = Y(0);
@@ -183,22 +303,18 @@ export function renderFunction(spec) {
     out += `<line class="fg-axis" x1="${N(X(xmin))}" y1="${N(y0px)}" x2="${N(X(xmax))}" y2="${N(y0px)}"/>`;
     out += `<path class="fg-arrow" d="M ${N(X(xmax))} ${N(y0px)} l -7 -3.5 l 0 7 z"/>`;
     out += `<path class="fg-arrow" d="M ${N(X(xmin))} ${N(y0px)} l 7 -3.5 l 0 7 z"/>`;
-    const xlY = y0px - 9 < 9 ? y0px + 13 : y0px - 9;
-    out += text(X(xmax) - 4, xlY, "x", "fg-axlab");
-    obstacles.push(box(X(xmax) - 4, xlY, 15, 17));
   }
   if (showY) {
     out += `<line class="fg-axis" x1="${N(x0px)}" y1="${N(Y(ymin))}" x2="${N(x0px)}" y2="${N(Y(ymax))}"/>`;
     out += `<path class="fg-arrow" d="M ${N(x0px)} ${N(Y(ymax))} l -3.5 7 l 7 0 z"/>`;
     out += `<path class="fg-arrow" d="M ${N(x0px)} ${N(Y(ymin))} l -3.5 -7 l 7 0 z"/>`;
-    const ylX = x0px + 9 > W - 6 ? x0px - 9 : x0px + 9;
-    out += text(ylX, Y(ymax) + 4, "y", "fg-axlab");
-    obstacles.push(box(ylX, Y(ymax) + 4, 15, 17));
   }
-  if (showX && showY) {
-    const oY = y0px + 10 > H - 5 ? y0px - 9 : y0px + 10;
-    out += text(x0px - 8, oY, "O", "fg-axlab"); obstacles.push(box(x0px - 8, oY, 15, 17));
-  }
+  /* the x / y / O letters — positions and obstacle boxes from the one
+     shared helper, text deferred to the axisText block above */
+  axisLetters(spec).forEach((l) => {
+    axisText += text(l.x, l.y, l.s, "fg-axlab");
+    obstacles.push(l.box);
+  });
 
   /* ---- axis number ticks (helps "read it off the axis" questions) ---- */
   if (spec.ticks && showX) {
@@ -208,7 +324,7 @@ export function renderFunction(spec) {
     for (let x = Math.ceil(xmin); x <= xmax; x++) {
       if (x === 0) continue;
       out += `<line class="fg-axis" x1="${N(X(x))}" y1="${N(y0px - 3)}" x2="${N(X(x))}" y2="${N(y0px + 3)}"/>`;
-      if (spec.ticks === "labels" && x % step === 0) out += text(X(x), y0px + 11, fmtComma(x), "fg-axlab");
+      if (spec.ticks === "labels" && x % step === 0) axisText += text(X(x), y0px + TICK_LAB_DY, fmtComma(x), "fg-axlab");
     }
   }
   if (spec.ticks && showY) {
@@ -219,27 +335,32 @@ export function renderFunction(spec) {
   }
 
   /* ---- the curves ---- */
+  /* the NAME labels are held back like the axis text: painted after every
+     curve so their halo can hide the line running under them, and so a
+     second curve can never draw over the first curve's name. */
+  let curveText = "";
   (spec.curves || []).forEach((cv) => {
     const stroke = cv.tone ? TONES[cv.tone] : "var(--accent)";
     /* cv.faint: reduced opacity, for a curve drawn as a "before" reference
        next to a solid "after" one (batch 2's transformations quest) — never
        used anywhere the curve is the only one on screen, since a faint
        curve alone would fail the "curve is visible" spirit of the frame */
-    const op = cv.faint ? ";opacity:.42" : "";
+    const op = cv.faint ? `;opacity:${FAINT}` : "";
     curvePaths(cv, g).forEach((d) => {
       out += `<path class="fg-curve${cv.dash ? " dash" : ""}" d="${d}" style="stroke:${stroke}${op}"/>`;
     });
     curveExitArrows(cv, g).forEach((d) => {
       out += `<path class="fg-curve-arrow" d="${d}" style="fill:${stroke}${op}"/>`;
     });
-    if (cv.label && cv.labelAt !== undefined) {
-      const f = makeFn(cv), lx = cv.labelAt, ly = f(lx);
-      if (Number.isFinite(ly) && ly >= ymin && ly <= ymax) {
-        out += `<text class="fg-flab" x="${N(X(lx) + 10)}" y="${N(Y(ly) - 6)}" text-anchor="middle" dominant-baseline="middle" style="fill:${stroke}">${cv.label}</text>`;
-        obstacles.push(box(X(lx) + 10, Y(ly) - 6, String(cv.label).length * 10 + 8, 19));
-      }
+    const lb = curveLabelBox(cv, g);
+    if (lb) {
+      /* the name fades with its own curve — a faint "before" curve with a
+         full-strength "f" beside it reads as the solid one's label */
+      curveText += `<text class="fg-flab" x="${N((lb[0] + lb[2]) / 2)}" y="${N((lb[1] + lb[3]) / 2)}" text-anchor="middle" dominant-baseline="middle" style="fill:${stroke}${op}">${cv.label}</text>`;
+      obstacles.push(lb);
     }
   });
+  out += curveText + axisText;
 
   (spec.vlines || []).forEach((v) => {
     out += `<line class="fg-vline" x1="${N(X(v.x))}" y1="${N(Y(ymin))}" x2="${N(X(v.x))}" y2="${N(Y(ymax))}"/>`;

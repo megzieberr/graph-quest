@@ -124,12 +124,15 @@ function includeFor(trueCv, stated, claims) {
    lines the equation claims for its asymptotes. Built here, shown only
    after a wrong verdict — never on a first, clean paint. */
 function scaffoldOf(spec, trueCv, stated) {
+  /* faint: true — these belong to the FAINT dashed liar curve, so they
+     fade with it. Left at full strength they shouted louder than the
+     honest curve's own asymptotes (batch 3 session 6). */
   const extra = [];
   if (stated.kind === "hyperbola") {
-    if (stated.p !== trueCv.p) extra.push({ x: stated.p });
-    if (stated.q !== trueCv.q) extra.push({ y: stated.q });
+    if (stated.p !== trueCv.p) extra.push({ x: stated.p, faint: true });
+    if (stated.q !== trueCv.q) extra.push({ y: stated.q, faint: true });
   } else if (stated.kind === "exp" && stated.q !== trueCv.q) {
-    extra.push({ y: stated.q });
+    extra.push({ y: stated.q, faint: true });
   }
   return {
     ...spec,

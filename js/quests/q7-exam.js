@@ -47,7 +47,7 @@
 import { mc, quest } from "./_shared.js";
 import { B, getLang } from "../i18n.js";
 import {
-  specFor, windowFor, mostlyInFrame, hideAsymLabels, asymOnAxis,
+  specFor, windowFor, mostlyInFrame, hideAsymLabels, asymOnAxis, curveLabelsClash,
   randLine, randParabola, randHyperbolaOffAxis, randExp, randSemicircle,
 } from "./_graphs.js";
 import {
@@ -58,7 +58,6 @@ import {
   lengthBetween, avgGradient, gradientStr, circleEq, frac,
 } from "../funclib.js";
 import { answerString, complementString, flipStrictString, asYString } from "./_intervals.js";
-import { computeFunction } from "../engine/function-graph.js";
 /* the move maths of Transformasies, and the numeral-overlap guard of
    Lengtes — reused, never re-derived (both are plain `export` additions
    to those files; neither quest's behaviour changed) */
@@ -138,31 +137,15 @@ function gridCrossings(a, b, win) {
   return out;
 }
 
-/* the two CURVE-NAME labels ("f" and "g") are placed by specFor's own
-   labelSpot(), one curve at a time — so unlike the point letters, which
-   placeLabels() keeps clear of every obstacle, they can land on top of
-   each other. Measured on the real render: ~1,3% of two-curve draws.
-   A sheet that does it is redrawn. The box maths is the engine's own,
-   read off function-graph.js's obstacle push for the same label. */
-function curveNamesClash(spec) {
-  const g = computeFunction(spec);
-  const boxes = [];
-  (spec.curves || []).forEach((cv) => {
-    if (!cv.label || cv.labelAt === undefined) return;
-    const y = makeFn(cv)(cv.labelAt);
-    if (!Number.isFinite(y) || y < spec.win.ymin || y > spec.win.ymax) return;
-    const cx = g.X(cv.labelAt) + 10, cy = g.Y(y) - 6;
-    const w = String(cv.label).length * 10 + 8, h = 19;
-    boxes.push([cx - w / 2, cy - h / 2, cx + w / 2, cy + h / 2]);
-  });
-  for (let i = 0; i < boxes.length; i++) {
-    for (let j = i + 1; j < boxes.length; j++) {
-      const a = boxes[i], b = boxes[j];
-      if (!(a[2] <= b[0] || a[0] >= b[2] || a[3] <= b[1] || a[1] >= b[3])) return true;
-    }
-  }
-  return false;
-}
+/* the two CURVE-NAME labels ("f" and "g") used to be placed one curve at
+   a time, blind to each other, and landed on top of each other on ~1,3%
+   of two-curve draws — this file carried its own clash test and redrew
+   the sheet. Batch 3 session 6 moved BOTH halves into _graphs.js:
+   specFor() now refuses a clashing candidate outright (engine-wide, so
+   every quest gets it), and the test itself is the exported
+   curveLabelsClash(), built on the engine's own curveLabelBox(). This
+   file keeps calling it as a belt-and-braces guard — an exam sheet is
+   the one place a crowded label is least forgivable. */
 
 const inside = (p, win, m = 0.4) =>
   (p.x == null || (p.x > win.xmin + m && p.x < win.xmax - m)) &&
@@ -1210,7 +1193,7 @@ function buildSheet(shape) {
       win, accent: ACC, ticks: "labels", labels: names, points, asymLabels: false,
     });
     if (!spec) continue;
-    if (curveNamesClash(spec)) continue;
+    if (curveLabelsClash(spec)) continue;
 
     const stem = sheetStem(shape, names, curves, prepared);
 

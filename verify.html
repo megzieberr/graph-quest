@@ -23,7 +23,10 @@
 import { QUESTS, buildRound, setSemicircles, getQuest } from "./js/quests/index.js";
 import { secondChanceAllowed, optionsNeedOneColumn } from "./js/play.js";
 import { questUnlocked, mapScreen, B_INTRO } from "./js/screens.js";
-import { verifyFunction, renderFunction, computeFunction } from "./js/engine/function-graph.js";
+import {
+  verifyFunction, renderFunction, computeFunction,
+  curveLabelBox, labelBoxHitsCurve, axisLetters, FAINT,
+} from "./js/engine/function-graph.js";
 import { axisGate, sweep, trailSweep } from "./js/engine/interactive.js";
 import { mountKeypad } from "./js/engine/keypad.js";
 import { L, UI, setLang } from "./js/i18n.js";
@@ -41,6 +44,7 @@ import { eqStrFor as tEqStrFor, shifted as tShifted, deltaFor as tDeltaFor } fro
 import {
   specFor, randParabola, randHyperbola, randExp, randLine, randSemicircle,
   windowFor, features, asymOnAxis, randHyperbolaOffAxis, mostlyInFrame,
+  curveLabelsClash,
 } from "./js/quests/_graphs.js";
 import { answerString } from "./js/quests/_intervals.js";
 import {
@@ -4354,6 +4358,245 @@ for (const lang of ["af", "en"]) {
     check(g, "a profile that finished Eksamenmodus before the rebuild stays unlocked, with its best score untouched (quest id is still \"q7\")",
       questUnlocked(profile, iq7) === true && iq7 === QUESTS.length - 1);
   }
+}
+
+/* ---------- 31. Batch 3 session 6 — the engine label pass ----------
+   Four jobs, all engine-wide: a background halo so a curve passes BEHIND
+   an axis number instead of through it; curve-name labels that refuse to
+   stack on each other, on the axis letters, or on the other curve's line;
+   q5's generators on bounded loops instead of recursion; and a faint
+   curve whose NAME and ASYMPTOTES fade with it. ---------- */
+{
+  setLang("af");
+  const g = group("31. Session 6 — axis-number halo, curve-name placement, faint asymptotes, q5 loop bounds");
+
+  /* a real sketch, mounted the way the app mounts one, so computed
+     styles (not the stylesheet text) are what gets read */
+  const stage = document.createElement("div");
+  stage.className = "graphbox";
+  stage.style.cssText = "position:fixed;left:-9999px;top:0;width:360px";
+  document.body.appendChild(stage);
+  const PAD_L = 16;                     // function-graph.js PAD.L
+
+  /* 31a. the halo: painted in the page's own background colour, under
+     the glyph, on BOTH the axis numbers and the curve names */
+  {
+    const cv = { kind: "parabola", a: 1, p: 0, q: -4 };
+    const win = windowFor([cv]);
+    stage.innerHTML = renderFunction(specFor([cv], { win, ticks: "labels", labels: ["f"] }));
+
+    /* what is actually behind the sketch, resolved by the browser */
+    const probe = document.createElement("div");
+    probe.style.background = "var(--bg)";
+    stage.appendChild(probe);
+    const bgColour = getComputedStyle(probe).backgroundColor;
+    probe.remove();
+
+    const read = (cls) => {
+      const el = stage.querySelector("." + cls);
+      if (!el) return null;
+      const cs = getComputedStyle(el);
+      return { paintOrder: cs.paintOrder, stroke: cs.stroke, width: cs.strokeWidth, join: cs.strokeLinejoin };
+    };
+    const ax = read("fg-axlab"), fl = read("fg-flab");
+    const haloOK = (s) => !!s && /stroke/.test(s.paintOrder) && s.stroke === bgColour
+      && parseFloat(s.width) >= 2.5 && s.join === "round";
+    check(g, `axis tick/letter labels (.fg-axlab) carry a background halo — paint-order "${ax && ax.paintOrder}", stroke ${ax && ax.stroke}, width ${ax && ax.width} (page background is ${bgColour})`,
+      haloOK(ax));
+    check(g, `curve-name labels (.fg-flab) carry the same halo — paint-order "${fl && fl.paintOrder}", stroke ${fl && fl.stroke}, width ${fl && fl.width}`,
+      haloOK(fl));
+
+    /* the halo must not eat the x-axis under a tick number. getBBox() on
+       a <text> is the EM box, not the ink, so it cannot answer this —
+       the sketch is RASTERISED instead and the axis row read pixel by
+       pixel. Halo pixels are the only thing on the sketch painted in the
+       flat page background colour, so they are unmistakable. */
+    const spec1 = specFor([cv], { win, ticks: "labels", labels: ["f"] });
+    const gg = computeFunction(spec1);
+    const y0 = Math.round(gg.Y(0));
+    const cssText = await (await fetch("./css/styles.css", { cache: "reload" })).text();
+    await document.fonts.ready;
+    /* the stylesheet travels INSIDE the standalone SVG — its :root block
+       lands on the <svg> itself, so the very same tokens resolve */
+    const standalone = renderFunction(spec1).replace(/<svg([^>]*)>/,
+      `<svg$1 xmlns="http://www.w3.org/2000/svg" width="360" height="300"><style>${cssText.replace(/[<>&]/g, "")}</style>`);
+    const url = URL.createObjectURL(new Blob([standalone], { type: "image/svg+xml" }));
+    const img = new Image();
+    let drawn = true;
+    try { await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = url; }); }
+    catch { drawn = false; }
+    const cn = document.createElement("canvas"); cn.width = 360; cn.height = 300;
+    const ctx = cn.getContext("2d");
+    if (drawn) ctx.drawImage(img, 0, 0);
+    URL.revokeObjectURL(url);
+    const at = (x, y) => ctx.getImageData(x, y, 1, 1).data;
+    const rgb = bgColour.match(/\d+/g).map(Number);
+    const isHalo = (p) => p[3] > 200 && Math.abs(p[0] - rgb[0]) < 8 && Math.abs(p[1] - rgb[1]) < 8 && Math.abs(p[2] - rgb[2]) < 8;
+    let eaten = 0, gaps = 0, firstHaloRow = 999;
+    for (let x = PAD_L + 2; x < 360 - PAD_L - 2; x++) {
+      const p = at(x, y0);
+      if (isHalo(p)) eaten++;
+      if (p[3] < 20) gaps++;
+      for (let y = y0; y < y0 + 22; y++) if (isHalo(at(x, y))) { firstHaloRow = Math.min(firstHaloRow, y); break; }
+    }
+    check(g, `rasterised at 360×300: the x-axis line runs unbroken under every tick number — ${eaten} axis pixels painted over, ${gaps} transparent gaps, topmost halo pixel ${firstHaloRow - y0} px below the axis (tick marks reach 3 px)`,
+      drawn && eaten === 0 && gaps === 0 && firstHaloRow > y0 + 3);
+
+    /* and the numbers are painted AFTER the curves — a halo drawn under
+       the curve hides nothing. Order is read off the SVG source. */
+    const svg = renderFunction(specFor([cv], { win, ticks: "labels", labels: ["f"] }));
+    check(g, "every axis number and curve name is emitted AFTER the last curve path — the halo really covers the line",
+      svg.lastIndexOf('class="fg-curve"') < svg.indexOf('class="fg-axlab"')
+      && svg.lastIndexOf('class="fg-curve"') < svg.indexOf('class="fg-flab"'));
+  }
+
+  /* 31b. curve-name labels: over EVERY quest's real rounds, no two names
+     touch, and no name sits on another curve's drawn line */
+  {
+    const specs = [];
+    for (let rep = 0; rep < 40 && specs.length < 320; rep++) {
+      for (const q of QUESTS) {
+        let items = [];
+        try { items = buildRound(q.id); } catch { continue; }
+        items.forEach((it) => {
+          [it.graph, it.then && it.then.graph].filter(Boolean).forEach((sp) => {
+            if ((sp.curves || []).filter((c) => c.label).length >= 2) specs.push({ q: q.id, sp });
+          });
+        });
+      }
+    }
+    let clash = 0, onCurve = 0, why = "";
+    specs.forEach(({ q, sp }) => {
+      if (curveLabelsClash(sp)) { clash++; why = `${q}: two curve names overlap`; }
+      const gg = computeFunction(sp);
+      sp.curves.forEach((cv, ci) => {
+        const b = curveLabelBox(cv, gg);
+        if (!b) return;
+        sp.curves.forEach((o, oi) => {
+          if (oi === ci) return;
+          if (labelBoxHitsCurve(o, b, gg)) { onCurve++; why = `${q}: "${cv.label}" sits on curve ${oi}`; }
+        });
+      });
+    });
+    check(g, `over ${specs.length} REAL two-curve specs from every quest: zero curve-name overlaps and zero names sitting on the other curve's line`,
+      specs.length >= 300 && clash === 0 && onCurve === 0, why || `${specs.length} specs`);
+
+    /* negative test: the checks above are not just always true */
+    const cv = { kind: "line", a: 1, q: 0 };
+    const win = windowFor([cv, cv]);
+    const stacked = specFor([cv, cv], { win, labels: ["f", "g"] });
+    stacked.curves[1].labelAt = stacked.curves[0].labelAt;
+    check(g, "negative test: two names forced onto the same x ARE reported as a clash", curveLabelsClash(stacked) === true);
+  }
+
+  /* 31c. curve names also keep clear of the x / y / O axis letters */
+  {
+    let bad = 0, why = "", checked = 0;
+    for (let i = 0; i < 400; i++) {
+      const cs = [randParabola(), randLine()];
+      const win = windowFor(cs);
+      if (!win) continue;
+      const sp = specFor(cs, { win, ticks: "labels", labels: ["f", "g"] });
+      if (!sp) continue;
+      const gg = computeFunction(sp);
+      const letters = axisLetters(sp).map((l) => l.box);
+      sp.curves.forEach((cv) => {
+        const b = curveLabelBox(cv, gg);
+        if (!b) return;
+        checked++;
+        letters.forEach((q) => {
+          if (!(b[2] <= q[0] || b[0] >= q[2] || b[3] <= q[1] || b[1] >= q[3])) { bad++; why = `"${cv.label}" sits on an axis letter`; }
+        });
+      });
+    }
+    check(g, `no curve name lands on the x / y / O axis letters (${checked} names placed)`, bad === 0 && checked > 0, why);
+  }
+
+  /* 31d. q5's generators are loop-bounded, and every draw lands */
+  {
+    const src = await (await fetch("./js/quests/q5-signs.js", { cache: "reload" })).text();
+    check(g, "q5's generators retry with bounded for-loops — no `return SKILLS.…()` recursion left in the file",
+      !/return\s+SKILLS\./.test(src) && (src.match(/for \(let tries = 0; tries < TRIES; tries\+\+\)/g) || []).length === 3);
+
+    const q5 = getQuest("q5");
+    let threw = 0, drawn = 0, why = "";
+    q5.skills.forEach((sk) => {
+      for (let i = 0; i < 500; i++) {
+        try { const it = sk.gen(); drawn++; if (!it) { threw++; why = `${sk.id} returned nothing`; } }
+        catch (e) { threw++; why = `${sk.id}: ${e.message}`; }
+      }
+    });
+    check(g, `500 draws of each q5 skill land a real round — zero throws (${drawn} rounds built)`,
+      threw === 0 && drawn === 1500, why);
+  }
+
+  /* 31e. a faint curve fades its NAME and its ASYMPTOTES with it */
+  {
+    /* a faint ASYMPTOTE LINE carries .7 × FAINT (relative fade — foreman
+       review fix, session 6); labels and curves carry FAINT itself */
+    const dimVals = [FAINT, (0.7 * Number(FAINT)).toFixed(2)].map((v) => v.replace(".", "\\."));
+    const dim = new RegExp(`opacity:(${dimVals.join("|")})`);
+
+    /* the label half, on a spec built exactly as specFor builds one */
+    const base = { kind: "hyperbola", a: 4, p: 1, q: 2 };
+    const solid = { kind: "hyperbola", a: 4, p: -1, q: -2 };
+    const win = windowFor([base, solid]);
+    const sp = specFor([{ ...base, dash: true, faint: true }, solid],
+      { win, ticks: "labels", labels: ["f", "g"], asymLabels: true, tones: ["b", "a"] });
+    const svg = renderFunction(sp);
+    const flabs = [...svg.matchAll(/<text class="fg-flab"[^>]*>([^<]*)<\/text>/g)].map((m) => ({ tag: m[0], label: m[1] }));
+    const faintLab = flabs.find((t) => t.label === "f"), solidLab = flabs.find((t) => t.label === "g");
+    check(g, "a faint curve's NAME fades with it, and the solid curve's name stays full strength",
+      !!faintLab && !!solidLab && dim.test(faintLab.tag) && !dim.test(solidLab.tag));
+
+    const asymLines = [...svg.matchAll(/<line class="fg-asym"[^>]*\/>/g)].map((m) => m[0]);
+    const asymLabs = [...svg.matchAll(/<text class="fg-asymlab"[^>]*>/g)].map((m) => m[0]);
+    const wantDim = (sp.asymptotes || []).filter((a) => a.faint).length;
+    check(g, `the faint curve's asymptote LINES fade too (${asymLines.filter((l) => dim.test(l)).length} of ${asymLines.length} dimmed, ${wantDim} expected) and its asymptote LABEL with them`,
+      wantDim === 2 && asymLines.filter((l) => dim.test(l)).length === wantDim
+      && asymLabs.filter((l) => dim.test(l)).length === 1 && asymLabs.length === 2);
+
+    /* the same, on the two places the app really ships faint curves:
+       a qT before/after sketch and qF's Law-6 scaffold */
+    let qtOK = false, qtSeen = 0;
+    for (let i = 0; i < 120 && !qtOK; i++) {
+      buildRound("qT").forEach((it) => {
+        const s = it.graph;
+        if (!s || !(s.curves || []).some((c) => c.faint)) return;
+        const faintIdx = s.curves.findIndex((c) => c.faint);
+        const want = (s.asymptotes || []).filter((a) => a.of === faintIdx);
+        if (!want.length) return;
+        qtSeen++;
+        const ok = want.every((a) => a.faint === true)
+          && (s.asymptotes || []).filter((a) => a.of !== faintIdx).every((a) => a.faint === undefined);
+        const svg2 = renderFunction(s);
+        const lines = [...svg2.matchAll(/<line class="fg-asym"[^>]*\/>/g)].map((m) => m[0]);
+        if (ok && lines.filter((l) => dim.test(l)).length === want.length) qtOK = true;
+      });
+    }
+    check(g, `a real qT before/after round dims exactly the FAINT curve's asymptotes, never the solid one's (${qtSeen} such rounds seen)`,
+      qtOK, qtSeen ? "" : "no qT round with a faint curve carrying asymptotes was dealt");
+
+    let qfOK = false, qfSeen = 0;
+    for (let i = 0; i < 160 && !qfOK; i++) {
+      buildRound("qF").forEach((it) => {
+        const d = it.debugFault;
+        if (!d || !d.scaffold) return;
+        const extra = (d.scaffold.asymptotes || []).filter((a) => a.of === undefined);
+        if (!extra.length) return;
+        qfSeen++;
+        const svg2 = renderFunction(d.scaffold);
+        const lines = [...svg2.matchAll(/<line class="fg-asym"[^>]*\/>/g)].map((m) => m[0]);
+        const honest = (d.scaffold.asymptotes || []).filter((a) => a.of !== undefined);
+        if (extra.every((a) => a.faint === true) && honest.every((a) => a.faint === undefined)
+            && lines.filter((l) => dim.test(l)).length === extra.length) qfOK = true;
+      });
+    }
+    check(g, `qF's Law-6 scaffold dims the LIAR's extra asymptotes and leaves the honest curve's alone (${qfSeen} scaffolds seen)`,
+      qfOK, qfSeen ? "" : "no qF scaffold with extra asymptotes was dealt");
+  }
+
+  stage.remove();
 }
 
 document.getElementById("sum").innerHTML = fail === 0

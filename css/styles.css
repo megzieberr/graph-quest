@@ -174,7 +174,14 @@ h2{font-size:20px} h3{font-size:16px}
 .fg-grid{stroke:var(--g-grid);stroke-width:.5}
 .fg-axis{stroke:var(--g-axis);stroke-width:1.2}
 .fg-arrow{fill:var(--g-axis)}
-.fg-axlab{font-size:11px;font-style:italic;fill:var(--g-muted)}
+/* the textbook halo: a curve that runs across an axis number passes
+   BEHIND it. Same trick .fg-plab has always used — paint a fat stroke in
+   the colour of whatever the sketch sits on, under the glyph. --bg is the
+   page's own base colour (the app has one theme; .graphbox is a 50%
+   wash of it over the same base), so the halo really is "what is behind".
+   Only works because renderFunction() now emits every .fg-axlab AFTER the
+   curves — see its "axis text is drawn last" note. */
+.fg-axlab{font-size:11px;font-style:italic;fill:var(--g-muted);paint-order:stroke;stroke:var(--bg);stroke-width:3px;stroke-linejoin:round}
 .fg-curve{stroke:var(--accent);stroke-width:2.4;fill:none;stroke-linejoin:round;stroke-linecap:round}
 .fg-curve.dash{stroke-dasharray:5 4}
 .fg-curve-arrow{opacity:.9}
@@ -187,7 +194,7 @@ h2{font-size:20px} h3{font-size:16px}
 .fg-dot.open{fill:var(--bg);stroke:var(--g-ink);stroke-width:1.4}
 .fg-seg{stroke:var(--g-read);stroke-width:2.4}
 .fg-plab{font-size:10.5px;font-weight:700;fill:var(--g-ink);paint-order:stroke;stroke:var(--bg);stroke-width:3.5px;stroke-linejoin:round}
-.fg-flab{font-size:13px;font-weight:700;font-style:italic;fill:var(--accent)}
+.fg-flab{font-size:13px;font-weight:700;font-style:italic;fill:var(--accent);paint-order:stroke;stroke:var(--bg);stroke-width:3px;stroke-linejoin:round}
 .fg-tappable .fg-plab,.fg-tappable .fg-flab{pointer-events:none}
 .graphbox{background:rgba(4,9,20,.5);border:1px solid var(--brd);border-radius:var(--r-lg);padding:6px}
 .graphcap{font-size:12px;color:var(--muted);text-align:center;padding:2px 4px 4px}

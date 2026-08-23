@@ -13,7 +13,9 @@ import {
   randInt, pick, parabolaFromRoots, paraTP, paraRoots, paraYInt,
   lineXInt, lineYInt, hypXInt, hypYInt, expXInt, expYInt, makeFn, C,
 } from "../funclib.js";
-import { PAD } from "../engine/function-graph.js";
+import {
+  PAD, computeFunction, axisLetters, curveLabelBox, labelBoxHitsCurve, boxesHit,
+} from "../engine/function-graph.js";
 
 /* whether semicircles may appear (blipwork mount turns this off:
    the IEB Grade 11 syllabus does not include them) */
@@ -270,37 +272,107 @@ export function specFor(curves, opts = {}) {
     accent: opts.accent,
   };
   curves.forEach((cv, i) => {
+    /* an asymptote inherits its curve's faintness — see the renderer's
+       a.faint note. Kept off the object entirely when the curve is solid,
+       so nothing that JSON-compares two specs sees a new field appear. */
+    const f = cv.faint ? { faint: true } : {};
     if (cv.kind === "hyperbola") {
-      spec.asymptotes.push({ x: cv.p, of: i }, { y: cv.q, of: i, label: opts.asymLabels ? `y = ${C(cv.q)}` : null });
+      spec.asymptotes.push({ x: cv.p, of: i, ...f },
+        { y: cv.q, of: i, label: opts.asymLabels ? `y = ${C(cv.q)}` : null, ...f });
     }
     if (cv.kind === "exp") {
-      spec.asymptotes.push({ y: cv.q, of: i, label: opts.asymLabels ? `y = ${C(cv.q)}` : null });
+      spec.asymptotes.push({ y: cv.q, of: i, label: opts.asymLabels ? `y = ${C(cv.q)}` : null, ...f });
     }
   });
   if (opts.labels) {
-    spec.curves.forEach((cv, i) => {
-      cv.label = opts.labels[i];
-      cv.labelAt = labelSpot(cv, win, i);
-    });
+    spec.curves.forEach((cv, i) => { cv.label = opts.labels[i]; });
+    placeCurveLabels(spec, win);
   }
   return spec;
 }
 
-/* a readable x to hang the curve's name at */
-function labelSpot(cv, win, i) {
+/* ---- where the curve NAMES go ---------------------------------------
+   labelSpot() used to answer one curve at a time, blind to everything
+   already on the sketch, and on ~1,3% of two-curve draws "f" and "g"
+   landed on top of each other (q7-exam.js carried a private clash test
+   and simply redrew the sheet; no other quest guarded itself at all).
+   Now the candidate list is walked properly: a candidate is refused if
+   its box touches an already-placed name, the x / y / O letters, or
+   ANOTHER curve's drawn path. The first candidate IS the old answer, so
+   a label that was already clear does not move — measured over 6 000
+   draws, a one-curve sketch moves 0,7% of the time (it was sitting on an
+   axis letter) and a two-curve one about 10%. When nothing is clash-free
+   the old answer is used anyway — a crowded label beats no label. */
+
+/* the x-positions labelSpot() considers, best first — the same list, in
+   the same order, the old single-answer version walked */
+function labelSpots(cv, win, i) {
   const f = makeFn(cv);
   const tries = i === 0
     ? [win.xmax - 1, win.xmax - 1.6, win.xmin + 1.2, win.xmax - 2.4]
     : [win.xmin + 1.2, win.xmax - 2.2, win.xmax - 1.2, win.xmin + 2];
-  for (const x of tries) {
+  const ok = (x) => {
     const y = f(x);
-    if (Number.isFinite(y) && y > win.ymin + 0.6 && y < win.ymax - 0.6) return x;
-  }
+    return Number.isFinite(y) && y > win.ymin + 0.6 && y < win.ymax - 0.6;
+  };
+  const out = tries.filter(ok);
   for (let k = 0; k <= 20; k++) {
-    const x = win.xmin + (k / 20) * (win.xmax - win.xmin), y = f(x);
-    if (Number.isFinite(y) && y > win.ymin + 0.6 && y < win.ymax - 0.6) return x;
+    const x = win.xmin + (k / 20) * (win.xmax - win.xmin);
+    if (ok(x)) out.push(x);
   }
-  return (win.xmin + win.xmax) / 2;
+  /* a third, finer sweep — only ever reached when all 25 positions above
+     are fouled. Without it the "no candidate is clean" fallback fired on
+     1 spec in 3 754 (a steep line under an exponential), which is rare
+     enough to look like a passing check and common enough to fail one. */
+  for (let k = 1; k < 120; k += 2) {
+    const x = win.xmin + (k / 120) * (win.xmax - win.xmin);
+    if (ok(x)) out.push(x);
+  }
+  return out;
+}
+
+/* the old behaviour, unchanged: the first candidate, else mid-window */
+function labelSpot(cv, win, i) {
+  const c = labelSpots(cv, win, i);
+  return c.length ? c[0] : (win.xmin + win.xmax) / 2;
+}
+
+function placeCurveLabels(spec, win) {
+  const g = computeFunction(spec);
+  const letters = axisLetters(spec).map((l) => l.box);
+  const placed = [];
+  spec.curves.forEach((cv, i) => {
+    const cands = labelSpots(cv, win, i);
+    const others = spec.curves.filter((_, j) => j !== i);
+    const clean = cands.find((x) => {
+      const b = curveLabelBox(cv, g, x);
+      if (!b) return false;
+      if (letters.some((q) => boxesHit(b, q))) return false;
+      if (placed.some((q) => boxesHit(b, q))) return false;
+      return !others.some((o) => labelBoxHitsCurve(o, b, g));
+    });
+    /* the FIRST candidate is exactly what the old labelSpot() answered, so
+       a curve whose old spot was already clear does not move a pixel —
+       only a genuinely fouled label goes looking for somewhere else. */
+    cv.labelAt = clean === undefined ? labelSpot(cv, win, i) : clean;
+    const b = curveLabelBox(cv, g);
+    if (b) placed.push(b);
+  });
+}
+
+/* do any two curve-NAME labels of this spec touch? Exported because
+   q7-exam.js still redraws a sheet rather than ship a crowded one — its
+   own copy of this test is gone (batch 3 session 6). Built on the
+   engine's curveLabelBox(), so the test and the drawing cannot drift. */
+export function curveLabelsClash(spec) {
+  const g = computeFunction(spec);
+  const boxes = (spec.curves || []).map((cv) => curveLabelBox(cv, g)).filter(Boolean);
+  for (let i = 0; i < boxes.length; i++) {
+    for (let j = i + 1; j < boxes.length; j++) {
+      if (boxesHit(boxes[i], boxes[j])) return true;
+    }
+  }
+  return false;
 }
 
 /* the marked points a sketch usually shows (intercepts, TP) */

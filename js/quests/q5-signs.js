@@ -160,198 +160,215 @@ const METHOD = (productQ) => [
 
 /* ---------------- the skills ---------------- */
 
+/* Every generator below retries with a BOUNDED for-loop, the qL/qG house
+   style — never by calling itself again. Same reject conditions, same
+   order, same probabilities; only the retry mechanism changed (batch 3
+   session 6). A recursive retry has no ceiling: an unlucky run of draws
+   grows the stack instead of giving up, and the failure it finally
+   throws is a stack overflow that names nothing. */
+const TRIES = 80;
+
 const SKILLS = {
   /* one graph: f(x) > 0 or f(x) < 0 */
   singleSign: () => {
-    const cv = pick([randParabola(), randParabola(), randLine(), randExp(), randHyperbola()]);
-    const win = windowFor([cv]);
-    /* the same rare edge case §4b guards everywhere else: windowFor()'s own
-       identity-feature box can still leave a steep-armed parabola mostly
-       cropped once the WHOLE curve is sampled, not just its features (fix
-       day, 2026-08-13 — caught the moment this round's spec was first
-       exposed as it.graph, closing a coverage hole that used to hide it).
-       randParabola() lives in _graphs.js, out of this file's edit scope —
-       so this round rejects the rare bad draw locally instead, the same
-       way every caller of windowFor() already has to. (Null-guard first:
-       mostlyInFrame reads win.xmin, and a null window must redraw, never
-       throw — foreman review fix, 2026-08-13.) */
-    if (!win || !mostlyInFrame(cv, win)) return SKILLS.singleSign();
-    const spec = specFor([cv], { win, accent: ACC, ticks: "labels", labels: ["f"], asymLabels: true });
-    const cuts = criticalXs([cv], win.xmin, win.xmax);
-    if (!cuts.length) return SKILLS.singleSign();
-    const cands = cutCandidates([cv], win);
-    const tableSpec = { ...spec, vlines: cuts.map((c) => ({ x: c.x })) };
-    const secs = usableSections(sections(cuts, win.xmin, win.xmax), [cv]);
-    if (!paintable([cv], secs, win)) return SKILLS.singleSign();
-    const wantPos = pick([true, false]);
-    const lang = getLang();
+    for (let tries = 0; tries < TRIES; tries++) {
+      const cv = pick([randParabola(), randParabola(), randLine(), randExp(), randHyperbola()]);
+      const win = windowFor([cv]);
+      /* the same rare edge case §4b guards everywhere else: windowFor()'s own
+         identity-feature box can still leave a steep-armed parabola mostly
+         cropped once the WHOLE curve is sampled, not just its features (fix
+         day, 2026-08-13 — caught the moment this round's spec was first
+         exposed as it.graph, closing a coverage hole that used to hide it).
+         randParabola() lives in _graphs.js, out of this file's edit scope —
+         so this round rejects the rare bad draw locally instead, the same
+         way every caller of windowFor() already has to. (Null-guard first:
+         mostlyInFrame reads win.xmin, and a null window must redraw, never
+         throw — foreman review fix, 2026-08-13.) */
+      if (!win || !mostlyInFrame(cv, win)) continue;
+      const spec = specFor([cv], { win, accent: ACC, ticks: "labels", labels: ["f"], asymLabels: true });
+      const cuts = criticalXs([cv], win.xmin, win.xmax);
+      if (!cuts.length) continue;
+      const cands = cutCandidates([cv], win);
+      const tableSpec = { ...spec, vlines: cuts.map((c) => ({ x: c.x })) };
+      const secs = usableSections(sections(cuts, win.xmin, win.xmax), [cv]);
+      if (!paintable([cv], secs, win)) continue;
+      const wantPos = pick([true, false]);
+      const lang = getLang();
 
-    const chosen = secs.filter((s) => s.usable && signAt(cv, s.mid) === (wantPos ? 1 : -1));
-    if (!chosen.length || chosen.length === secs.length) return SKILLS.singleSign();
-    const correct = answerString(chosen, cuts, win, { strict: true, lang });
-    const wrongs = [
-      { label: complementString(chosen, secs, cuts, win, { strict: true, lang }),
-        misc: wantPos
-          ? B("Those are the − sections. f(x) > 0 asks where the graph is ABOVE the x-axis — the + marks.",
-              "Daai is die − afdelings. f(x) > 0 vra waar die grafiek BO die x-as lê — die + merke.")
-          : B("Those are the + sections. f(x) < 0 asks where the graph is BELOW the x-axis — the − marks.",
-              "Daai is die + afdelings. f(x) < 0 vra waar die grafiek ONDER die x-as lê — die − merke.") },
-      { label: asYString(correct),
-        misc: B("The answer must be x-values. f(x) is the height, but WHERE it happens is an x.",
-                "Die antwoord moet x-waardes wees. f(x) is die hoogte, maar WAAR dit gebeur is 'n x.") },
-      { label: flipStrictString(chosen, cuts, win, { strict: true, lang }),
-        misc: B("A strict < or > never includes the boundary values.",
-                "'n Streng < of > sluit nooit die grenswaardes in nie.") },
-    ];
+      const chosen = secs.filter((s) => s.usable && signAt(cv, s.mid) === (wantPos ? 1 : -1));
+      if (!chosen.length || chosen.length === secs.length) continue;
+      const correct = answerString(chosen, cuts, win, { strict: true, lang });
+      const wrongs = [
+        { label: complementString(chosen, secs, cuts, win, { strict: true, lang }),
+          misc: wantPos
+            ? B("Those are the − sections. f(x) > 0 asks where the graph is ABOVE the x-axis — the + marks.",
+                "Daai is die − afdelings. f(x) > 0 vra waar die grafiek BO die x-as lê — die + merke.")
+            : B("Those are the + sections. f(x) < 0 asks where the graph is BELOW the x-axis — the − marks.",
+                "Daai is die + afdelings. f(x) < 0 vra waar die grafiek ONDER die x-as lê — die − merke.") },
+        { label: asYString(correct),
+          misc: B("The answer must be x-values. f(x) is the height, but WHERE it happens is an x.",
+                  "Die antwoord moet x-waardes wees. f(x) is die hoogte, maar WAAR dit gebeur is 'n x.") },
+        { label: flipStrictString(chosen, cuts, win, { strict: true, lang }),
+          misc: B("A strict < or > never includes the boundary values.",
+                  "'n Streng < of > sluit nooit die grenswaardes in nie.") },
+      ];
 
-    const built = iq({
-      concept: "signs", kind: "signPaint", accent: ACC,
-      prompt: wantPos
-        ? B("For which values of x is <span class='eq'>f(x) &gt; 0</span>?", "Vir watter waardes van x is <span class='eq'>f(x) &gt; 0</span>?")
-        : B("For which values of x is <span class='eq'>f(x) &lt; 0</span>?", "Vir watter waardes van x is <span class='eq'>f(x) &lt; 0</span>?"),
-      stem: `<span class="eq">${eqStr(cv, "f(x)")}</span>`,
-      coach: B("Step 1: tap every place that needs a vertical line.",
-               "Stap 1: klik op elke plek wat 'n vertikale lyn nodig het."),
-      hints: [
-        B("Lines go where the graph CROSSES the x-axis, and at asymptotes — nowhere else.",
-          "Lyne gaan waar die grafiek die x-as SNY, en by asimptote — nêrens anders nie."),
-        wantPos
-          ? B("Then read your + marks: those sections, left to right, are the answer.",
-              "Lees dan jou + merke: daardie afdelings, links na regs, is die antwoord.")
-          : B("Then read your − marks: those sections, left to right, are the answer.",
-              "Lees dan jou − merke: daardie afdelings, links na regs, is die antwoord."),
-      ],
-      build: buildSignsFlow({ spec, cands, secs, curveIdx: [0], names: ["f"], tableSpec }),
-      then: mc("signs",
-        wantPos ? B("Read the answer off your + marks.", "Lees die antwoord van jou + merke af.")
-                : B("Read the answer off your − marks.", "Lees die antwoord van jou − merke af."),
-        correct, wrongs,
-        { answerLabel: correct, solution: METHOD(false),
-          hint: B("Your marks already hold the answer — join the right sections, left to right.",
-                  "Jou merke het reeds die antwoord — voeg die regte afdelings saam, links na regs.") }),
-    });
-    /* verify-only: independent ground truth for the headless checks
-       (never read by play.js — an extra field on an ordinary object) */
-    built.debugCurves = { cv, win, cuts, secs, wantPos, cands };
-    /* verify-only: play.js only ever reads item.graph on a NON-interactive
-       item — an interactive item is mounted through build() instead, so
-       exposing the built spec here is pure data (§4b frame-honesty and
-       §22 off-axis now cover this round too, closing the gap the old
-       code left open). */
-    built.graph = tableSpec;
-    return built;
+      const built = iq({
+        concept: "signs", kind: "signPaint", accent: ACC,
+        prompt: wantPos
+          ? B("For which values of x is <span class='eq'>f(x) &gt; 0</span>?", "Vir watter waardes van x is <span class='eq'>f(x) &gt; 0</span>?")
+          : B("For which values of x is <span class='eq'>f(x) &lt; 0</span>?", "Vir watter waardes van x is <span class='eq'>f(x) &lt; 0</span>?"),
+        stem: `<span class="eq">${eqStr(cv, "f(x)")}</span>`,
+        coach: B("Step 1: tap every place that needs a vertical line.",
+                 "Stap 1: klik op elke plek wat 'n vertikale lyn nodig het."),
+        hints: [
+          B("Lines go where the graph CROSSES the x-axis, and at asymptotes — nowhere else.",
+            "Lyne gaan waar die grafiek die x-as SNY, en by asimptote — nêrens anders nie."),
+          wantPos
+            ? B("Then read your + marks: those sections, left to right, are the answer.",
+                "Lees dan jou + merke: daardie afdelings, links na regs, is die antwoord.")
+            : B("Then read your − marks: those sections, left to right, are the answer.",
+                "Lees dan jou − merke: daardie afdelings, links na regs, is die antwoord."),
+        ],
+        build: buildSignsFlow({ spec, cands, secs, curveIdx: [0], names: ["f"], tableSpec }),
+        then: mc("signs",
+          wantPos ? B("Read the answer off your + marks.", "Lees die antwoord van jou + merke af.")
+                  : B("Read the answer off your − marks.", "Lees die antwoord van jou − merke af."),
+          correct, wrongs,
+          { answerLabel: correct, solution: METHOD(false),
+            hint: B("Your marks already hold the answer — join the right sections, left to right.",
+                    "Jou merke het reeds die antwoord — voeg die regte afdelings saam, links na regs.") }),
+      });
+      /* verify-only: independent ground truth for the headless checks
+         (never read by play.js — an extra field on an ordinary object) */
+      built.debugCurves = { cv, win, cuts, secs, wantPos, cands };
+      /* verify-only: play.js only ever reads item.graph on a NON-interactive
+         item — an interactive item is mounted through build() instead, so
+         exposing the built spec here is pure data (§4b frame-honesty and
+         §22 off-axis now cover this round too, closing the gap the old
+         code left open). */
+      built.graph = tableSpec;
+      return built;
+    }
+    throw new Error("q5 singleSign: no honest draw fits");
   },
 
   /* two graphs: the product (her "tekens verskil") */
   productSign: () => {
-    const a = pick([randParabola(), randLine(), randSemicircle()]);
-    const b = pick([randLine(), randExp(), randParabola()]);
-    const win = windowFor([a, b]);
-    if (!win) return SKILLS.productSign();
-    /* same rare-edge-case guard as singleSign — see its comment */
-    if (!mostlyInFrame(a, win) || !mostlyInFrame(b, win)) return SKILLS.productSign();
-    const spec = specFor([a, b], { win, accent: ACC, ticks: true, labels: ["f", "g"], asymLabels: true });
-    const cuts = criticalXs([a, b], win.xmin, win.xmax);
-    if (cuts.length < 2 || cuts.length > 4) return SKILLS.productSign();
-    const cands = cutCandidates([a, b], win);
-    const tableSpec = { ...spec, vlines: cuts.map((c) => ({ x: c.x })) };
-    const secs = usableSections(sections(cuts, win.xmin, win.xmax), [a, b]);
-    if (!paintable([a, b], secs, win)) return SKILLS.productSign();
-    const wantNeg = pick([true, true, false]);
-    const lang = getLang();
+    for (let tries = 0; tries < TRIES; tries++) {
+      const a = pick([randParabola(), randLine(), randSemicircle()]);
+      const b = pick([randLine(), randExp(), randParabola()]);
+      const win = windowFor([a, b]);
+      if (!win) continue;
+      /* same rare-edge-case guard as singleSign — see its comment */
+      if (!mostlyInFrame(a, win) || !mostlyInFrame(b, win)) continue;
+      const spec = specFor([a, b], { win, accent: ACC, ticks: true, labels: ["f", "g"], asymLabels: true });
+      const cuts = criticalXs([a, b], win.xmin, win.xmax);
+      if (cuts.length < 2 || cuts.length > 4) continue;
+      const cands = cutCandidates([a, b], win);
+      const tableSpec = { ...spec, vlines: cuts.map((c) => ({ x: c.x })) };
+      const secs = usableSections(sections(cuts, win.xmin, win.xmax), [a, b]);
+      if (!paintable([a, b], secs, win)) continue;
+      const wantNeg = pick([true, true, false]);
+      const lang = getLang();
 
-    const chosen = secs.filter((s) => {
-      if (!s.usable) return false;
-      const p = signAt(a, s.mid) * signAt(b, s.mid);
-      return wantNeg ? p < 0 : p > 0;
-    });
-    if (!chosen.length || chosen.length === secs.length) return SKILLS.productSign();
-    const strict = pick([true, false]);
-    const correct = answerString(chosen, cuts, win, { strict, lang });
-    const wrongs = [
-      { label: complementString(chosen, secs, cuts, win, { strict, lang }),
-        misc: wantNeg
-          ? B("Those columns have the SAME signs — the product is positive there.",
-              "Daai kolomme het DIESELFDE tekens — die produk is positief daar.")
-          : B("Those columns have DIFFERENT signs — the product is negative there.",
-              "Daai kolomme het VERSKILLENDE tekens — die produk is negatief daar.") },
-      { label: flipStrictString(chosen, cuts, win, { strict, lang }),
-        misc: strict
-          ? B("A strict inequality never includes the boundaries.", "'n Streng ongelykheid sluit nooit die grense in nie.")
-          : B("≤ and ≥ DO include the x-intercepts (where the product is 0) — but never an asymptote.",
-              "≤ en ≥ sluit WEL die x-afsnitte in (waar die produk 0 is) — maar nooit 'n asimptoot nie.") },
-      { label: asYString(correct),
-        misc: B("The answer must be x-values, not y.", "Die antwoord moet x-waardes wees, nie y nie.") },
-    ];
-    const sym = wantNeg ? (strict ? "&lt; 0" : "≤ 0") : (strict ? "&gt; 0" : "≥ 0");
+      const chosen = secs.filter((s) => {
+        if (!s.usable) return false;
+        const p = signAt(a, s.mid) * signAt(b, s.mid);
+        return wantNeg ? p < 0 : p > 0;
+      });
+      if (!chosen.length || chosen.length === secs.length) continue;
+      const strict = pick([true, false]);
+      const correct = answerString(chosen, cuts, win, { strict, lang });
+      const wrongs = [
+        { label: complementString(chosen, secs, cuts, win, { strict, lang }),
+          misc: wantNeg
+            ? B("Those columns have the SAME signs — the product is positive there.",
+                "Daai kolomme het DIESELFDE tekens — die produk is positief daar.")
+            : B("Those columns have DIFFERENT signs — the product is negative there.",
+                "Daai kolomme het VERSKILLENDE tekens — die produk is negatief daar.") },
+        { label: flipStrictString(chosen, cuts, win, { strict, lang }),
+          misc: strict
+            ? B("A strict inequality never includes the boundaries.", "'n Streng ongelykheid sluit nooit die grense in nie.")
+            : B("≤ and ≥ DO include the x-intercepts (where the product is 0) — but never an asymptote.",
+                "≤ en ≥ sluit WEL die x-afsnitte in (waar die produk 0 is) — maar nooit 'n asimptoot nie.") },
+        { label: asYString(correct),
+          misc: B("The answer must be x-values, not y.", "Die antwoord moet x-waardes wees, nie y nie.") },
+      ];
+      const sym = wantNeg ? (strict ? "&lt; 0" : "≤ 0") : (strict ? "&gt; 0" : "≥ 0");
 
-    const built = iq({
-      concept: "product", kind: "signPaint", accent: ACC,
-      prompt: B(`For which values of x is <span class='eq'>f(x)·g(x) ${sym}</span>?`,
-                `Vir watter waardes van x is <span class='eq'>f(x)·g(x) ${sym}</span>?`),
-      stem: B("Both graphs get marked, section by section.", "Albei grafieke word gemerk, afdeling vir afdeling."),
-      coach: B("Step 1: tap every place that needs a vertical line.",
-               "Stap 1: klik op elke plek wat 'n vertikale lyn nodig het."),
-      hints: [
-        B("Lines at every x-intercept of BOTH graphs, and at asymptotes.",
-          "Lyne by elke x-afsnit van ALBEI grafieke, en by asimptote."),
-        B("Then compare the two rows of marks: same signs +, different signs − ('tekens verskil').",
-          "Vergelyk dan die twee rye merke: dieselfde tekens +, verskillende tekens − ('tekens verskil')."),
-      ],
-      build: buildSignsFlow({ spec, cands, secs, curveIdx: [0, 1], names: ["f", "g"], tableSpec }),
-      then: mc("product",
-        wantNeg ? B("Where do the signs DIFFER? Read those sections off.", "Waar VERSKIL die tekens? Lees daardie afdelings af.")
-                : B("Where do the signs MATCH? Read those sections off.", "Waar STEM die tekens ooreen? Lees daardie afdelings af."),
-        correct, wrongs,
-        { answerLabel: correct, solution: METHOD(true),
-          hint: B("Compare f's marks with g's marks, section by section — same gives +, different gives −.",
-                  "Vergelyk f se merke met g se merke, afdeling vir afdeling — dieselfde gee +, verskillend gee −.") }),
-    });
-    built.debugCurves = { a, b, win, cuts, secs, wantNeg, strict, cands };
-    built.graph = tableSpec;
-    return built;
+      const built = iq({
+        concept: "product", kind: "signPaint", accent: ACC,
+        prompt: B(`For which values of x is <span class='eq'>f(x)·g(x) ${sym}</span>?`,
+                  `Vir watter waardes van x is <span class='eq'>f(x)·g(x) ${sym}</span>?`),
+        stem: B("Both graphs get marked, section by section.", "Albei grafieke word gemerk, afdeling vir afdeling."),
+        coach: B("Step 1: tap every place that needs a vertical line.",
+                 "Stap 1: klik op elke plek wat 'n vertikale lyn nodig het."),
+        hints: [
+          B("Lines at every x-intercept of BOTH graphs, and at asymptotes.",
+            "Lyne by elke x-afsnit van ALBEI grafieke, en by asimptote."),
+          B("Then compare the two rows of marks: same signs +, different signs − ('tekens verskil').",
+            "Vergelyk dan die twee rye merke: dieselfde tekens +, verskillende tekens − ('tekens verskil')."),
+        ],
+        build: buildSignsFlow({ spec, cands, secs, curveIdx: [0, 1], names: ["f", "g"], tableSpec }),
+        then: mc("product",
+          wantNeg ? B("Where do the signs DIFFER? Read those sections off.", "Waar VERSKIL die tekens? Lees daardie afdelings af.")
+                  : B("Where do the signs MATCH? Read those sections off.", "Waar STEM die tekens ooreen? Lees daardie afdelings af."),
+          correct, wrongs,
+          { answerLabel: correct, solution: METHOD(true),
+            hint: B("Compare f's marks with g's marks, section by section — same gives +, different gives −.",
+                    "Vergelyk f se merke met g se merke, afdeling vir afdeling — dieselfde gee +, verskillend gee −.") }),
+      });
+      built.debugCurves = { a, b, win, cuts, secs, wantNeg, strict, cands };
+      built.graph = tableSpec;
+      return built;
+    }
+    throw new Error("q5 productSign: no honest draw fits");
   },
 
   /* the idea underneath it all: f(x) IS the height */
   heightIdea: () => {
-    const cv = pick([randParabola(), randLine(), randExp()]);
-    const win = windowFor([cv]);
-    const f = makeFn(cv);
-    /* the sample x must sit CLEARLY above or below the axis — a point on
-       (or near) an x-intercept makes "positive or negative?" a lie, and
-       the app once marked f(x)=0 as "negative" because of exactly this.
-       It must also be a WHOLE number — the window's edges are no longer
-       rounded (that would break sx === sy), so candidates are built from
-       integers directly rather than from win.xmin/xmax arithmetic. */
-    const loInt = Math.ceil(win.xmin) + 1, hiInt = Math.floor(win.xmax) - 1;
-    const allInts = [];
-    for (let v = loInt; v <= hiInt; v++) allInts.push(v);
-    const cands = allInts.filter((v) => Number.isFinite(f(v)) && Math.abs(f(v)) >= 0.6 && f(v) > win.ymin && f(v) < win.ymax);
-    if (!cands.length) return SKILLS.heightIdea();
-    const x = pick(cands);
-    const y = f(x);
-    const spec = specFor([cv], { win, accent: ACC, ticks: "labels", labels: ["f"],
-      points: [{ x, y, on: 0, dashTo: "x" }] });
-    const correct = y > 0
-      ? B("positive — the graph is above the x-axis there", "positief — die grafiek is daar bo die x-as")
-      : B("negative — the graph is below the x-axis there", "negatief — die grafiek is daar onder die x-as");
-    return mc("signs",
-      B(`At x = ${C(x)}, is f(x) positive or negative?`, `By x = ${C(x)}, is f(x) positief of negatief?`),
-      correct,
-      [y > 0 ? B("negative — the graph is below the x-axis there", "negatief — die grafiek is daar onder die x-as")
-             : B("positive — the graph is above the x-axis there", "positief — die grafiek is daar bo die x-as"),
-       B("zero", "nul"),
-       { label: B("you cannot tell from a sketch", "jy kan nie van 'n skets af sê nie"),
-         misc: B("You can! Height above the axis = positive, below = negative. That is all f(x) means.",
-                 "Jy kan! Hoogte bo die as = positief, onder = negatief. Dis al wat f(x) beteken.") }],
-      { graph: spec, wide: true,
-        stem: B("The dashed line shows how high the graph is at that x.",
-                "Die stippellyn wys hoe hoog die grafiek by daardie x is."),
-        hints: [B("f(x) is just the y-value — the height of the graph at that x.",
-                  "f(x) is net die y-waarde — die hoogte van die grafiek by daardie x."),
-                B("Follow the dashed line: does it point up from the axis, or down?",
-                  "Volg die stippellyn: wys dit op vanaf die as, of af?")],
-        answerLabel: correct });
+    for (let tries = 0; tries < TRIES; tries++) {
+      const cv = pick([randParabola(), randLine(), randExp()]);
+      const win = windowFor([cv]);
+      const f = makeFn(cv);
+      /* the sample x must sit CLEARLY above or below the axis — a point on
+         (or near) an x-intercept makes "positive or negative?" a lie, and
+         the app once marked f(x)=0 as "negative" because of exactly this.
+         It must also be a WHOLE number — the window's edges are no longer
+         rounded (that would break sx === sy), so candidates are built from
+         integers directly rather than from win.xmin/xmax arithmetic. */
+      const loInt = Math.ceil(win.xmin) + 1, hiInt = Math.floor(win.xmax) - 1;
+      const allInts = [];
+      for (let v = loInt; v <= hiInt; v++) allInts.push(v);
+      const cands = allInts.filter((v) => Number.isFinite(f(v)) && Math.abs(f(v)) >= 0.6 && f(v) > win.ymin && f(v) < win.ymax);
+      if (!cands.length) continue;
+      const x = pick(cands);
+      const y = f(x);
+      const spec = specFor([cv], { win, accent: ACC, ticks: "labels", labels: ["f"],
+        points: [{ x, y, on: 0, dashTo: "x" }] });
+      const correct = y > 0
+        ? B("positive — the graph is above the x-axis there", "positief — die grafiek is daar bo die x-as")
+        : B("negative — the graph is below the x-axis there", "negatief — die grafiek is daar onder die x-as");
+      return mc("signs",
+        B(`At x = ${C(x)}, is f(x) positive or negative?`, `By x = ${C(x)}, is f(x) positief of negatief?`),
+        correct,
+        [y > 0 ? B("negative — the graph is below the x-axis there", "negatief — die grafiek is daar onder die x-as")
+               : B("positive — the graph is above the x-axis there", "positief — die grafiek is daar bo die x-as"),
+         B("zero", "nul"),
+         { label: B("you cannot tell from a sketch", "jy kan nie van 'n skets af sê nie"),
+           misc: B("You can! Height above the axis = positive, below = negative. That is all f(x) means.",
+                   "Jy kan! Hoogte bo die as = positief, onder = negatief. Dis al wat f(x) beteken.") }],
+        { graph: spec, wide: true,
+          stem: B("The dashed line shows how high the graph is at that x.",
+                  "Die stippellyn wys hoe hoog die grafiek by daardie x is."),
+          hints: [B("f(x) is just the y-value — the height of the graph at that x.",
+                    "f(x) is net die y-waarde — die hoogte van die grafiek by daardie x."),
+                  B("Follow the dashed line: does it point up from the axis, or down?",
+                    "Volg die stippellyn: wys dit op vanaf die as, of af?")],
+          answerLabel: correct });
+    }
+    throw new Error("q5 heightIdea: no honest draw fits");
   },
 };
 
