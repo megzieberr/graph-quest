@@ -3,3 +3,5 @@ seed-private-real.sql
 .DS_Store
 Thumbs.db
 __pycache__/
+.claude/
+scratch/

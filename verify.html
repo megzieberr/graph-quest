@@ -39,6 +39,10 @@ import {
   windowFor, features, asymOnAxis, randHyperbolaOffAxis, mostlyInFrame,
 } from "./js/quests/_graphs.js";
 import { answerString } from "./js/quests/_intervals.js";
+import {
+  featureDiff, namedFeatures, faultGap, eqOf as faultEqOf,
+  KINDS as FAULT_KINDS, FEATURE_KEYS as FAULT_FEATURE_KEYS,
+} from "./js/quests/_fault.js";
 
 const out = document.getElementById("out");
 let pass = 0, fail = 0;
@@ -1134,11 +1138,12 @@ for (const lang of ["af", "en"]) {
      session 1 (2026-08-14) added a fourth, qE (Vind die vergelyking), right
      after qT. Batch 3 session 2 (2026-08-21) added a fifth, qK (Aard van
      wortels), right after qE. Batch 3 session 3 added a sixth, qI
-     (Ongelykhede 2), right after qK. This literal is a roster-size
+     (Ongelykhede 2), right after qK. Batch 3 session 4 added a seventh,
+     qF (Soek die fout), right after qI. This literal is a roster-size
      regression guard, updated deliberately here, not relaxed: it still
      fails the moment a quest silently vanishes or duplicates. */
-  check(g, "QUESTS holds exactly 14 quests and q4 no longer exists as a separate quest",
-    ids.length === 14 && !ids.includes("q4"), `ids: ${ids.join(", ")}`);
+  check(g, "QUESTS holds exactly 15 quests and q4 no longer exists as a separate quest",
+    ids.length === 15 && !ids.includes("q4"), `ids: ${ids.join(", ")}`);
 }
 
 /* ---------- 9. Round D (q6) — pre-drawn cuts, stamp, sweep, scaffold-on-error (session 5) ----------
@@ -1255,8 +1260,8 @@ for (const lang of ["af", "en"]) {
     });
   }
   const ids = QUESTS.map((q) => q.id);
-  check(g, "q6's retired v1 skills (topSweep/whichCuts) are gone and the new compareSweep round is in, QUESTS holds 14 (batch 2 added qL/qG/qT, batch 3 added qE/qK/qI)",
-    !sawOld && sawNew && ids.length === 14 && ids.includes("q6"), `ids: ${ids.join(", ")}`);
+  check(g, "q6's retired v1 skills (topSweep/whichCuts) are gone and the new compareSweep round is in, QUESTS holds 15 (batch 2 added qL/qG/qT, batch 3 added qE/qK/qI/qF)",
+    !sawOld && sawNew && ids.length === 15 && ids.includes("q6"), `ids: ${ids.join(", ")}`);
 
   /* 9f. a two-part answer must show real space around "of"/"or" INSIDE an
      option button. .opt is display:flex, and flex trims the edge spaces off
@@ -2675,12 +2680,16 @@ for (const lang of ["af", "en"]) {
   const qe = getQuest("qE");
   const skillIds = qe.skills.map((s) => s.id).sort();
 
-  /* scope: only qE opts into this — every other quest's dealing is
-     byte-for-byte unchanged (buildRound never even reads metState unless
-     the quest itself opted in) */
-  const flagged = QUESTS.filter((q) => q.dealEachKindFirst).map((q) => q.id);
-  check(g, `only qE opts into dealEachKindFirst (saw: ${flagged.join(", ") || "none"})`,
-    flagged.length === 1 && flagged[0] === "qE");
+  /* scope: qE and qF are the only two that opt into this — every other
+     quest's dealing is byte-for-byte unchanged (buildRound never even
+     reads metState unless the quest itself opted in). qF joined on
+     2026-08-23, batch 3 session 4: its "kinds" are the fault kinds, so
+     the same ruling gives "one round of each fault kind, plus one
+     no-fault, per play until they are all met". Widened deliberately,
+     not relaxed — a THIRD quest silently opting in still fails here. */
+  const flagged = QUESTS.filter((q) => q.dealEachKindFirst).map((q) => q.id).sort();
+  check(g, `only qE and qF opt into dealEachKindFirst (saw: ${flagged.join(", ") || "none"})`,
+    flagged.length === 2 && flagged[0] === "qE" && flagged[1] === "qF");
 
   /* fresh met-state: every play deals one of EVERY usable skill kind —
      never relaxed */
@@ -3669,6 +3678,290 @@ for (const lang of ["af", "en"]) {
       }
     });
     check(g, `§25a discipline holds for qI: every maths option list is one-per-line (${mathLists} lists)`, bad === 0 && mathLists > 0, why);
+  }
+
+  host.remove();
+}
+
+/* ---------- 29. Quest qF (Soek die fout) — batch 3, session 4.
+   The sketch is drawn honestly; the EQUATION is the thing being marked.
+   Every check below re-derives the truth from ./js/quests/_fault.js's own
+   pure helpers on the round's stored curves — never from the round's own
+   stored verdict (debugFault.gap/diff are recomputed here, not trusted). ---------- */
+{
+  setLang("af");
+  const g = group("29. Quest qF (Soek die fout) — batch 3, session 4");
+  const host = document.createElement("div");
+  host.style.position = "absolute"; host.style.left = "-9999px"; host.style.width = "360px";
+  document.body.appendChild(host);
+  const bothLangs = (v) => (v && typeof v === "object" ? Object.values(v) : [v]);
+
+  /* Two dealings, because qF's dealer has two modes (her qE ruling):
+     COVERAGE = a fresh learner, one round of every fault kind per play;
+     RANDOM   = every kind met, the plain weighted draw. Both are sampled,
+     because the Ja-frequency bar only means anything on the random one. */
+  const ALL_MET = {};
+  FAULT_KINDS.forEach((k) => { ALL_MET[k] = true; });
+  const coverage = [], random = [];
+  for (let i = 0; i < 12; i++) coverage.push(...buildRound("qF"));
+  for (let i = 0; i < 120; i++) random.push(...buildRound("qF", ALL_MET));
+  const rounds = [...coverage, ...random];
+  const dc = (it) => it.debugFault;
+  const nee = rounds.filter((it) => !dc(it).isMatch);
+  const ja = rounds.filter((it) => dc(it).isMatch);
+
+  check(g, `qF builds rounds in both dealing modes (${coverage.length} coverage + ${random.length} random = ${rounds.length})`,
+    coverage.length > 0 && random.length > 0 && rounds.length >= 60);
+
+  /* 29a/29b. Menu coverage and Ja-frequency, both measured on the REAL
+     dealer. These two bars are tight against each other — five fault
+     kinds at ≥ 8 per 60 leaves at most 20 of 60 (33 %) for the no-fault
+     rounds, and the Ja-frequency floor is 25 % — so the sample has to be
+     big enough that ordinary randomness cannot flip either verdict.
+     Rounds are tallied and thrown away here (no specs retained), which is
+     what makes a sample this size affordable. */
+  {
+    const tallyOf = (metState, reps) => {
+      const t = { _n: 0 };
+      FAULT_KINDS.forEach((k) => { t[k] = 0; });
+      for (let i = 0; i < reps; i++) {
+        buildRound("qF", metState).forEach((it) => { t[it.skillId]++; t._n++; });
+      }
+      return t;
+    };
+    const tc = tallyOf({}, 100);                 // a fresh learner: coverage dealing (exact by construction)
+    const tr = tallyOf(ALL_MET, 6000);           // every kind met: the plain weighted draw
+    const per60 = (t) => FAULT_KINDS.map((k) => `${k} ${(t[k] / t._n * 60).toFixed(1)}`).join(" · ");
+    const faults = FAULT_KINDS.filter((k) => k !== "none");
+    check(g, `every fault kind comes up at least 8 times per 60 rounds, coverage dealing over ${tc._n} rounds (${per60(tc)})`,
+      faults.every((k) => tc[k] / tc._n * 60 >= 8));
+    check(g, `every fault kind comes up at least 8 times per 60 rounds, random dealing over ${tr._n} rounds (${per60(tr)})`,
+      faults.every((k) => tr[k] / tr._n * 60 >= 8));
+    const p = tr.none / tr._n;
+    check(g, `no-fault rounds are 25–40 % of the random dealing (${(p * 100).toFixed(1)} % over ${tr._n} rounds) — "Nee" is never the safe guess, and neither is "Ja"`,
+      p >= 0.25 && p <= 0.40, `${(p * 100).toFixed(1)} %`);
+    info(g, `coverage dealing is exactly one round of each kind per play (her qE ruling), so a fresh learner meets ${(tc.none / tc._n * 100).toFixed(1)} % no-fault rounds by construction`);
+  }
+
+  /* 29c. NEVER RELAX — the unique-mismatch law, recomputed here from the
+     stored curves: a Ja-round has ZERO differing named features, and a
+     Nee-round differs in exactly the set its fault kind claims (which is
+     one key for every kind except asymSwap, the documented pair — a swap
+     cannot move one of two values; see _fault.js's header). */
+  {
+    let bad = 0, why = "", sizes = {};
+    ja.forEach((it) => {
+      const d = dc(it);
+      const diff = featureDiff(d.trueCv, d.stated);
+      if (diff.length !== 0) { bad++; why = `a Ja-round (${d.family}) differs in ${diff.join("+")} — a no-fault pair must be identical`; }
+    });
+    nee.forEach((it) => {
+      const d = dc(it);
+      const diff = featureDiff(d.trueCv, d.stated);
+      sizes[d.kind] = diff.length;
+      const want = d.claims.slice().sort().join("+");
+      if (diff.slice().sort().join("+") !== want) {
+        bad++; why = `${d.kind}/${d.family}: moved ${diff.join("+") || "nothing"}, claims ${want}`;
+      }
+    });
+    check(g, `ZERO named features differ on every no-fault round (${ja.length} rounds) — NEVER RELAX`, bad === 0 && ja.length > 0, why);
+    check(g, `every fault moves exactly the named features it claims, no more (${nee.length} rounds) — NEVER RELAX`, bad === 0 && nee.length > 0, why);
+    info(g, `differing-feature count per kind: ${Object.keys(sizes).sort().map((k) => `${k} ${sizes[k]}`).join(" · ")} (asymSwap is 2 by definition — it swaps a PAIR)`);
+  }
+
+  /* 29d. NEVER RELAX — the why-list: at most four options, exactly one
+     true, and every decoy names a feature this fault demonstrably did NOT
+     move (checked against featureDiff, not against the round's own claim) */
+  {
+    let bad = 0, why = "", checked = 0, noneSeen = 0;
+    rounds.forEach((it) => {
+      const d = dc(it);
+      const asked = it.then;
+      checked++;
+      if (!asked || !asked.options) { bad++; why = `${d.kind}: the round exposes no follow-up question`; return; }
+      if (asked.options.length > 4 || asked.options.length < 3) { bad++; why = `${d.kind}: ${asked.options.length} options`; }
+      if (asked.options.filter((o) => o.correct).length !== 1) { bad++; why = `${d.kind}: not exactly one correct option`; }
+      const diff = featureDiff(d.trueCv, d.stated);
+      d.decoyKeys.forEach((k) => {
+        if (k === "none") { return; }
+        if (diff.includes(k)) { bad++; why = `${d.kind}/${d.family}: decoy names "${k}", which this fault DID move`; }
+        if (!(FAULT_FEATURE_KEYS[d.family] || []).includes(k)) { bad++; why = `${d.kind}/${d.family}: decoy names "${k}", not a feature of this family`; }
+      });
+      /* "niks nie — elke kenmerk pas" must sit in EVERY fault round's list
+         too, or its presence would BE the tell that a round has no fault */
+      if (!d.isMatch && d.decoyKeys.includes("none")) noneSeen++;
+      asked.options.forEach((o) => { if (!o.correct && !o.misc) { bad++; why = `${d.kind}: a decoy carries no misconception nudge`; } });
+    });
+    check(g, `every round's why-list has 3–4 options with exactly one true (${checked} rounds) — NEVER RELAX`, bad === 0 && checked > 0, why);
+    check(g, `every decoy names a feature of the family that this fault left UNTOUCHED, and carries its own nudge`, bad === 0);
+    check(g, `"niks nie — elke kenmerk pas" also sits in the fault rounds' lists, so its presence never gives a no-fault round away (${noneSeen}/${nee.length})`,
+      noneSeen === nee.length && nee.length > 0);
+  }
+
+  /* 29e. NEVER RELAX — every injected fault is VISIBLE: at least one whole
+     grid unit of daylight between the honest curve and the one the equation
+     describes, somewhere the true curve is actually drawn. Recomputed here,
+     never read off the round. (The foreman's review focus this session.) */
+  {
+    let bad = 0, why = "", worst = Infinity, n = 0;
+    nee.forEach((it) => {
+      const d = dc(it);
+      const gap = faultGap(d.trueCv, d.stated, d.win);
+      n++;
+      worst = Math.min(worst, gap);
+      if (!(gap >= 1)) { bad++; why = `${d.kind}/${d.family}: only ${gap.toFixed(3)} units of daylight at the drawn window`; }
+    });
+    check(g, `every injected fault is at least ONE whole grid unit visible inside its own window (${n} rounds, tightest ${Number.isFinite(worst) ? worst.toFixed(2) : "—"}) — NEVER RELAX`,
+      bad === 0 && n > 0, why);
+    /* negative test: the same measurement on a pair that really is identical
+       must report zero, so the check is not just always passing */
+    const d0 = dc(nee[0]);
+    check(g, "negative test: faultGap() on a curve against ITSELF reports no daylight at all",
+      faultGap(d0.trueCv, d0.trueCv, d0.win) === 0);
+  }
+
+  /* 29f. the picture: every round exposes its real spec via it.graph, both
+     the sketch AND its scaffold keep asymptotes off the axes, the window is
+     a square grid at a readable zoom, and the points the round is ABOUT are
+     inside the frame */
+  {
+    let bad = 0, why = "", n = 0, specsChecked = 0;
+    rounds.forEach((it) => {
+      const d = dc(it);
+      n++;
+      if (!it.graph) { bad++; why = `${d.kind}: no it.graph exposed to the harness`; return; }
+      if (it.kind !== "faultVerdict") { bad++; why = `${d.kind}: reports kind "${it.kind}"`; }
+      [it.graph, d.scaffold].forEach((sp) => {
+        specsChecked++;
+        (sp.curves || []).forEach((cv) => {
+          if (cv.kind === "hyperbola" && asymOnAxis(cv)) { bad++; why = `${d.kind}: hyperbola p=${cv.p} q=${cv.q} sits on an axis`; }
+        });
+        (sp.asymptotes || []).forEach((a) => {
+          if (a.x === 0 || a.y === 0) { bad++; why = `${d.kind}: a dashed asymptote is drawn on top of an axis`; }
+        });
+        const gm = computeFunction(sp);
+        if (Math.abs(gm.sx - gm.sy) > 1e-6) { bad++; why = `${d.kind}: sx ${gm.sx.toFixed(2)} ≠ sy ${gm.sy.toFixed(2)}`; }
+        if (gm.sx < 18 || gm.sx > 47) { bad++; why = `${d.kind}: ${gm.sx.toFixed(1)} px/unit`; }
+        const svg = renderFunction(sp);
+        if (BAD.test(svg.replace(/class="[^"]*"/g, ""))) { bad++; why = `${d.kind}: NaN/undefined in the drawn SVG`; }
+      });
+      if (!mostlyInFrame(d.trueCv, d.win)) { bad++; why = `${d.kind}/${d.family}: the drawn curve is mostly cropped`; }
+      d.include.forEach((p) => {
+        if (p.x != null && (p.x <= d.win.xmin || p.x >= d.win.xmax)) { bad++; why = `${d.kind}: the round is about x = ${p.x}, which the window crops`; }
+        if (p.y != null && (p.y <= d.win.ymin || p.y >= d.win.ymax)) { bad++; why = `${d.kind}: the round is about y = ${p.y}, which the window crops`; }
+      });
+    });
+    check(g, `every qF round exposes its real spec via it.graph and reports kind "faultVerdict" (${n} rounds)`, bad === 0 && n > 0, why);
+    check(g, `sketch AND scaffold: asymptotes off the axes, square grid, readable zoom, nothing NaN (${specsChecked} specs)`, bad === 0 && specsChecked > 0, why);
+    check(g, "every feature the round is ABOUT — the true one and the one the equation claims — lands inside the drawn window", bad === 0);
+  }
+
+  /* 29g. no answer visible on the sketch: the drawn picture marks WHERE the
+     features are and never prints their values, so the equation stays the
+     only stated claim in the round */
+  {
+    let bad = 0, why = "", n = 0;
+    rounds.forEach((it) => {
+      const d = dc(it);
+      n++;
+      (it.graph.points || []).forEach((p) => { if (p.label != null) { bad++; why = `${d.kind}: the sketch prints the point label "${p.label}"`; } });
+      (it.graph.asymptotes || []).forEach((a) => { if (a.label) { bad++; why = `${d.kind}: the sketch prints the asymptote label "${a.label}"`; } });
+    });
+    check(g, `the sketch never prints a coordinate or an asymptote value — the equation is the only stated claim (${n} rounds) — NEVER RELAX`, bad === 0 && n > 0, why);
+  }
+
+  /* 29h. the EQUATION is the side that lies: the stem states the STATED
+     curve, and on a fault round it is not the honest curve's own equation */
+  {
+    let bad = 0, why = "", n = 0;
+    rounds.forEach((it) => {
+      const d = dc(it);
+      n++;
+      const stem = strip(L(it.stem));
+      const wantStated = strip(faultEqOf(d.stated));
+      const trueEq = strip(faultEqOf(d.trueCv));
+      if (!stem.includes(wantStated)) { bad++; why = `${d.kind}: the stem does not state the claimed equation`; }
+      if (!d.isMatch && wantStated === trueEq) { bad++; why = `${d.kind}: the stated equation reads exactly like the honest one — nothing to mark`; }
+      if (d.isMatch && wantStated !== trueEq) { bad++; why = `${d.kind}: a no-fault round states something other than the honest equation`; }
+    });
+    check(g, `the stem always states the claimed equation, and never the honest one on a fault round (${n} rounds) — NEVER RELAX`, bad === 0 && n > 0, why);
+  }
+
+  /* 29i. driven for REAL: the verdict stage mounts, the Law 6 scaffold is
+     absent until a wrong verdict and present after one, a right verdict
+     never shows it, and done() fires exactly once either way. */
+  {
+    let bad = 0, why = "", driven = 0;
+    const drive = (it, tapCorrect) => {
+      const box = document.createElement("div");
+      host.appendChild(box);
+      let doneCount = 0, options = null, pick = null;
+      const ask = (prompt, opts, onPick) => { options = opts; pick = onPick; };
+      try {
+        it.build(box, () => { doneCount++; }, () => {}, () => {}, ask);
+      } catch (e) { bad++; why = `${dc(it).kind}: build threw on mount: ${e.message}`; return null; }
+      if (!box.querySelector("svg path.fg-curve")) { bad++; why = `${dc(it).kind}: mounted without drawing a curve`; }
+      if (!options || options.length !== 2) { bad++; why = `${dc(it).kind}: the verdict is not a two-option Ja/Nee`; return null; }
+      if (options.filter((o) => o.correct).length !== 1) { bad++; why = `${dc(it).kind}: the verdict has no single correct answer`; }
+      if (box.querySelector(".fg-curve.dash")) { bad++; why = `${dc(it).kind}: the scaffold is on screen before any answer — Law 6`; }
+      if (doneCount !== 0) { bad++; why = `${dc(it).kind}: done() fired on mount`; }
+      const wrong = options.find((o) => !o.correct);
+      const right = options.find((o) => o.correct);
+      if (tapCorrect) {
+        pick(true);
+        if (doneCount !== 1) { bad++; why = `${dc(it).kind}: a right verdict fired done() ${doneCount}×`; }
+        if (box.querySelector(".fg-curve.dash")) { bad++; why = `${dc(it).kind}: a RIGHT verdict switched the scaffold on — Law 6`; }
+      } else {
+        pick(false);
+        if (!box.querySelector(".fg-curve.dash")) { bad++; why = `${dc(it).kind}: a wrong verdict did not switch the scaffold on`; }
+        if (doneCount !== 0) { bad++; why = `${dc(it).kind}: a wrong verdict already unlocked the question`; }
+        pick(true);
+        if (doneCount !== 1) { bad++; why = `${dc(it).kind}: after the second, right verdict done() fired ${doneCount}×`; }
+      }
+      driven++;
+      return { wrong, right };
+    };
+    /* one of each kind, driven both ways */
+    FAULT_KINDS.forEach((k) => {
+      const it = rounds.find((r) => dc(r).kind === k);
+      if (!it) { bad++; why = `no ${k} round to drive`; return; }
+      drive(it, true);
+      drive(rounds.find((r) => dc(r).kind === k && r !== it) || it, false);
+    });
+    check(g, `every fault kind's verdict stage mounts, draws, and offers exactly one right answer of two (${driven} drives)`, bad === 0 && driven > 0, why);
+    check(g, "the scaffold is ABSENT on a clean paint, ABSENT after a right verdict, and PRESENT only after a wrong one (Law 6, driven) — NEVER RELAX", bad === 0);
+    check(g, "done() fires exactly once per round, whichever way the verdict went", bad === 0);
+  }
+
+  /* 29j. §25a's option-layout discipline: qF's why-lists are prose, so
+     nothing should need one-per-line — and if a maths option ever appears,
+     it must go one per line like everywhere else */
+  {
+    let bad = 0, why = "", mathLists = 0;
+    rounds.forEach((it) => {
+      const asked = it.then;
+      const isMath = asked.options.some((o) => bothLangs(o.label).some((v) => {
+        const s = String(v == null ? "" : v);
+        if (/class="(eq|frac)"|<sup/.test(s)) return true;
+        const plain = strip(s);
+        return /[=<>≤≥≠]/.test(plain) && plain.trim().split(/\s+/).length <= 10;
+      }));
+      if (!isMath) return;
+      mathLists++;
+      if (!optionsNeedOneColumn(asked)) { bad++; why = `a qF maths option list is not one-per-line`; }
+    });
+    check(g, `§25a discipline holds for qF (${mathLists} maths option lists — qF's why-lists are prose by design)`, bad === 0);
+  }
+
+  /* 29k. inserting qF must not re-lock Eksamenmodus for a profile that
+     already finished it before qF existed — the grandfather-unlock
+     regression every new quest insertion is checked against (§21/§27/§28i) */
+  {
+    const ids = QUESTS.map((q) => q.id);
+    const iq7 = ids.indexOf("q7");
+    const profile = { quests: { q7: { done: true, best: 6, total: 6, plays: 3 } } };
+    check(g, "inserting qF does not re-lock Eksamenmodus for a profile that already finished it before qF existed (qF itself never played)",
+      questUnlocked(profile, iq7) === true);
   }
 
   host.remove();

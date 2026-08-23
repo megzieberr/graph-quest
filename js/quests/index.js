@@ -59,6 +59,14 @@ import { questRoots } from "./qK-roots.js";
    exists before it, so it stays last. x·f(x) quadrant signs, f/g with
    the open circle, and endpoint discipline (which boundaries close). */
 import { questInequal2 } from "./qI-inequal2.js";
+/* batch 3, session 4: "Soek die fout" slots in AFTER questInequal2 and
+   BEFORE quest7 (Eksamenmodus) — exam mode samples everything that exists
+   before it, so it stays last. Kickoff call (c), 2026-08-14: its OWN quest
+   on the map, not extra rounds woven into the earlier ones, because it
+   needs every reading skill before it. The sketch is honest and the
+   EQUATION is the thing being marked; the fault machinery is pure and
+   lives in ./_fault.js so blipwork can reuse it. */
+import { questFault } from "./qF-fault.js";
 import { quest7, TECHOK, resetExam } from "./q7-exam.js";
 import { CONTENT } from "./_graphs.js";
 import { pick, shuffled } from "../ui.js";
@@ -70,7 +78,7 @@ import { pick, shuffled } from "../ui.js";
 export const QUESTS = [
   questDiscover, questDiscover2, questRecognize, quest2,
   quest3, quest5, quest6, questLengths, questGradient, questTransform, questEquation, questRoots,
-  questInequal2, quest7,
+  questInequal2, questFault, quest7,
 ];
 
 /* flip semicircle content on/off everywhere */
