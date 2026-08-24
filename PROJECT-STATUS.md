@@ -681,9 +681,8 @@ OUTRANKS the design docs** — her own board pages plus every ruling from the re
   disappointing — the whole idea was to put it as a round in blipwork".
 
 ## Pending on Megan
+- Nothing. (2026-08-24 sweep, her word: the Fun Functions phone check is DONE. Nothing pending.)
 
-- 📱 2 min: open Fun Functions on the phone (fully close + reopen the PWA), play one
-  round of Ontdek — it should look exactly as before **[whenever]**
 
 ## Next up
 
