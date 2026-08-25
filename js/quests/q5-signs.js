@@ -26,7 +26,7 @@
 import { mc, iq, quest } from "./_shared.js";
 import { B, getLang } from "../i18n.js";
 import { cutSockets, signPaint } from "../engine/interactive.js";
-import { specFor, randParabola, randLine, randHyperbola, randExp, randSemicircle, windowFor, mostlyInFrame } from "./_graphs.js";
+import { specFor, randParabola, randLine, randHyperbola, randExp, randSemicircle, windowFor, mostlyInFrame, CONTENT } from "./_graphs.js";
 import { criticalXs, sections, signAt, paraTP, eqStr, C, pick, makeFn, parabolaFromRoots } from "../funclib.js";
 import { computeFunction } from "../engine/function-graph.js";
 import { answerString, complementString, flipStrictString, asYString } from "./_intervals.js";
@@ -256,7 +256,16 @@ const SKILLS = {
   /* two graphs: the product (her "tekens verskil") */
   productSign: () => {
     for (let tries = 0; tries < TRIES; tries++) {
-      const a = pick([randParabola(), randLine(), randSemicircle()]);
+      /* ⚠ semicircles are flag-gated app-wide (CONTENT.semicircles): the
+         no-semicircle build — ?nosemi=1 on the standalone, and the blipwork
+         mount — must never DRAW one. This pool called randSemicircle()
+         unconditionally until 2026-08-25, so a product round still showed a
+         semicircle in ~12% of q5's rounds (half of all plays of quest 5)
+         with the flag off. Every other direct randSemicircle() call site is
+         gated: q3's three are techOnly skills, q7's sits behind TECHOK,
+         qF's behind familiesFor(). This one was the only leak. */
+      const a = pick([randParabola(), randLine(),
+                      ...(CONTENT.semicircles ? [randSemicircle()] : [])]);
       const b = pick([randLine(), randExp(), randParabola()]);
       const win = windowFor([a, b]);
       if (!win) continue;

@@ -27,10 +27,33 @@ let screen = { name: "map" };
 /* ---------- url flags: STANDALONE ONLY ----------
    A mounted copy has no url of its own, so every flag is read here and
    passed inward. Semicircles are ON for the standalone (Grade 12
-   Technical Maths) build; ?nosemi=1 previews the blipwork content set,
-   where the IEB Grade 11s never meet them. ?boost=1 forces help mode. */
+   Technical Maths) build; ?nosemi=1 gives the set without them — the same
+   content the IEB Grade 11s meet in blipwork, for a learner who is not on
+   Technical Maths but has no blipwork login. ?boost=1 forces help mode.
+
+   nosemi STICKS to the device, the same way backend.js makes ?local=1
+   stick: the manifest's start_url is a plain "./", so a learner who adds
+   the app to her home screen would otherwise open it WITHOUT the flag and
+   meet semicircles the day she installs it. ?nosemi=0 clears it again —
+   that is how a phone goes back to the Technical Maths set. */
+const NOSEMI_FLAG = "gq.nosemi";
 const FLAGS = new URL(location.href).searchParams;
-setSemicircles(FLAGS.get("nosemi") !== "1");
+
+/* the url wins when it says anything, and says so for good; otherwise the
+   device remembers what it was last told */
+function semicirclesAreOff() {
+  const asked = FLAGS.get("nosemi");
+  if (asked === "1" || asked === "0") {
+    try {
+      if (asked === "1") localStorage.setItem(NOSEMI_FLAG, "1");
+      else localStorage.removeItem(NOSEMI_FLAG);
+    } catch { /* private mode: the url still rules this visit */ }
+    return asked === "1";
+  }
+  try { return localStorage.getItem(NOSEMI_FLAG) === "1"; } catch { return false; }
+}
+
+setSemicircles(!semicirclesAreOff());
 const FORCE_BOOST = FLAGS.get("boost") === "1";
 
 async function boot() {

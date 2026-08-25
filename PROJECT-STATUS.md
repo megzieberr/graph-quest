@@ -1,4 +1,4 @@
-# Project status — updated 2026-08-23 late (MOUNT PART 1 SHIPPED: the adapter seam is LIVE on sw gq-v31, harness 319; NEXT: Part 2 in blipwork)
+# Project status — updated 2026-08-25 (?nosemi=1 now STICKS to the device AND actually removes every semicircle — a q5 leak was live in blipwork; sw gq-v32, harness 321)
 
 **Read this first.** The v2 spec is [RUN-PLAN.md](RUN-PLAN.md); Megan's own class notes
 are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTIONS-NOTES-DIGEST.md).
@@ -6,6 +6,35 @@ are digested at [reference/GR11-FUNCTIONS-NOTES-DIGEST.md](reference/GR11-FUNCTI
 OUTRANKS the design docs** — her own board pages plus every ruling from the redesign night.
 
 ## Where we are
+
+- **THE SECOND STANDALONE LEARNER, 2026-08-25 (sw `gq-v32`, harness 321).** She has a
+  second learner who is NOT on Technical Maths and does NOT get blipwork, so she needs
+  Fun Functions without semicircles on its own link. No second app was built and no
+  toggle was added to the UI — `?nosemi=1` already flipped the whole content set, and it
+  now **sticks to the device** (`localStorage gq.nosemi`, the same pattern backend.js
+  uses for `?local=1`). Cause it fixes: `manifest.json`'s `start_url` is a plain `"./"`,
+  so a learner who added the app to her home screen opened it WITHOUT the flag and met
+  semicircles again from the day she installed it. `?nosemi=0` clears it — that is how a
+  phone goes back to the Technical Maths set. **The two links:**
+  `…/graph-quest/` = Technical Maths (semicircles ON, unchanged);
+  `…/graph-quest/?nosemi=1` = the no-semicircle set. Progress is per device, so the two
+  learners never collide.
+
+- **⚠ THE FLAG HAD A LEAK, FOUND + FIXED THE SAME DAY (2026-08-25) — it was live in
+  blipwork.** Making `?nosemi=1` sticky meant testing what it actually removes, and it
+  did not remove everything: **`q5-signs.js`'s `productSign` called `randSemicircle()`
+  with no gate at all**, so "Plus en minus" drew a semicircle in **12,3% of its rounds
+  and half of all plays of quest 5** even with semicircles switched OFF (measured, 400
+  plays / 2 000 rounds). That is the build the IEB Grade 11s have been playing inside
+  blipwork since the mount shipped on 08-23 — they were meeting a Technical Maths graph
+  in their own app. Every OTHER direct `randSemicircle()` call site was correctly
+  gated (q3's three are `techOnly` skills, q7's sits behind `TECHOK`, qF's behind
+  `familiesFor()`); q5 was the only leak. **Why the harness stayed green:** §6 tested
+  the flag by reading the question TEXT for "halfsirkel"/"semicircle"/"x² + y²", and
+  q5's product rounds call their curves "f" and "g" and never name the shape. The
+  words were clean; the picture was not. §6 now scans the DRAWN curves of every quest
+  (never-relax) — harness **319 → 321**. Same family as her standing rule: measuring
+  misses what only looking would catch.
 
 - **MOUNT PART 1 SHIPPED 2026-08-23 late (Opus build 0.27M under her /go, Fable
   review, push `2194946`, sw `gq-v31`, live-verified: v31 served, map 15 cards at
@@ -95,6 +124,21 @@ OUTRANKS the design docs** — her own board pages plus every ruling from the re
   screen). Nobody but Megan has the app yet.
 
 ## Decisions
+
+- **2026-08-25 — a second learner gets the standalone WITHOUT semicircles, and the
+  answer was NOT a second app.** Her three options were: an in-app toggle, a separate
+  copy of the app on its own link, or the flag that already existed. Ruled: **the flag.**
+  A visible toggle is wrong because it is not a setting a learner should own — flipping
+  it drops her into work outside her syllabus with no way to know why the questions look
+  strange. A separate copy is worse: two codebases doing the same thing, every future fix
+  done twice, one of them quietly falling behind — and it breaks this repo's one-source
+  rule. So `?nosemi=1` became sticky instead (`js/app.js`, `gq.nosemi` in localStorage,
+  url beats storage and, when the url speaks, it rewrites storage). Verified in the
+  browser across all four states: `?nosemi=1` → off + stored; plain `./` → still off
+  (the install case, the whole point of the change); `?nosemi=0` → on + storage cleared;
+  plain `./` again → still on. 80 dealt rounds of q2 + q3 in the off state produced
+  line/parabola/hyperbola/exp and **zero** semicircles; the same 80 in the on state
+  produced semicircles. Harness 321/321, three runs.
 
 - **2026-08-23 late — Part 1 seam rulings (foreman):** mounted mode plays ONE quest
   (no map — blipwork draws tiles); `setLang(l,{persist:false})` so a mount never
@@ -681,7 +725,9 @@ OUTRANKS the design docs** — her own board pages plus every ruling from the re
   disappointing — the whole idea was to put it as a round in blipwork".
 
 ## Pending on Megan
-- Nothing. (2026-08-24 sweep, her word: the Fun Functions phone check is DONE. Nothing pending.)
+- 📱 2 min **[whenever]**: open `…/graph-quest/?nosemi=1` on the new learner's phone, add it
+  to her home screen, then open it from the icon — the icon must still be semicircle-free.
+- (2026-08-24 sweep, her word: the Fun Functions phone check is DONE.)
 
 
 ## Next up
@@ -716,7 +762,7 @@ python -m http.server 5207 --directory "C:\Users\megzi\Desktop\Claude Code Proje
 Then <http://localhost:5207/> (`?local=1` forces local save mode). Preview entry
 `graph-quest` (port 5207) in the nested `C:\Users\megzi\.claude\.claude\launch.json`.
 verify.html is the harness — ALL must pass at the same total three runs in a row
-(currently 319) before any commit.
+(currently 321) before any commit.
 
 ⚠ Cache discipline (it lied to THREE reviews this build): before trusting verify.html
 in a browser, unregister the SW, delete `gq-*` caches, AND force-refetch changed modules

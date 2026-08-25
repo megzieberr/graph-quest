@@ -900,25 +900,51 @@ for (const lang of ["af", "en"]) {
 /* ---------- 6. the blipwork content switch ---------- */
 {
   const g = group("6. Content switch — blipwork build has no semicircles");
+
+  /* every curve a dealt round actually DRAWS — not what its words say.
+     ⚠ NEVER RELAX this back into a text-only scan: until 2026-08-25 this
+     section read the stem and nothing else, and q5's product rounds call
+     their two curves "f" and "g" without ever naming the shape. An ungated
+     randSemicircle() in q5 therefore drew semicircles in ~12% of that
+     quest's rounds with the flag OFF — in the ?nosemi=1 standalone and in
+     the LIVE blipwork mount — while this harness stayed green. Check the
+     picture, not the prose. */
+  const drawnKinds = (it) => {
+    const out = [];
+    [it.graph, ...(it.graphs || [])].filter(Boolean).forEach((s) => {
+      (s.curves || [s]).forEach((c) => { if (c && c.kind) out.push(c.kind); });
+    });
+    return out;
+  };
+
   setSemicircles(false);
-  let found = false;
+  let found = false, deals = 0;
+  const leaked = [];
   for (const q of QUESTS) {
     for (let rep = 0; rep < 14; rep++) {
+      deals++;
       buildRound(q.id).forEach((it) => {
         const txt = strip(L(it.stem || "")) + strip(L(it.prompt || ""));
         if (/halfsirkel|semicircle|x² \+ y²/.test(txt)) found = true;
+        if (drawnKinds(it).includes("semicircle")) leaked.push(q.id);
       });
     }
   }
-  check(g, "with semicircles off, no round mentions one (98 rounds)", !found);
+  check(g, "with semicircles off, no round mentions one (in words)", !found);
+  check(g, `with semicircles off, no quest DRAWS one (${deals} deals, every quest)`,
+        leaked.length === 0,
+        leaked.length ? "leaked in: " + [...new Set(leaked)].join(", ") : "");
+
   setSemicircles(true);
-  let any = false;
+  let any = false, back = false;
   for (let rep = 0; rep < 40; rep++) {
     buildRound("q3").forEach((it) => {
       if (/halfsirkel|x² \+ y²/.test(strip(L(it.stem || "")))) any = true;
     });
+    buildRound("q5").forEach((it) => { if (drawnKinds(it).includes("semicircle")) back = true; });
   }
   check(g, "with semicircles on, they come back", any);
+  check(g, "…and q5's product rounds draw them again (the gate is a gate, not a delete)", back);
 }
 
 /* ---------- 7. Round B — equation-only recognition (session 3) ----------
