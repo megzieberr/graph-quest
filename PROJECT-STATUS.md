@@ -725,8 +725,7 @@ OUTRANKS the design docs** — her own board pages plus every ruling from the re
   disappointing — the whole idea was to put it as a round in blipwork".
 
 ## Pending on Megan
-- 📱 2 min **[whenever]**: open `…/graph-quest/?nosemi=1` on the new learner's phone, add it
-  to her home screen, then open it from the icon — the icon must still be semicircle-free.
+- Nothing. (2026-08-31 sweep, her word: the `?nosemi=1` home-screen icon check on the new learner's phone is KILLED.)
 - (2026-08-24 sweep, her word: the Fun Functions phone check is DONE.)
 
 
