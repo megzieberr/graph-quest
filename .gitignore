@@ -5,3 +5,7 @@ Thumbs.db
 __pycache__/
 .claude/
 scratch/
+
+# Local session notes — never in a public repo (they accumulate learner references)
+PROJECT-STATUS.md
+PROJECT-HISTORY.md
