@@ -88,7 +88,18 @@ function curveNode(cv, g, cls) {
    curve. Snapping IS the lesson: "on the graph" means the
    coordinates fit the equation.
 
-   opts: { spec, curve, at, mode:"v"|"h", tol, onSnap(value) }
+   opts: { spec, curve, at, mode:"v"|"h", tol, targetX, onSnap(value) }
+
+   targetX (mode "h" only) is the x the GENERATOR already knows the point
+   sits at. Pass it and the snap, the locked label and the follow-up
+   question agree by construction. Without it the landing spot is solved
+   for numerically, and solveForX() answers the FIRST crossing from the
+   left — on a parabola the line y = k crosses twice, so a point meant for
+   the right-hand crossing snapped onto the left one and the locked label
+   printed coordinates that were not among the answer options ("there is
+   not option for −4 when k = −4", a Gr11 learner, 2026-09-03). It also
+   read a hyperbola's asymptote jump as a crossing, and sometimes found
+   nothing at all (NaN — the point could then never snap).
    ============================================================ */
 export function pointDrop(host, opts) {
   const { spec, curve, at, mode = "v", onSnap } = opts;
@@ -97,8 +108,11 @@ export function pointDrop(host, opts) {
   const { xmin, xmax, ymin, ymax } = g.win;
   const tol = opts.tol ?? (mode === "v" ? (ymax - ymin) * 0.045 : (xmax - xmin) * 0.045);
 
-  /* the true landing spot */
-  const target = mode === "v" ? { x: at, y: f(at) } : { x: solveForX(cv, at, xmin, xmax), y: at };
+  /* the true landing spot — told, not solved for, whenever the caller
+     knows it (see targetX above) */
+  const target = mode === "v"
+    ? { x: at, y: f(at) }
+    : { x: opts.targetX != null ? opts.targetX : solveForX(cv, at, xmin, xmax), y: at };
   let cur = mode === "v"
     ? { x: at, y: clamp(target.y + (ymax - ymin) * (target.y > (ymin + ymax) / 2 ? -0.34 : 0.34), ymin, ymax) }
     : { x: clamp(target.x + (xmax - xmin) * (target.x > (xmin + xmax) / 2 ? -0.34 : 0.34), xmin, xmax), y: at };
@@ -157,7 +171,9 @@ export function pointDrop(host, opts) {
   return { isSnapped: () => locked, target };
 }
 
-/* x such that f(x) = y0 — numeric, inside the window (first crossing) */
+/* x such that f(x) = y0 — numeric, inside the window (first crossing).
+   The fallback for a mode "h" caller that does not pass opts.targetX;
+   every caller in the app now does. */
 function solveForX(cv, y0, xmin, xmax) {
   const f = makeFn(cv), STEPS = 2000, dx = (xmax - xmin) / STEPS;
   let px = xmin, pv = f(px) - y0;

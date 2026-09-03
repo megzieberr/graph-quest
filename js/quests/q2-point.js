@@ -13,13 +13,31 @@ import { B, UI } from "../i18n.js";
 import { pointDrop } from "../engine/interactive.js";
 import { specFor, randLine, randParabola, randHyperbola, randExp, windowFor } from "./_graphs.js";
 import {
-  makeFn, eqStr, C, ptStr, pick, randInt, isInt, numDecoys, circleEq,
+  makeFn, eqStr, C, ptStr, pick, randInt, isInt, numDecoys, circleEq, paraTP,
 } from "../funclib.js";
 
 const ACC = "#7b5cff";
 
-/* ---- a curve plus an (x ; y) on it, both whole numbers ---- */
-function niceCurveAndPoint() {
+/* ---- is there a SECOND spot on the drawn curve at this height? ----
+   Only a parabola can have one: a line, one branch of a hyperbola and an
+   exponential are each one-to-one, so y = k meets them exactly once. The
+   parabola's other crossing is the mirror of x about the axis of symmetry.
+   It matters for the sideways drag (dropForX): a visible second crossing
+   would let P slide straight through a spot that genuinely lies on the
+   curve without snapping — its own kind of wrong. Measured against the
+   REAL window (the same windowFor() call specFor() will make), never a
+   guessed bound. */
+function secondSpotVisible(cv, x, win) {
+  if (cv.kind !== "parabola") return false;
+  const mx = 2 * paraTP(cv).x - x;
+  if (Math.abs(mx - x) < 1e-9) return false;          // x IS the turning point: one spot only
+  return mx > win.xmin - 1e-6 && mx < win.xmax + 1e-6;
+}
+
+/* ---- a curve plus an (x ; y) on it, both whole numbers ----
+   opts.oneSpotAtY: refuse a draw whose height y also meets the curve
+   somewhere else inside the drawn window (see secondSpotVisible) */
+function niceCurveAndPoint(opts = {}) {
   for (let tries = 0; tries < 200; tries++) {
     const kind = pick(["line", "parabola", "hyperbola", "exp", "parabola", "line"]);
     let cv, x;
@@ -35,7 +53,9 @@ function niceCurveAndPoint() {
     if (!Number.isFinite(y) || !isInt(y) || Math.abs(y) > 13 || Math.abs(x) > 7) continue;
     if (Math.abs(y) < 0.5) continue;                 // (x ; 0) is a giveaway, it's on the axis
     /* the dragged point P is an extra feature the window must also hold */
-    if (!windowFor([cv], { include: [{ x, y }] })) continue;
+    const win = windowFor([cv], { include: [{ x, y }] });
+    if (!win) continue;
+    if (opts.oneSpotAtY && secondSpotVisible(cv, x, win)) continue;
     return { cv, x: Math.round(x), y: Math.round(y) };
   }
   const cv = { kind: "line", a: 2, q: 1 };
@@ -80,9 +100,12 @@ const SKILLS = {
     });
   },
 
-  /* ---------- drag SIDEWAYS onto the curve, then name k ---------- */
+  /* ---------- drag SIDEWAYS onto the curve, then name k ----------
+     Two things keep the snap, the locked label and the options in step:
+     the draw refuses a height that meets the curve twice on screen, and
+     pointDrop is TOLD the x rather than solving for it. */
   dropForX: () => {
-    const { cv, x, y } = niceCurveAndPoint();
+    const { cv, x, y } = niceCurveAndPoint({ oneSpotAtY: true });
     const spec = specFor([cv], {
       accent: ACC, ticks: "labels", labels: ["f"],
       include: [{ x, y }],
@@ -96,7 +119,7 @@ const SKILLS = {
       stem: `<span class="eq">${eqStr(cv, "f(x)")}</span>`,
       coach: B("This one slides sideways — P's y stays " + C(y) + ".",
                "Hierdie een gly links of regs — P se y bly " + C(y) + "."),
-      build: (host, done) => pointDrop(host, { spec, curve: 0, at: y, mode: "h", onSnap: () => done() }),
+      build: (host, done) => pointDrop(host, { spec, curve: 0, at: y, mode: "h", targetX: x, onSnap: () => done() }),
       then: mc("pointOnGraph",
         B("So what is k?", "So wat is k?"), correct, wrongs,
         { hint: B(`Let f(x) = ${C(y)} and solve for x.`, `Stel f(x) = ${C(y)} en los op vir x.`),
