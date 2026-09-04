@@ -88,6 +88,13 @@ export function startQuest(questId, onFinish, onQuit, opts = {}) {
     boost, fails: opts.fails || 0,
     /* one entry per item, in play order — see recordAnswer() */
     record: [],
+    /* the look-back stash: done[i] = the finished item's own DOM subtree,
+       lifted off the stage instead of thrown away. `live` is the subtree
+       currently ON the stage — a DOM handle, not round state; render()
+       writes both, review only ever READS done. finish()/quitQuest() set
+       S = null, which drops the whole lot. */
+    done: {},
+    live: null,
     /* the qE dealing ruling's "met" hook — fired once per skillId, the
        moment a round is actually PRESENTED (below in render()), never
        for a round merely dealt into S.items that the learner may quit
@@ -138,6 +145,20 @@ function recordAnswer(outcome, xp) {
 export function rerender() { if (S) render(); }
 export const isPlaying = () => !!S;
 export function quitQuest() { S = null; }
+
+/* A read-only peek at the running session — verify.html §33 uses it to
+   prove that a trip through the look-back sheet changes NOTHING here.
+   Numbers and counts only; nothing the caller can write back through. */
+export function peekSession() {
+  if (!S) return null;
+  return {
+    i: S.i, answered: S.answered, usedHint: S.usedHint,
+    score: S.score, xp: S.xp, boost: S.boost,
+    records: S.record.length,
+    stashed: Object.keys(S.done).map(Number).sort((a, b) => a - b),
+    total: S.items.length,
+  };
+}
 
 /* ---------------- the intro player (cutscene) ----------------
    quest.intro = { beats: [ { cap:{en,af}, spec, frag? } ] }
@@ -216,9 +237,139 @@ function buildHintLadder(item, host) {
   return { wrap, btn, open, hide: () => { btn.hidden = true; } };
 }
 
+/* ---------------- looking back at a finished question ----------------
+   A learner wrote this in the feedback box, mid-round on the drag-the-
+   line question: "can ma'am please make that u can swip back and look at
+   the previous question u did after pressing next". She is right — every
+   question is generated fresh, so Volgende used to throw the finished one
+   away for good.
+
+   It is a BUTTON, not a swipe: a sideways swipe would fight the drag
+   mechanics inside a graph and the phone's own edge-swipe-back.
+
+   Nothing is re-drawn. The finished question's own DOM subtree is lifted
+   off the stage before the stage is wiped, and put back on screen exactly
+   as she left it — the option she tapped, the ✓/✗, the answer, the method
+   steps. Which also means the subtree still carries every click handler it
+   was built with, and those handlers read S.answered — which by then
+   belongs to a DIFFERENT question. So a review sheet is sealed three ways:
+   `inert` on the wrapper, pointer-events:none in the stylesheet, and a
+   capture-phase blocker on the panel that swallows anything starting
+   inside a stored item (that last one is what stops a synthetic click).
+
+   Review reads S.done and S.items.length. It never writes S.i, S.answered,
+   S.usedHint, S.ctl, S.record, S.score, S.xp or S.fails. */
+function stashLive() {
+  if (!S || !S.live) return;
+  const wrap = S.live;
+  S.live = null;
+  const idx = Number(wrap.dataset.qi);
+  if (!Number.isInteger(idx)) return;
+  const box = el("div", "review-item");
+  /* inert = the browser refuses this whole subtree focus and hit-testing */
+  box.setAttribute("inert", "");
+  wrap.remove();
+  box.appendChild(wrap);
+  S.done[idx] = box;
+}
+
+/* every event kind a stored control could still act on */
+const REVIEW_SEALED = ["click", "pointerdown", "pointerup", "mousedown", "mouseup",
+  "touchstart", "touchend", "keydown", "change", "input", "submit"];
+
+function openReview(startIdx) {
+  if (!S) return;
+  const app = $(".ff-app");
+  if (!app || app.querySelector(".review-panel")) return;   // already open
+
+  /* only items BEFORE the live one — a language re-render stashes the
+     question still being answered, and that one is never on show */
+  const idxs = [];
+  for (let k = 0; k < S.i; k++) if (S.done[k]) idxs.push(k);
+  if (!idxs.length) return;
+  let at = idxs.indexOf(startIdx);
+  if (at < 0) at = idxs.length - 1;
+
+  const panel = el("div", "review-panel");
+  panel.tabIndex = -1;
+  panel.setAttribute("role", "dialog");
+  const sheet = el("div", "review-sheet");
+  const head = el("div", "review-head");
+  const title = el("div", "review-title");
+  const nav = el("div", "review-nav");
+  const older = el("button", "link-btn review-older", "◀");
+  const newer = el("button", "link-btn review-newer", "▶");
+  [older, newer].forEach((b) => { b.type = "button"; });
+  older.title = L(UI.reviewOlder); older.setAttribute("aria-label", L(UI.reviewOlder));
+  newer.title = L(UI.reviewNewer); newer.setAttribute("aria-label", L(UI.reviewNewer));
+  nav.append(older, newer);
+  head.append(title, nav);
+  const note = el("div", "review-note", L(UI.reviewNote));
+  const close = el("button", "btn primary big review-close", L(UI.reviewBack) + " ▶");
+  close.type = "button";
+  const body = el("div", "review-body");
+  sheet.append(head, note, close, body);
+  panel.appendChild(sheet);
+
+  const paint = () => {
+    body.textContent = "";
+    const k = idxs[at];
+    body.appendChild(S.done[k]);
+    title.textContent = `${L(UI.questionWord)} ${k + 1} ${L(UI.roundOf)} ${S.items.length}`;
+    older.disabled = at === 0;
+    newer.disabled = at === idxs.length - 1;
+  };
+  /* the stored subtrees belong to S.done, not to this panel — hand the
+     one on show back before the panel goes */
+  const shut = () => { body.textContent = ""; panel.remove(); };
+
+  older.addEventListener("click", () => { if (at > 0) { at--; paint(); } });
+  newer.addEventListener("click", () => { if (at < idxs.length - 1) { at++; paint(); } });
+  close.addEventListener("click", () => {
+    if (close.disabled) return;      // disable BEFORE the action (her double-submit rule)
+    close.disabled = true;
+    shut();
+  });
+  panel.addEventListener("keydown", (e) => { if (e.key === "Escape") shut(); });
+
+  REVIEW_SEALED.forEach((t) => panel.addEventListener(t, (e) => {
+    const n = e.target;
+    if (n && n.closest && n.closest(".review-item")) { e.stopPropagation(); e.preventDefault(); }
+  }, true));
+
+  paint();
+  app.appendChild(panel);
+  try { panel.focus({ preventScroll: true }); } catch { /* older browsers */ }
+  /* both homes hand us a scroller (the standalone owns the page; blipwork
+     passes onScrollTop), so this normally puts the top of the play box at
+     the top of the screen and the sheet opens on its own header. A host
+     that offers no scroller would leave the header off the top of the
+     screen instead. Foreman review fix 2026-09-04: the first version slid
+     the sheet down by the cut-off amount, and a page scrolled PAST the
+     whole play box then pushed the sheet's top beyond the box's bottom,
+     collapsing it to 0 px (a sheet nobody could see or close). So: bring
+     the play box itself back to the top edge first; only if the host pins
+     its scroll is the sheet slid down, and never past the box's own bottom. */
+  scrollToTop();
+  let r = panel.getBoundingClientRect();
+  if (r.top < 0) {
+    try { app.scrollIntoView({ block: "start" }); } catch { /* older browsers */ }
+    r = panel.getBoundingClientRect();
+    if (r.top < 0) {
+      const room = Math.max(0, app.clientHeight - 240);
+      panel.style.top = `${Math.round(Math.min(-r.top, room))}px`;
+    }
+  }
+}
+
 /* ---------------- rendering ---------------- */
 function render() {
   const app = $(".ff-app");
+  /* THE stage wipe. Every path that moves on — the Next/Klaar button, the
+     interactive skip link, the intro's own hand-off, a language re-render
+     — ends up here, so lifting the finished subtree out at the top of
+     render() is the one hook that no path can dodge. */
+  stashLive();
   const item = S.items[S.i];
   if (!item) return finish();
 
@@ -243,6 +394,14 @@ function render() {
     if (oq) oq();
   });
   bar.prepend(backBtn);
+  /* ◀ Vorige — only once there is a finished question behind her. Same
+     weight as the "Slaan oor" link, left of the counter, never wrapping. */
+  if (S.i > 0) {
+    const prevBtn = el("button", "link-btn prev-btn", "◀ " + L(UI.prevQ));
+    prevBtn.type = "button";
+    prevBtn.addEventListener("click", () => openReview(S.i - 1));
+    bar.insertBefore(prevBtn, bar.querySelector(".qcount"));
+  }
   view.appendChild(bar);
 
   if (S.boost && S.i === 0) {
@@ -251,6 +410,10 @@ function render() {
   }
 
   const wrap = el("div", "qwrap");
+  /* which item this subtree IS — stashLive() reads it back, so a language
+     re-render (same item, i unchanged) can never be filed under the wrong
+     number */
+  wrap.dataset.qi = String(S.i);
   view.appendChild(wrap);
 
   if (item.stem) wrap.appendChild(el("div", "stem", L(item.stem)));
@@ -309,6 +472,7 @@ function render() {
 
   app.textContent = "";
   app.appendChild(view);
+  S.live = wrap;
   scrollToTop();
 }
 

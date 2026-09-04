@@ -339,6 +339,30 @@
 .ff-root .res{text-align:center;padding-top:12px}
 .ff-root .res .big{font-family:var(--font-num);font-size:44px;font-weight:700;color:var(--accent);line-height:1.1}
 .ff-root .res .sub{color:var(--muted);font-size:14px}
+/* ---------- the look-back sheet ----------
+   "swip back and look at the previous question u did after pressing next"
+   — a learner, in the feedback box. The finished question's own subtree is
+   put back on screen, so it still carries its old click handlers: the
+   stylesheet's job here is to make sure nothing in it can be touched
+   (pointer-events) and that its Volgende / Slaan oor / wenk controls are
+   not even drawn (two Next buttons on one screen would be a trap).
+   js/play.js adds `inert` and a capture-phase blocker on top of this. */
+.ff-root .prev-btn{flex:none;white-space:nowrap;padding:2px 6px}
+.ff-root .review-panel{position:absolute;top:0;right:0;bottom:0;left:0;z-index:20;
+  background:var(--bg);overflow-y:auto;overscroll-behavior:contain}
+.ff-root .review-sheet{max-width:560px;margin:0 auto;padding:16px 16px 96px;display:flex;flex-direction:column;gap:11px}
+.ff-root .review-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.ff-root .review-title{font-family:var(--font-display);font-weight:700;font-size:15px;color:var(--ink)}
+.ff-root .review-nav{flex:none;display:flex;align-items:center;gap:2px}
+.ff-root .review-nav .link-btn{font-size:16px;line-height:1;padding:5px 11px;text-decoration:none}
+.ff-root .review-nav .link-btn:disabled{color:var(--faint);opacity:.35;cursor:default}
+.ff-root .review-note{font-size:13px;color:var(--muted);border:1px dashed var(--brd-2);
+  border-radius:var(--r-md);padding:9px 11px}
+.ff-root .review-item{pointer-events:none}
+.ff-root .review-item .btn,
+.ff-root .review-item .skip-btn,
+.ff-root .review-item .hint-btn{display:none!important}
+
 .ff-root .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;z-index:50;background:var(--panel-solid);border:1px solid var(--brd-2);
   border-radius:var(--r-md);padding:11px 16px;font-size:14px;max-width:90vw;box-shadow:0 10px 40px -12px #000}
 .ff-root .toast.bad{border-color:var(--bad)}

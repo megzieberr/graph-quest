@@ -71,6 +71,18 @@ export const UI = {
   locked:       B("Finish the quest before this one first", "Voltooi eers die vorige soektog"),
   done:         B("done", "klaar"),
   best:         B("best", "beste"),
+
+  /* looking back at a question already finished (a learner asked for it
+     in the feedback box: "swip back and look at the previous question u
+     did after pressing next"). It is a button, not a swipe — a sideways
+     swipe would fight the drag rounds and the phone's own edge-swipe. */
+  prevQ:        B("Previous", "Vorige"),
+  questionWord: B("Question", "Vraag"),
+  reviewNote:   B("Just looking. You've done this one already.",
+                  "Net kyk. Hierdie een is klaar gedoen."),
+  reviewBack:   B("Back to my question", "Terug na my vraag"),
+  reviewOlder:  B("Earlier question", "Vroeëre vraag"),
+  reviewNewer:  B("Later question", "Latere vraag"),
   reset:        B("Reset my progress", "Herstel my vordering"),
   resetSure:    B("Wipe all progress on this device?", "Vee alle vordering op hierdie toestel uit?"),
   loading:      B("Loading…", "Laai…"),

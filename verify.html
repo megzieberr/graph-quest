@@ -25,10 +25,13 @@
 
 <script type="module">
 import { QUESTS, buildRound, setSemicircles, getQuest } from "./js/quests/index.js";
-import { secondChanceAllowed, optionsNeedOneColumn, COMEBACK as XP_COMEBACK } from "./js/play.js";
+import { secondChanceAllowed, optionsNeedOneColumn, COMEBACK as XP_COMEBACK, peekSession } from "./js/play.js";
 /* §32 — the mount seam (Part 1 of the blipwork migration) */
 import { chooseBackend, LocalBackend, HostBackend } from "./js/backend.js";
 import { spyHost, playMounted } from "./mount-driver.js";
+/* §33 — the look-back sheet drives a mount by hand, one item at a time,
+   which the all-the-way-to-the-end driver cannot do */
+import { mountFunFunctions } from "./js/mount.js";
 import { questUnlocked, mapScreen, B_INTRO } from "./js/screens.js";
 import {
   verifyFunction, renderFunction, computeFunction,
@@ -4816,6 +4819,424 @@ for (const lang of ["af", "en"]) {
   }
 
   /* put the app back the way the standalone runs it */
+  setSemicircles(true);
+  setLang("af");
+}
+
+/* ---------- 33. Looking back at a question already finished
+   "can ma'am please make that u can swip back and look at the previous
+   question u did after pressing next" — a learner, in the in-app feedback
+   box, on the drag-the-line round. Every question here is generated fresh,
+   so Volgende used to throw the finished one away for good.
+
+   It is a BUTTON, not a swipe: a sideways swipe would fight the drag
+   mechanics inside a graph and the phone's own edge-swipe-back.
+
+   Nothing is re-drawn. The finished question's REAL subtree is lifted off
+   the stage and put back on screen, which means it still carries every
+   click handler it was built with — and those handlers read S.answered,
+   which by then belongs to a different question. So most of what follows
+   is about what review may NOT do: it may not score, it may not advance,
+   and it may not disturb the question she is in the middle of.
+   NEVER RELAX. ---------- */
+{
+  const g = group("33. Looking back — a finished question can be re-read, and reading it changes nothing");
+
+  const tick33 = () => new Promise((r) => queueMicrotask(r));
+  /* the LIVE question only: a stored one is a .qwrap too, but it hangs
+     under .review-panel > .review-item, never under .view */
+  const liveWrap = (root) => root.querySelector(".view > .qwrap[data-qi]");
+  const panelOf = (root) => root.querySelector(".review-panel");
+  const snap = () => JSON.stringify(peekSession());
+
+  async function passIntro(root) {
+    for (let n = 0; n < 40 && root.querySelector(".intro-cap"); n++) {
+      const b = root.querySelector(".view .btn.primary.big");
+      if (!b || b.disabled) break;
+      b.click();
+      await tick33();
+    }
+  }
+  /* answer whatever is on the stage the way a learner would: tap an
+     option, type-and-submit on a keypad, or take the round's own "Slaan
+     oor" link when the mechanic needs a real pointer on an SVG */
+  async function resolveItem(root) {
+    for (let n = 0; n < 90; n++) {
+      await tick33();
+      const w = liveWrap(root);
+      if (!w) return false;
+      if (w.querySelector(".fb")) return true;
+      const grid = w.querySelector(".kgrid");
+      if (grid) {
+        const submit = grid.querySelector(".key.submit");
+        if (submit && !submit.disabled) {
+          const d = [...grid.querySelectorAll(".key")].find((k) => k.textContent === "4");
+          if (d && !d.disabled) d.click();
+          submit.click();
+          continue;
+        }
+      }
+      const live = [...w.querySelectorAll(".opt")].filter((b) => !b.disabled);
+      if (live.length) { live[0].click(); continue; }
+      const skip = w.querySelector(".skip-btn");
+      if (skip && !skip.disabled) { skip.click(); continue; }
+      return false;
+    }
+    return false;
+  }
+  async function pressNext(root) {
+    const w = liveWrap(root);
+    if (!w) return false;
+    const btn = [...w.querySelectorAll(".btn.primary.big")].pop();
+    if (!btn || btn.disabled) return false;
+    btn.click();
+    for (let n = 0; n < 10; n++) await tick33();
+    return true;
+  }
+  const stepOn = async (root) => {
+    await passIntro(root);
+    const ok = await resolveItem(root);
+    await pressNext(root);
+    return ok;
+  };
+
+  const mountQuest = async (questId, target, lang = "af") => {
+    const host = spyHost({ questId, lang, semicircles: false, startProfile: { xp: 0, quests: {}, met: {} } });
+    const handle = mountFunFunctions(target, host);
+    await handle.ready;
+    await passIntro(target);
+    return { host, handle };
+  };
+
+  const slot = document.createElement("div");
+  slot.style.cssText = "position:fixed;left:-9999px;top:0;width:360px";
+  document.body.appendChild(slot);
+
+  /* ---- 33a. an OPTION round (qB — ten mc questions, no cutscene) ---- */
+  {
+    const { host, handle } = await mountQuest("qB", slot);
+
+    const p0 = peekSession();
+    check(g, "on the first question of a round there is no ◀ Vorige link — there is nothing behind her yet",
+      !!p0 && p0.i === 0 && !slot.querySelector(".prev-btn"));
+
+    await stepOn(slot);
+    const p1 = peekSession();
+    const prev = slot.querySelector(".prev-btn");
+    check(g, "after the first Volgende: ◀ Vorige is in the progress row, S.i = 1, one row in the record, item 0 stashed",
+      !!prev && !!p1 && p1.i === 1 && p1.records === 1 && p1.stashed.join(",") === "0",
+      p1 ? `i=${p1.i} records=${p1.records} stashed=[${p1.stashed}]` : "no session");
+
+    prev.click();
+    await tick33();
+    const panel = panelOf(slot);
+    const stored = panel && panel.querySelector(".review-item");
+    const fb = stored && stored.querySelector(".fb");
+    check(g, "the sheet shows the stored question itself: an inert wrapper holding the ✓/✗ card she was shown",
+      !!panel && !!stored && stored.hasAttribute("inert") && !!fb && /[✓✗]/.test(fb.textContent)
+      && !!stored.querySelector(".qwrap") && !!stored.querySelector(".opt"),
+      fb ? fb.textContent.slice(0, 40) : "no feedback card in the stash");
+
+    const oldNext = stored && stored.querySelector(".btn");
+    check(g, "the stored question's own Volgende button is not drawn — two Next buttons on one screen would be a trap",
+      !!oldNext && getComputedStyle(oldNext).display === "none",
+      oldNext ? getComputedStyle(oldNext).display : "no button found");
+
+    check(g, "the sheet says which question this is and that it is only for looking",
+      panel.querySelector(".review-title").textContent === `Vraag 1 van ${p1.total}`
+      && panel.querySelector(".review-note").textContent.trim().length > 12,
+      panel.querySelector(".review-title").textContent);
+
+    /* the one real hazard: the stored subtree's handlers are still live,
+       and they read S.answered — which now belongs to the NEXT question */
+    const before = snap();
+    const targets = [stored.querySelector(".opt"), stored.querySelector(".btn.primary.big"),
+      stored.querySelector(".hint-btn")].filter(Boolean);
+    const wasOff = targets.map((n) => n.disabled);
+    targets.forEach((n) => { n.disabled = false; });          // prove the SEAL holds, not that a button is greyed out
+    targets.forEach((n) => n.click());
+    targets.forEach((n) => {
+      n.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+      n.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, cancelable: true }));
+    });
+    await tick33();
+    const after = snap();
+    targets.forEach((n, k) => { n.disabled = wasOff[k]; });
+    check(g, "a real click on a stored option, on its hint link or on its old Volgende changes nothing — not S.i, not the record, not the score, not the XP — NEVER RELAX",
+      before === after && !liveWrap(slot).querySelector(".fb"),
+      before === after ? "" : `${before} → ${after}`);
+
+    const liveBefore = liveWrap(slot);
+    panel.querySelector(".review-close").click();
+    await tick33();
+    check(g, "Terug na my vraag closes the sheet, and the live question is the SAME node — it is never re-rendered",
+      !panelOf(slot) && liveWrap(slot) === liveBefore && snap() === after);
+
+    slot.querySelector(".prev-btn").click();
+    await tick33();
+    const panel2 = panelOf(slot);
+    panel2.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+    await tick33();
+    check(g, "Escape closes the sheet too, and still leaves the live question alone",
+      !!panel2 && !panelOf(slot) && liveWrap(slot) === liveBefore);
+
+    /* …and a round read back after every question still finishes the way
+       §32c says a round must */
+    let guard = 0;
+    while (peekSession() && guard++ < 40) {
+      const pb = slot.querySelector(".prev-btn");
+      if (pb) {
+        pb.click();
+        await tick33();
+        const pp = panelOf(slot);
+        if (pp) { pp.querySelector(".review-close").click(); await tick33(); }
+      }
+      await stepOn(slot);
+    }
+    for (let n = 0; n < 30; n++) await tick33();
+    const res = host.calls.finished[0];
+    check(g, "a round read back after every question still finishes identically: one row per item, Σ answered.xp + comeback = res.xp, exactly one saveResult carrying that same array",
+      !!res && res.answered.length === res.total
+      && res.answered.reduce((a, r) => a + r.xp, 0) + (res.comeback ? XP_COMEBACK : 0) === res.xp
+      && host.calls.saveResult.length === 1 && host.calls.saveResult[0].answered === res.answered,
+      res ? `${res.answered.length}/${res.total} · xp ${res.xp}` : "never finished");
+    handle.destroy();
+  }
+
+  /* ---- 33b. a KEYPAD round (qK's kiss round) — typed digits must survive ---- */
+  {
+    let live = null, deals = 0;
+    while (!live && deals++ < 20) {
+      const made = await mountQuest("qK", slot);
+      for (let k = 0; k < 8; k++) {
+        const p = peekSession();
+        if (!p) break;
+        const w = liveWrap(slot);
+        if (p.i >= 1 && w && w.querySelector(".kgrid")) { live = made; break; }
+        if (!(await stepOn(slot))) break;
+      }
+      if (!live) { made.handle.destroy(); await tick33(); }
+    }
+    check(g, "a typed-number round can be reached with a finished question behind it", !!live, `after ${deals} deals`);
+
+    if (live) {
+      const w = liveWrap(slot);
+      const keys = [...w.querySelectorAll(".kgrid .key")];
+      keys.find((k) => k.textContent === "7").click();
+      keys.find((k) => k.textContent === "3").click();
+      const typed = w.querySelector(".kval").textContent;
+      const before = snap();
+
+      slot.querySelector(".prev-btn").click();
+      await tick33();
+      const panel = panelOf(slot);
+      const stored = panel.querySelector(".review-item");
+      const storedKeys = [...stored.querySelectorAll(".key, .opt, .chip")];
+      const off = storedKeys.map((n) => n.disabled);
+      storedKeys.forEach((n) => { n.disabled = false; n.click(); });
+      storedKeys.forEach((n, k) => { n.disabled = off[k]; });
+      await tick33();
+      panel.querySelector(".review-close").click();
+      await tick33();
+
+      const w2 = liveWrap(slot);
+      check(g, "typed keypad digits survive a look-back trip: same node, same number on the display, nothing submitted behind her back",
+        typed === "73" && w2 === w && w2.querySelector(".kval").textContent === typed
+        && snap() === before && !w2.querySelector(".fb"),
+        `typed "${typed}" · back to "${w2 ? w2.querySelector(".kval").textContent : "?"}"`);
+      live.handle.destroy();
+    }
+  }
+
+  /* ---- 33c. an INTERACTIVE round (q2) — the skip link is an advance path too ---- */
+  {
+    const { handle } = await mountQuest("q2", slot);
+    await stepOn(slot);
+    await stepOn(slot);
+    const p = peekSession();
+    check(g, "an item taken with the Slaan oor link is stashed as well — every advance path funnels through render()",
+      !!p && p.i === 2 && p.stashed.join(",") === "0,1",
+      p ? `i=${p.i} stashed=[${p.stashed}]` : "no session");
+
+    slot.querySelector(".prev-btn").click();
+    await tick33();
+    const panel = panelOf(slot);
+    const title = panel.querySelector(".review-title");
+    const older = panel.querySelector(".review-older");
+    const newer = panel.querySelector(".review-newer");
+    const openedOn = title.textContent, endStop = newer.disabled && !older.disabled;
+    older.click();
+    await tick33();
+    const steppedTo = title.textContent, startStop = older.disabled && !newer.disabled;
+    check(g, "◀ ▶ page through the finished questions, newest first, and stop dead at both ends",
+      openedOn === `Vraag 2 van ${p.total}` && steppedTo === `Vraag 1 van ${p.total}` && endStop && startStop,
+      `${openedOn} → ${steppedTo}`);
+
+    const stored = panel.querySelector(".review-item");
+    check(g, "a stored interactive round keeps its picture — the line where she left it, not a blank box",
+      !!stored.querySelector("svg") && stored.querySelectorAll("svg *").length > 5);
+
+    const before = snap();
+    const btns = [...stored.querySelectorAll("button")];
+    const off = btns.map((b) => b.disabled);
+    btns.forEach((b) => { b.disabled = false; b.click(); });
+    [...stored.querySelectorAll("svg")].forEach((s) => {
+      s.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, cancelable: true }));
+      s.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, cancelable: true }));
+    });
+    btns.forEach((b, k) => { b.disabled = off[k]; });
+    await tick33();
+    check(g, "nothing inside a stored interactive round can be driven from the sheet",
+      snap() === before, snap() === before ? "" : `${before} → ${snap()}`);
+    handle.destroy();
+  }
+
+  slot.remove();
+
+  /* ---- 33d. the phone width she actually plays on ---- */
+  {
+    const box = document.createElement("div");
+    box.style.cssText = "position:fixed;left:0;top:0;width:375px;height:420px;overflow:auto;z-index:-1";
+    document.body.appendChild(box);
+    /* a desktop scrollbar eats into the box — widen it by exactly that much
+       so what the app really gets is a 375 px content width, her phone */
+    box.style.width = `${375 + (box.offsetWidth - box.clientWidth)}px`;
+    const { handle } = await mountQuest("qB", box);
+    await stepOn(box);
+
+    const bar = box.querySelector(".qbar");
+    const prev = box.querySelector(".prev-btn");
+    const count = box.querySelector(".qcount");
+    const barR = bar.getBoundingClientRect(), pR = prev.getBoundingClientRect(), cR = count.getBoundingClientRect();
+    /* what the row really needs, so a future widening shows its margin */
+    const gap = parseFloat(getComputedStyle(bar).columnGap) || 0;
+    const needs = [...bar.children].reduce((a, n) => a + n.getBoundingClientRect().width, 0)
+      + gap * (bar.children.length - 1);
+    check(g, `at 375 px the progress row still fits: ◀ Vorige sits left of the counter, nothing wraps, nothing runs off the edge (fixed parts need ${Math.round(needs - bar.querySelector(".qprog").getBoundingClientRect().width)} px of ${Math.round(bar.clientWidth)} px, the bar takes the rest)`,
+      bar.scrollWidth <= bar.clientWidth + 1 && cR.height < 26 && pR.height < 34
+      && pR.right <= cR.left + 0.5 && cR.right <= barR.right + 0.5 && pR.left >= barR.left - 0.5);
+
+    /* clicking a button focuses it, and a focused button at the bottom of a
+       tall question scrolls this test box — put it back where a learner
+       tapping ◀ Vorige would really be, at the top of her question */
+    box.scrollTop = 0;
+    prev.click();
+    await tick33();
+    const panel = panelOf(box);
+    const close = panel.querySelector(".review-close");
+    const nav = panel.querySelector(".review-nav");
+    const boxR = box.getBoundingClientRect();
+    const closeR = close.getBoundingClientRect(), navR = nav.getBoundingClientRect();
+    check(g, "at 375 px the sheet's own buttons are on screen and nothing scrolls sideways",
+      panel.scrollWidth <= panel.clientWidth + 1 && box.scrollWidth <= box.clientWidth + 1
+      && closeR.left >= boxR.left - 0.5 && closeR.right <= boxR.right + 0.5
+      && closeR.top >= boxR.top - 0.5 && closeR.bottom <= boxR.bottom + 0.5
+      && navR.right <= boxR.right + 0.5,
+      `panel ${Math.round(panel.scrollWidth)}/${Math.round(panel.clientWidth)} · box ${Math.round(box.scrollWidth)}/${Math.round(box.clientWidth)}`);
+
+    const appR = box.querySelector(".ff-app").getBoundingClientRect();
+    const panR = panel.getBoundingClientRect();
+    check(g, "the sheet lies exactly over the play box, so the live question is hidden while she reads",
+      getComputedStyle(panel).position === "absolute"
+      && Math.abs(panR.top - appR.top) < 1 && Math.abs(panR.left - appR.left) < 1
+      && Math.abs(panR.width - appR.width) < 1 && Math.abs(panR.height - appR.height) < 1,
+      `${Math.round(panR.width)}×${Math.round(panR.height)} vs ${Math.round(appR.width)}×${Math.round(appR.height)}`);
+
+    check(g, "the open sheet adds no horizontal page scroll",
+      document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+      `${document.documentElement.scrollWidth} vs ${document.documentElement.clientWidth}`);
+
+    /* a host that hands the mount no scroller (spyHost does not) — the
+       sheet must still open where she can see it, not above the top edge.
+       Foreman review 2026-09-04: the sheet now brings the play box back to
+       the top edge itself (scrollIntoView), so the box's scrollTop is
+       allowed to change here — what must hold is that the header and the
+       close button are inside the visible box. */
+    panel.querySelector(".review-close").click();
+    await tick33();
+    box.scrollTop = 200;
+    box.querySelector(".prev-btn").click();
+    await tick33();
+    const late = panelOf(box);
+    const lateR = late.getBoundingClientRect();
+    const lateClose = late.querySelector(".review-close").getBoundingClientRect();
+    check(g, "opened from halfway down a scrolled page, the sheet still starts at the top edge she can see",
+      lateR.height > 0 && lateR.top >= boxR.top - 1 && lateR.top <= boxR.top + 1
+      && lateClose.top >= boxR.top - 0.5 && lateClose.bottom <= boxR.bottom + 0.5,
+      `was 200 px down · now ${Math.round(box.scrollTop)} px · sheet top ${Math.round(lateR.top)} · button ${Math.round(lateClose.top)}–${Math.round(lateClose.bottom)}`);
+
+    /* the scratch look-page caught this one (foreman review 2026-09-04):
+       scrolled PAST the whole play box, the first fallback pushed the
+       sheet's top beyond the box's bottom and it collapsed to 0 px — a
+       sheet nobody could see or close. The box is raised above the harness
+       page for one hit-test, then put back. */
+    late.querySelector(".review-close").click();
+    await tick33();
+    const spacer = document.createElement("div");
+    spacer.style.height = "1200px";
+    box.appendChild(spacer);
+    const appH = box.querySelector(".ff-app").getBoundingClientRect().height;
+    box.scrollTop = appH + 300;
+    const wasPast = box.scrollTop > appH;
+    box.style.zIndex = "5";
+    box.querySelector(".prev-btn").click();
+    await tick33();
+    const far = panelOf(box);
+    const farR = far.getBoundingClientRect();
+    const farClose = far.querySelector(".review-close").getBoundingClientRect();
+    const hit = document.elementFromPoint(farClose.left + farClose.width / 2, farClose.top + farClose.height / 2);
+    box.style.zIndex = "-1";
+    check(g, "scrolled clean past the play box, the sheet still opens with real height and a close button she can hit",
+      wasPast && farR.height > 200
+      && farClose.top >= boxR.top - 0.5 && farClose.bottom <= boxR.bottom + 0.5
+      && !!(hit && hit.closest && hit.closest(".review-close")),
+      `was ${Math.round(appH + 300)} px down past a ${Math.round(appH)} px box · sheet ${Math.round(farR.width)}×${Math.round(farR.height)} · button ${Math.round(farClose.top)}–${Math.round(farClose.bottom)} · hit ${hit ? (hit.className || hit.tagName) : "nothing"}`);
+    far.querySelector(".review-close").click();
+    await tick33();
+    spacer.remove();
+
+    handle.destroy();
+    box.remove();
+  }
+
+  /* ---- 33e. inside a shadow root, the way blipwork really mounts it ---- */
+  {
+    const css = await (await fetch("./css/styles.css", { cache: "reload" })).text();
+    const hostEl = document.createElement("div");
+    hostEl.style.cssText = "position:fixed;left:0;top:0;width:375px;height:640px;overflow:auto;z-index:-1";
+    document.body.appendChild(hostEl);
+    const shadow = hostEl.attachShadow({ mode: "open" });
+    const st = document.createElement("style");
+    /* blipwork's own overrides, verbatim from its js/funfun-play.js: mounted
+       there, .view does NOT own a whole phone screen */
+    st.textContent = css
+      + "\n.ff-root .view { min-height: 0; padding-bottom: 28px; }\n.ff-root .back-btn { display: none; }";
+    const rootEl = document.createElement("div");
+    shadow.append(st, rootEl);
+
+    const { handle } = await mountQuest("qB", rootEl);
+    await stepOn(rootEl);
+    rootEl.querySelector(".prev-btn").click();
+    await tick33();
+    const panel = panelOf(rootEl);
+    const appR = rootEl.querySelector(".ff-app").getBoundingClientRect();
+    const panR = panel ? panel.getBoundingClientRect() : { top: -1, height: -1, width: -1 };
+    check(g, "inside a shadow root the sheet is still positioned on the play box (blipwork drops .view's 100vh, so this is the box that has to hold it)",
+      !!panel && getComputedStyle(panel).position === "absolute" && panR.height > 100
+      && Math.abs(panR.top - appR.top) < 1 && Math.abs(panR.height - appR.height) < 1,
+      `panel ${Math.round(panR.width)}×${Math.round(panR.height)} vs app ${Math.round(appR.width)}×${Math.round(appR.height)}`);
+
+    const liveBefore = liveWrap(rootEl);
+    const before = snap();
+    panel.querySelector(".review-close").click();
+    await tick33();
+    check(g, "closing it inside a shadow root leaves the live question exactly as it was",
+      !panelOf(rootEl) && liveWrap(rootEl) === liveBefore && snap() === before);
+
+    handle.destroy();
+    hostEl.remove();
+  }
+
   setSemicircles(true);
   setLang("af");
 }
