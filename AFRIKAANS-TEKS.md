@@ -108,7 +108,7 @@ Reël vir regmaak: **verander net die Afrikaanse sin self** — moenie die etike
 - Die y-afsnit het nooit beweeg nie — net die rigting het verander.
 - **[regte antwoord]** Groter m → die lyn is STEILER
 - **[vraag]** m bly hier positief. Trek m. Wat gebeur?
-- **[wenk]** Vergelyk m = 0,5 met m = 2. Hoe steil is die lyn elke keer?
+- **[wenk]** Steilheid is hoe drasties 'n lyn styg of daal, maak nie saak in watter rigting nie. Vergelyk m = 0,5 met m = 2. Hoe steil is die lyn elke keer?
 - Kyk na die y-afsnit terwyl jy trek. Beweeg dit opwaarts?
 - **[afleier]** Groter m → die lyn is PLATTER
 - **[nudge (na verkeerde keuse)]** By m = 2 het die lyn amper regop geskiet — vergelyk dit met m = 0,5.
@@ -471,7 +471,7 @@ Reël vir regmaak: **verander net die Afrikaanse sin self** — moenie die etike
 - **[afleier]** hulle is ewe steil
 - **[nudge (na verkeerde keuse)]** Kyk weer — een van hulle styg of daal baie skerper. Hulle is nie ewe steil nie.
 - **[nudge (na verkeerde keuse)]** Jy kan! Die steiler koord lyk nader aan vertikaal — jy kan sommer met jou oë sien watter een wen.
-- **[wenk]** Die steiler koord lyk nader aan vertikaal — kyk watter een klim of val die skerpste.
+- **[wenk]** Steilheid is hoe drasties 'n lyn styg of daal, maak nie saak in watter rigting nie. Die steiler koord lyk nader aan vertikaal — kyk watter een klim of val die skerpste.
 - **[antwoord-etiket]** AB is steiler
 - **[antwoord-etiket]** CD is steiler
 - Gemiddelde gradiënt
@@ -947,6 +947,12 @@ Reël vir regmaak: **verander net die Afrikaanse sin self** — moenie die etike
 - Voltooi eers die vorige soektog
 - klaar
 - beste
+- Vorige
+- Vraag
+- Net kyk. Hierdie een is klaar gedoen.
+- Terug na my vraag
+- Vroeëre vraag
+- Latere vraag
 - Herstel my vordering
 - Vee alle vordering op hierdie toestel uit?
 - Laai…

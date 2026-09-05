@@ -166,8 +166,8 @@ const BEATS = {
       prompt: B("m stays positive here. Drag m. What happens?",
                 "m bly hier positief. Trek m. Wat gebeur?"),
       hints: [
-        B("Compare m = 0,5 with m = 2. How steep is the line each time?",
-          "Vergelyk m = 0,5 met m = 2. Hoe steil is die lyn elke keer?"),
+        B("Steepness is how sharply the line climbs or falls, not which way it goes. Compare m = 0,5 with m = 2. How steep is the line each time?",
+          "Steilheid is hoe drasties 'n lyn styg of daal, maak nie saak in watter rigting nie. Vergelyk m = 0,5 met m = 2. Hoe steil is die lyn elke keer?"),
         B("Watch the y-intercept while you drag. Does it move at all?",
           "Kyk na die y-afsnit terwyl jy trek. Beweeg dit opwaarts?"),
       ],

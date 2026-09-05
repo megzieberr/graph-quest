@@ -251,8 +251,8 @@ const SKILLS = {
            { label: B("you cannot tell without calculating", "jy kan nie sê sonder om uit te werk nie"),
              misc: B("You can! The steeper chord looks closer to vertical — your eyes can see which one wins.",
                      "Jy kan! Die steiler koord lyk nader aan vertikaal — jy kan sommer met jou oë sien watter een wen.") }],
-          { hint: B("The steeper chord looks closer to vertical — see which one climbs or falls the sharpest.",
-                    "Die steiler koord lyk nader aan vertikaal — kyk watter een klim of val die skerpste."),
+          { hint: B("Steepness is how sharply the line climbs or falls, not which way it goes. The steeper chord looks closer to vertical — see which one climbs or falls the sharpest.",
+                    "Steilheid is hoe drasties 'n lyn styg of daal, maak nie saak in watter rigting nie. Die steiler koord lyk nader aan vertikaal — kyk watter een klim of val die skerpste."),
             answerLabel: correct === "AB" ? B("AB is steeper", "AB is steiler") : B("CD is steeper", "CD is steiler") }),
       });
       built.debugGrad = {
