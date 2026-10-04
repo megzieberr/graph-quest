@@ -34,7 +34,7 @@ mount simply filters it out.
   *definisieversameling* (domain), *waardeversameling* (range), *afsnitte* (intercepts),
   *asimptoot*, *stygend/dalend*, "Vir watter waardes van x is …".
 - Question style reference (fresh questions, never copy):
-  `C:\Users\megzi\Desktop\Wiskunde Boekies\2026\Graad 12 Tegnies\Werkkaarte\Funksies\funksies-grafieklees.tex`
+  `C:\Users\megzi\Desktop\Tutoring Resources\Graad 12 Tegnies\Werkkaarte\Funksies\funksies-grafieklees.tex`
   — read it; the vb. 1–8 structure there is the exam shape we're training toward.
 - Diagrams: **to-scale rendering engines** (house rule) — plot real functions on a real coordinate
   system (SVG or canvas), never hand-placed sketch approximations. Points, asymptotes and
